@@ -5,6 +5,15 @@
 // ============================================================
 const TOOLS = [
   {
+    id: "shaft-check",
+    name: "轴扭转与弯扭合成校核",
+    file: "tools/shaft-check.html",
+    category: "力学计算",
+    desc: "实心/空心轴的扭转切应力、弯曲应力与当量弯矩法合成校核（第三强度理论），扭转角校核、键槽削弱折减与按 P·n 初估最小轴径",
+    icon: "⚙️",
+    date: "2026-09-12"
+  },
+  {
     id: "beam-multi",
     name: "梁多载荷叠加校核",
     file: "tools/beam-multi.html",

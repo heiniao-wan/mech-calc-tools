@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>轴扭转与弯扭合成校核 - 机械非标自动化设计计算工具集</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #faf7f4; color: #2d2a26; padding-bottom: 50px; }
+  header {
+    background: linear-gradient(135deg, #ff6b35 0%, #f7433b 50%, #e62e2e 100%);
+    color: #fff; padding: 26px 20px; text-align: center;
+  }
+  header h1 { font-size: 22px; }
+  header .back { position: absolute; left: 16px; top: 26px; color: #fff; text-decoration: none; font-size: 14px; opacity: .9; }
+  header p { font-size: 13px; opacity: .9; margin-top: 6px; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 24px 18px; }
+  .panel { background: #fff; border: 1px solid #eee5dc; border-radius: 14px; padding: 22px; margin-bottom: 18px; }
+  .panel h2 { font-size: 16px; color: #b3352b; margin-bottom: 14px; padding-left: 9px; border-left: 4px solid #f7433b; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  label { display: block; font-size: 13px; color: #6b645a; margin-bottom: 4px; }
+  input, select {
+    width: 100%; padding: 9px 11px; border: 1px solid #e5ddd5; border-radius: 9px;
+    font-size: 14px; outline: none; background: #fff; color: #2d2a26;
+  }
+  input:focus, select:focus { border-color: #f7433b; }
+  .row2 { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+  .row2 > div { flex: 1; min-width: 180px; }
+  .btn {
+    display: inline-block; margin-top: 18px; padding: 11px 34px; border: none; border-radius: 10px;
+    background: linear-gradient(135deg, #ff6b35, #e62e2e); color: #fff; font-size: 15px; cursor: pointer;
+  }
+  .btn-lite {
+    display: inline-block; margin-top: 10px; padding: 7px 18px; border: 1px dashed #f7a48b; border-radius: 9px;
+    background: #fff5ef; color: #d24a35; font-size: 13px; cursor: pointer;
+  }
+  .btn-lite:hover { background: #ffe9df; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { border: 1px solid #f0e7de; padding: 9px 12px; text-align: left; }
+  th { background: #fff3ec; color: #8c3220; font-weight: 600; white-space: nowrap; }
+  td { color: #2d2a26; }
+  td.v { font-weight: bold; color: #d24a35; white-space: nowrap; }
+  .ok { color: #1c8a43; font-weight: bold; }
+  .bad { color: #d2222a; font-weight: bold; }
+  .note { font-size: 12.5px; color: #a89e92; line-height: 1.8; margin-top: 12px; }
+  svg.diag { width: 100%; max-width: 300px; display: block; margin: 10px auto 0; }
+</style>
+</head>
+<body>
+<header style="position:relative">
+  <a class="back" href="../index.html">← 返回工具集</a>
+  <h1>⚙️ 轴扭转与弯扭合成校核</h1>
+  <p>扭转切应力 + 弯曲应力 → 当量弯矩法合成校核（第三强度理论）· 扭转角校核 · 按功率转速初估轴径（公式依据《机械设计手册》轴的强度计算）</p>
+</header>
+
+<div class="wrap">
+  <div class="panel">
+    <h2>① 载荷（转矩与弯矩）</h2>
+    <div class="row2">
+      <div><label>功率 P（kW，选填，用于换算 T）</label><input id="P" type="number" value=""></div>
+      <div><label>转速 n（r/min，选填）</label><input id="n" type="number" value=""></div>
+      <div style="flex:0 0 auto;align-self:flex-end"><button class="btn-lite" onclick="calcT()">由 P·n 算 T 并填入 →</button></div>
+    </div>
+    <div class="row2">
+      <div><label>转矩 T（N·m）</label><input id="T" type="number" value="100"></div>
+      <div><label>危险截面弯矩 M（N·m，纯扭填 0）</label><input id="M" type="number" value="100"></div>
+      <div><label>转矩性质（折合系数 α）</label>
+        <select id="alpha">
+          <option value="0.3">恒定转矩（离心机等），α=0.3</option>
+          <option value="0.6" selected>脉动循环（一般机床/传动轴），α=0.6</option>
+          <option value="1">对称循环（频繁正反转），α=1</option>
+        </select>
+      </div>
+    </div>
+
+    <h2 style="margin-top:22px">② 轴截面与材料</h2>
+    <div class="row2">
+      <div><label>轴径 d（mm）</label><input id="d" type="number" value="30"></div>
+      <div><label>空心内径 di（mm，实心填 0）</label><input id="di" type="number" value="0"></div>
+      <div><label>键槽削弱（对 W、Wt 近似折减）</label>
+        <select id="key">
+          <option value="1">无键槽</option>
+          <option value="0.94" selected>单键槽（×0.94，约 −6%）</option>
+          <option value="0.88">双键槽（×0.88，约 −12%）</option>
+        </select>
+      </div>
+    </div>
+    <div class="row2">
+      <div><label>轴材料 / 热处理</label>
+        <select id="mat">
+          <option value="40">Q235（σb≈440 MPa）· [σ-1b]=40</option>
+          <option value="45">35 钢正火（σb≈540）· [σ-1b]=45</option>
+          <option value="45b">45 钢正火（σb≈600）· [σ-1b]=45</option>
+          <option value="60" selected>45 钢调质（σb≈650）· [σ-1b]=60</option>
+          <option value="70">40Cr 调质（σb≈750）· [σ-1b]=70</option>
+          <option value="75">35SiMn 调质（σb≈800）· [σ-1b]=75</option>
+          <option value="custom">自定义许用值</option>
+        </select>
+      </div>
+      <div><label>许用弯曲应力 [σ-1b]（MPa）</label><input id="sigmaA" type="number" value="60"></div>
+    </div>
+
+    <h2 style="margin-top:22px">③ 扭转角校核（选做，长度填 0 跳过）</h2>
+    <div class="row2">
+      <div><label>轴段长度 Ls（mm）</label><input id="Ls" type="number" value="0"></div>
+      <div><label>剪切模量 G（GPa，钢 79）</label><input id="G" type="number" value="79" step="0.1"></div>
+      <div><label>许用扭转角 [φ']（°/m）</label>
+        <select id="phiA">
+          <option value="0.25">0.25（精密/伺服传动轴）</option>
+          <option value="0.5" selected>0.5（一般传动轴）</option>
+          <option value="1">1（低精度传动）</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn" onclick="calc()">开始计算</button>
+  </div>
+
+  <div class="panel" id="resultPanel" style="display:none">
+    <h2>④ 截面属性</h2>
+    <table>
+      <tr><th>抗弯截面模量 W（mm³）</th><td class="v" id="rW">—</td>
+          <th>抗扭截面模量 W<sub>t</sub>（mm³）</th><td class="v" id="rWt">—</td></tr>
+      <tr><th>极惯性矩 I<sub>p</sub>（mm⁴）</th><td class="v" id="rIp">—</td>
+          <th>截面说明</th><td id="rSec">—</td></tr>
+    </table>
+
+    <h2 style="margin-top:20px">⑤ 应力计算</h2>
+    <table>
+      <tr><th>弯曲应力 σ = M/W（MPa）</th><td class="v" id="rS">—</td>
+          <th>扭转切应力 τ = T/W<sub>t</sub>（MPa）</th><td class="v" id="rTau">—</td></tr>
+      <tr><th>当量弯矩 M<sub>e</sub>=√(M²+(αT)²)（N·m）</th><td class="v" id="rMe">—</td>
+          <th>当量应力 σ<sub>e</sub> = M<sub>e</sub>/W（MPa）</th><td class="v" id="rSe">—</td></tr>
+      <tr><th>参考：第三强度直接合成 √(σ²+4τ²)（MPa）</th><td class="v" id="rSe3">—</td>
+          <th>扭转角 φ′（°/m）</th><td class="v" id="rPhi">—</td></tr>
+    </table>
+
+    <h2 style="margin-top:20px">⑥ 校核结论</h2>
+    <table>
+      <tr><th>强度校核 σ<sub>e</sub> ≤ [σ-1b]</th><td id="chkS">—</td>
+          <th>刚度校核 φ′ ≤ [φ′]</th><td id="chkP">—</td></tr>
+    </table>
+
+    <h2 style="margin-top:20px">⑦ 轴径初估（按转矩，纯扭 + 降许用值补偿弯矩影响）</h2>
+    <table>
+      <tr><th>按当前 T 与 [τ] 估最小轴径 d<sub>min</sub>（mm）</th><td class="v" id="rDmin">—</td>
+          <th>说明</th><td id="rDminTip">—</td></tr>
+    </table>
+
+    <div id="diagBox"></div>
+
+    <div class="note">
+      <b>公式依据（《机械设计手册》轴的强度计算）： </b><br>
+      · 抗弯截面模量：实心圆 W = πd³/32；空心圆 W = πD³(1−α⁴)/32，α = di/D<br>
+      · 抗扭截面模量：实心圆 W<sub>t</sub> = πd³/16；空心圆 W<sub>t</sub> = πD³(1−α⁴)/16；极惯性矩 I<sub>p</sub> = πD⁴(1−α⁴)/32<br>
+      · 当量弯矩法（转矩折合）：M<sub>e</sub> = √(M² + (αT)²)，σ<sub>e</sub> = M<sub>e</sub>/W ≤ [σ-1b]；α：转矩恒定 0.3、脉动循环 0.6、对称循环 1.0<br>
+      · 参考：第三强度理论直接合成 σ<sub>e3</sub> = √(σ² + 4τ²)（不折合转矩性质，供对比）<br>
+      · 扭转角：单位长度扭转角 φ′ = T/(G·I<sub>p</sub>)×1000×180/π（°/m，与长度无关）；Ls&gt;0 时另给出该轴段总扭转角；钢 G≈79 GPa<br>
+      · 轴径初估：d ≥ ∛(16T/(π·[τ]))，一般取 [τ]=20~30 MPa（已隐含补偿弯矩影响，弯矩大取小值）<br>
+      · 键槽削弱为近似折减（单键约 5~7%、双键约 10~15%，教材推荐区间），精确值查手册带键槽截面表；轴径 ≤100 mm 按上表，更大轴径折减略小<br>
+      · 许用弯曲应力 [σ-1b] 表（σ<sub>-1b</sub> 对应对称循环变应力）摘自《机械设计手册》轴常用材料表
+    </div>
+  </div>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+
+  // 材料选择 → 回填许用值
+  $("mat").onchange = () => {
+    const v = $("mat").value;
+    if (v !== "custom") $("sigmaA").value = v;
+    $("sigmaA").readOnly = v !== "custom";
+  };
+  $("sigmaA").readOnly = true;
+
+  // 由 P、n 换算 T：T = 9550·P/n（N·m）
+  function calcT() {
+    const P = +$("P").value, n = +$("n").value;
+    if (!(P > 0 && n > 0)) { alert("请先填写功率 P（kW）与转速 n（r/min）"); return; }
+    $("T").value = (+($("T").value || 0) + 9550 * P / n).toFixed(2);
+  }
+
+  function calc() {
+    const T = +$("T").value * 1000;   // N·m → N·mm
+    const M = +$("M").value * 1000;
+    const d = +$("d").value, di = Math.min(+$("di").value || 0, d * 0.99);
+    const alpha = +$("alpha").value;
+    const kf = +$("key").value;
+    if (!(d > 0) || !(T !== 0 || M !== 0)) { alert("请输入轴径 d 和至少一个载荷（T 或 M）"); return; }
+
+    // 截面属性（含键槽折减）
+    let W, Wt, Ip, secDesc;
+    if (di > 0) {
+      const a4 = (di / d) ** 4;
+      W = Math.PI * d ** 3 * (1 - a4) / 32;
+      Wt = Math.PI * d ** 3 * (1 - a4) / 16;
+      Ip = Math.PI * d ** 4 * (1 - a4) / 32;
+      secDesc = `空心圆 D${d}×di${di}`;
+    } else {
+      W = Math.PI * d ** 3 / 32;
+      Wt = Math.PI * d ** 3 / 16;
+      Ip = Math.PI * d ** 4 / 32;
+      secDesc = "实心圆";
+    }
+    W *= kf; Wt *= kf;
+    if (kf < 1) secDesc += kf >= 0.94 ? "（单键槽折减）" : "（双键槽折减）";
+
+    // 应力
+    const sigma = Math.abs(M) / W;
+    const tau = Math.abs(T) / Wt;
+    const alphaT = alpha * Math.abs(T);
+    const Me = Math.sqrt(M * M + alphaT * alphaT);   // N·mm
+    const se = Me / W;
+    const se3 = Math.sqrt(sigma * sigma + 4 * tau * tau);
+
+    // 扭转角：单位长度扭转角 φ′（°/m），与 Ls 无关；Ls>0 时另给出总扭转角
+    const Ls = +$("Ls").value || 0;
+    const G = (+$("G").value || 79) * 1000; // GPa → MPa
+    let phi = null, phiTotal = null;
+    if (T !== 0) {
+      phi = Math.abs(T) / (G * Ip) * 1000 * 180 / Math.PI; // rad/mm → °/m
+      if (Ls > 0) phiTotal = phi * Ls / 1000;              // °
+    }
+
+    // 强度校核
+    const sigmaA = +$("sigmaA").value;
+    const passS = se <= sigmaA;
+    const phiA = +$("phiA").value;
+    const passP = phi === null ? null : phi <= phiA;
+
+    // 轴径初估：[τ] 按弯矩占比取 20~30
+    const tauAllow = sigma > 0 ? Math.max(20, 30 - 10 * Math.min(1, sigma / sigmaA)) : 30;
+    const dmin = Math.cbrt(16 * Math.abs(T) / (Math.PI * tauAllow));
+
+    // 输出
+    $("resultPanel").style.display = "";
+    $("rW").textContent = fmt(W) + " mm³";
+    $("rWt").textContent = fmt(Wt) + " mm³";
+    $("rIp").textContent = fmt(Ip) + " mm⁴";
+    $("rSec").textContent = secDesc;
+    $("rS").textContent = M === 0 ? "0（纯扭）" : fmt(sigma) + " MPa";
+    $("rTau").textContent = fmt(tau) + " MPa";
+    $("rMe").textContent = fmt(Me / 1000) + " N·m";
+    $("rSe").textContent = fmt(se) + " MPa";
+    $("rSe3").textContent = fmt(se3) + " MPa";
+    $("rPhi").textContent = phi === null ? "—（T=0）" : fmt(phi) + " °/m" + (phiTotal !== null ? "（Ls 内总扭转 " + fmt(phiTotal) + "°）" : "");
+    $("chkS").innerHTML = passS
+      ? `<span class="ok">✔ 通过</span>（${fmt(se)} ≤ ${sigmaA} MPa）`
+      : `<span class="bad">✘ 不通过</span>（${fmt(se)} &gt; ${sigmaA} MPa，请增大轴径或改材料）`;
+    $("chkP").innerHTML = phi === null ? "—（T=0，无扭转）" : (passP
+      ? `<span class="ok">✔ 通过</span>（${fmt(phi)} ≤ ${phiA} °/m）`
+      : `<span class="bad">✘ 不通过</span>（${fmt(phi)} &gt; ${phiA} °/m，请增大轴径或缩短悬伸）`);
+    $("rDmin").textContent = fmt(dmin) + " mm（[τ]=" + fmt(tauAllow) + " MPa）";
+    $("rDminTip").textContent = sigma > 0
+      ? "已按弯矩占比在 20~30 MPa 内取低 [τ] 补偿弯矩影响"
+      : "纯扭工况取 [τ]=30 MPa，有弯矩时请以当量弯矩校核为准";
+
+    $("diagBox").innerHTML = draw(d, di, kf);
+  }
+
+  function fmt(x) {
+    if (!isFinite(x)) return "—";
+    const a = Math.abs(x);
+    if (a >= 1e6 || (a > 0 && a < 0.01)) return x.toExponential(3);
+    return (+x.toPrecision(5)).toLocaleString("en-US", { maximumFractionDigits: 4 });
+  }
+
+  // 轴截面示意图（含键槽）
+  function draw(d, di, kf) {
+    const S = 85, cx = 130, cy = 70;
+    let s = `<svg class="diag" viewBox="0 0 260 150" xmlns="http://www.w3.org/2000/svg">`;
+    s += `<circle cx="${cx}" cy="${cy}" r="${S}" fill="#ffe3d6" stroke="#e62e2e" stroke-width="2.5"/>`;
+    if (di > 0) s += `<circle cx="${cx}" cy="${cy}" r="${S * di / d}" fill="#faf7f4" stroke="#e62e2e" stroke-width="1.5"/>`;
+    if (kf < 1) {
+      const kw = S * 0.24, kh = S * 0.22; // 键槽（示意）
+      s += `<rect x="${cx - kw / 2}" y="${cy - S - kh + 4}" width="${kw}" height="${kh}" fill="#faf7f4" stroke="#e62e2e" stroke-width="1.5" rx="3"/>`;
+    }
+    s += `<line x1="${cx - S - 12}" y1="${cy}" x2="${cx + S + 12}" y2="${cy}" stroke="#b9afa4" stroke-width="1" stroke-dasharray="5,4"/>
+          <text x="${cx + S + 14}" y="${cy + 4}" fill="#a89e92" font-size="10">z</text>
+          <text x="${cx}" y="${cy + S + 18}" fill="#8a8177" font-size="12" text-anchor="middle">d = ${d} mm${di > 0 ? "，di = " + di + " mm" : ""}${kf < 1 ? "（含键槽）" : ""}</text></svg>`;
+    return s;
+  }
+</script>
+</body>
+</html>
