@@ -57,7 +57,7 @@
 <header style="position:relative">
   <a class="back" href="../index.html">← 返回工具集</a>
   <h1>🏗️ 梁多载荷叠加校核</h1>
-  <p>简支梁 / 悬臂梁 · 集中力 + 均布段 + 集中力偶任意组合 · 支反力、剪力、弯矩、挠度全量校核（静力平衡 +挠度积分，精度等同叠加法）</p>
+  <p>简支 / 外伸 / 悬臂 / 两端固支 · 集中力 + 均布段 + 集中力偶任意组合 · 支反力、剪力、弯矩、挠度全量校核（静力平衡 + 挠度积分，超静定用力法）</p>
 </header>
 
 <div class="wrap">
@@ -67,8 +67,10 @@
       <div>
         <label>支承形式</label>
         <select id="support">
-          <option value="ss">简支梁（左固定铰 + 右滚动）</option>
+          <option value="ss">简支梁（两端支座）</option>
+          <option value="oh">外伸梁（支座内移，悬伸臂）</option>
           <option value="cb">悬臂梁（左端固支）</option>
+          <option value="ff">两端固支梁（超静定）</option>
         </select>
       </div>
       <div>
@@ -91,6 +93,10 @@
       <div id="hWrap" style="display:none"><label>截面高 h（mm）</label><input id="h" type="number" value="40"></div>
       <div id="iWrap" style="display:none"><label>惯性矩 I（mm⁴）</label><input id="I" type="number" value="1000000"></div>
       <div id="cWrap" style="display:none"><label>边缘距中性轴 c（mm）</label><input id="c" type="number" value="20"></div>
+    </div>
+    <div class="row2" id="supRow">
+      <div id="s1Wrap" style="display:none"><label>左支座位置 s1（mm）</label><input id="s1v" type="number" value="150"></div>
+      <div id="s2Wrap" style="display:none"><label>右支座位置 s2（mm）</label><input id="s2v" type="number" value="1350"></div>
     </div>
 
     <h2 style="margin-top:22px">② 载荷列表（可任意增删组合）</h2>
@@ -137,11 +143,12 @@
 
     <div class="note">
       <b>计算方法：</b><br>
-      · 支反力：由静力平衡 ΣF=0、ΣM=0 精确求解（集中力、均布段、集中力偶任意组合）<br>
+      · 静定形式（简支/外伸/悬臂）：支反力由静力平衡 ΣF=0、ΣM=0 精确求解（集中力、均布段、集中力偶任意组合）<br>
+      · 两端固支（一次超静定）：以简支基本系 + 端弯矩线性修正项表示弯矩场，由固定端 4 个边界条件（两端 θ=0、y=0）解出端弯矩（力法）<br>
       · 弯矩 M(x)：自左端逐段解析累加（V(x)=dM/dx），集中力处剪力突变、集中力偶处弯矩突变<br>
-      · 挠度：由 y″ = M/(EI) 二次数值积分（2000+ 分割，梯形法收敛于解析解）；简支梁按 y(0)=y(L)=0 定解，悬臂梁按固端 y(0)=θ(0)=0 定解<br>
+      · 挠度：由 y″ = M/(EI) 二次数值积分（4000 分割，梯形法收敛于解析解）；简支/外伸梁按支座处 y=0 定解，悬臂/固支梁按固端 y(0)=θ(0)=0 定解<br>
       · 弯曲应力 σ = M<sub>max</sub>/Z；多载荷叠加结果与逐项叠加法一致（线弹性小变形）<br>
-      <b>符号约定：</b>集中力 P 向下为正（可输入负值表示向上）；均布载荷 q 向下为正；集中力偶 M 逆时针为正。<br>
+      <b>符号约定：</b>集中力 P 向下为正（可输入负值表示向上）；均布载荷 q 向下为正；集中力偶 M 逆时针为正；支反力向上为正（负值表示支座压住梁，外伸梁常见）。<br>
       <b>公式依据：</b>《机械设计手册》材料力学篇（梁的弯曲内力与变形）；挠度积分法与叠加法公式（PL³/48EI 等）结果一致，可覆盖手册全部单一载荷工况。
     </div>
   </div>
@@ -203,7 +210,12 @@
   addLoad({ type: "P", v: 3000, a: 750 });
   addLoad({ type: "q", v: 5, a: 0, b: 1500 });
 
-  // ---------- 截面切换 ----------
+  // ---------- 支承 / 截面切换 ----------
+  $("support").onchange = () => {
+    const oh = $("support").value === "oh";
+    $("s1Wrap").style.display = $("s2Wrap").style.display = oh ? "" : "none";
+  };
+
   $("sec").onchange = () => {
     const s = $("sec").value;
     $("dWrap").style.display = s === "circle" ? "" : "none";
@@ -213,6 +225,18 @@
   };
 
   // ---------- 主计算 ----------
+  // 数值积分：κ=M/EI → θ=∫κ，y=∫θ（梯形法，边界 θ(0)=y(0)=0）
+  function integrate(M, E, I, N, dx) {
+    const th = new Array(N + 1), y = new Array(N + 1);
+    th[0] = 0; y[0] = 0;
+    for (let i = 1; i <= N; i++) {
+      const k1 = M[i - 1] / (E * I), k2 = M[i] / (E * I);
+      th[i] = th[i - 1] + (k1 + k2) / 2 * dx;
+      y[i] = y[i - 1] + (th[i - 1] + th[i]) / 2 * dx;
+    }
+    return { th, y };
+  }
+
   function calc() {
     const L = +$("L").value, E = +$("E").value * 1000; // GPa → MPa(N/mm²)
     if (!(L > 0)) { alert("请输入有效的梁长 L"); return; }
@@ -247,56 +271,82 @@
       I = +$("I").value; Z = I / +$("c").value; secDesc = "自定义";
     }
 
-    const support = $("support").value;
-    const isSS = support === "ss";
+    const st = $("support").value; // ss | oh | cb | ff
+    const isCB = st === "cb", isFF = st === "ff";
+    let s1 = 0, s2 = L;
+    if (st === "oh") {
+      s1 = Math.min(Math.max(+$("s1v").value || 0, 0), L - 1);
+      s2 = Math.min(Math.max(+$("s2v").value || L, s1 + 1), L);
+    }
 
     // 竖向载荷合力与对左端之矩（顺时针为正）
     let Fdown = 0, MaboutA = 0;
     Ps.forEach(o => { Fdown += o.P; MaboutA += o.P * o.a; });
     Qs.forEach(o => { const len = o.b - o.a; Fdown += o.q * len; MaboutA += o.q * len * (o.a + len / 2); });
 
-    let RA, RB, wallM = 0;
-    // 逆时针力偶合计（对左端取矩时与力矩反号）
+    // 逆时针力偶合计（取矩时与力矩反号）
     let MccwSum = 0;
     Ms.forEach(o => MccwSum += o.M);
-    if (isSS) {
-      RB = (MaboutA - MccwSum) / L; // 右支反力（向上为正），对左端取矩
-      RA = Fdown - RB;              // 左支反力
-    } else {
+
+    // 支反力：双支座（简支/外伸/固支基本系）对 s1 取矩；悬臂梁直接平衡
+    let RA, RB, wallM = 0, m0 = 0, m1 = 0;
+    if (isCB) {
       RA = Fdown;
-      // 固端反力偶（逆时针为正）：平衡全部外力对左端之矩
-      wallM = MaboutA - MccwSum;
+      wallM = MaboutA - MccwSum; // 固端反力偶（逆时针为正）
+    } else {
+      RB = (MaboutA - Fdown * s1 - MccwSum) / (s2 - s1); // 右支反力（向上为正，负值=支座压梁）
+      RA = Fdown - RB;
     }
 
-    // 弯矩采样（自左端解析累加）
-    // 约定：M 以正弯矩（下凸受拉）为正。M(x) = RA·x − ΣP(x−a) − Σq积分 − Σ力偶突变量(逆时针力偶使 M 突降)
-    // 悬臂梁：RA 为固端竖向反力，固端反力偶 wallM 在 x=0 处使弯矩突降（M(0⁺) = −wallM）
-    const N = 4000, dx = L / N;
-    const Mx = new Array(N + 1), xArr = new Array(N + 1);
-    for (let i = 0; i <= N; i++) {
-      const x = i * dx;
-      let m = RA * x;
-      if (!isSS) m -= wallM; // 固端反力偶作用（x ≥ 0 恒成立）
+    // 载荷对弯矩/剪力的贡献（自左端累加；M 以正弯矩/下侧受拉为正）
+    function loadM(x) {
+      let m = 0;
       Ps.forEach(o => { if (x >= o.a) m -= o.P * (x - o.a); });
       Qs.forEach(o => {
         if (x <= o.a) return;
         if (x < o.b) m -= o.q * (x - o.a) ** 2 / 2;
         else { const len = o.b - o.a; m -= o.q * len * (x - (o.a + o.b) / 2); }
       });
-      Ms.forEach(o => { if (x >= o.a) m -= o.M; });
-      Mx[i] = m; xArr[i] = x;
+      Ms.forEach(o => { if (x >= o.a) m -= o.M; }); // 逆时针力偶使弯矩突降
+      return m;
     }
-
-    // 剪力采样
-    let Vmax = 0;
-    for (let i = 0; i <= N; i++) {
-      const x = xArr[i];
-      let v = RA;
+    function loadV(x) {
+      let v = 0;
       Ps.forEach(o => { if (x > o.a) v -= o.P; });
       Qs.forEach(o => {
         if (x > o.b) v -= o.q * (o.b - o.a);
         else if (x > o.a) v -= o.q * (x - o.a);
       });
+      return v;
+    }
+
+    // 弯矩采样
+    const N = 4000, dx = L / N;
+    const Mx = new Array(N + 1), xArr = new Array(N + 1);
+    for (let i = 0; i <= N; i++) xArr[i] = i * dx;
+    if (isFF) {
+      // 两端固支（一次超静定）：M = 简支基本系 + 端弯矩线性项，由 θ(L)=0、y(L)=0 定端弯矩
+      const Mss = new Array(N + 1);
+      for (let i = 0; i <= N; i++) Mss[i] = RA * xArr[i] + RB * Math.max(0, xArr[i] - s2) + loadM(xArr[i]);
+      const r0 = integrate(Mss, E, I, N, dx);
+      m0 = -6 * E * I * r0.y[N] / (L * L) + 2 * E * I * r0.th[N] / L;
+      m1 = 6 * E * I * r0.y[N] / (L * L) - 4 * E * I * r0.th[N] / L;
+      for (let i = 0; i <= N; i++) Mx[i] = Mss[i] + m0 * (1 - xArr[i] / L) + m1 * xArr[i] / L;
+    } else if (isCB) {
+      for (let i = 0; i <= N; i++) Mx[i] = RA * xArr[i] - wallM + loadM(xArr[i]);
+    } else {
+      for (let i = 0; i <= N; i++) Mx[i] = RA * Math.max(0, xArr[i] - s1) + RB * Math.max(0, xArr[i] - s2) + loadM(xArr[i]);
+    }
+
+    // 剪力采样
+    let Vmax = 0;
+    const dv = (m1 - m0) / L; // 固支梁端弯矩引起的均布剪力增量
+    for (let i = 0; i <= N; i++) {
+      const x = xArr[i];
+      let v;
+      if (isCB) v = RA + loadV(x);
+      else if (isFF) v = RA + loadV(x) + dv;
+      else v = (x > s1 ? RA : 0) + (x > s2 ? RB : 0) + loadV(x);
       Vmax = Math.max(Vmax, Math.abs(v));
     }
 
@@ -304,18 +354,17 @@
     let Mmax = 0, xMmax = 0;
     for (let i = 0; i <= N; i++) if (Math.abs(Mx[i]) > Math.abs(Mmax)) { Mmax = Mx[i]; xMmax = xArr[i]; }
 
-    // 挠度：θ=y'=∫M/EI，y=∫θ；悬臂梁固定端 θ(0)=y(0)=0 直接积分；简支梁按 y(L)=0 修正线性项
-    const kapa = new Array(N + 1);
-    for (let i = 0; i <= N; i++) kapa[i] = Mx[i] / (E * I);
-    const th = new Array(N + 1).fill(0), yRaw = new Array(N + 1).fill(0);
-    for (let i = 1; i <= N; i++) {
-      th[i] = th[i - 1] + (kapa[i - 1] + kapa[i]) / 2 * dx;
-      yRaw[i] = yRaw[i - 1] + (th[i - 1] + th[i]) / 2 * dx;
-    }
-    let y = yRaw;
-    if (isSS) {
+    // 挠度：θ=y'=∫M/EI，y=∫θ（4000 分割梯形法，收敛于解析解）
+    const r = integrate(Mx, E, I, N, dx);
+    let y;
+    if (isCB || isFF) {
+      y = r.y; // 固支端 y(0)=θ(0)=0 已由构造满足（ff 的端弯矩按全部 4 个边界条件解出）
+    } else {
+      // 双支座（简支/外伸）：支座处挠度为零，按两支座连线修正
+      const i1 = Math.round(s1 / dx), i2 = Math.round(s2 / dx);
+      const k = (r.y[i2] - r.y[i1]) / (s2 - s1);
       y = new Array(N + 1);
-      for (let i = 0; i <= N; i++) y[i] = yRaw[i] - yRaw[N] * xArr[i] / L;
+      for (let i = 0; i <= N; i++) y[i] = r.y[i] - r.y[i1] - k * (xArr[i] - s1);
     }
     let fmax = 0, xFmax = 0;
     for (let i = 0; i <= N; i++) if (Math.abs(y[i]) > Math.abs(fmax)) { fmax = y[i]; xFmax = xArr[i]; }
@@ -330,10 +379,12 @@
     $("resultPanel").style.display = "";
     $("rI").textContent = fmt(I) + " mm⁴";
     $("rZ").textContent = fmt(Z) + " mm³";
-    if (isSS) {
-      $("rowR").innerHTML = `<th>支反力（向上为正）</th><td class="v">左支座 RA = ${fmt(RA)} N ｜ 右支座 RB = ${fmt(RB)} N</td>`;
-    } else {
+    if (isCB) {
       $("rowR").innerHTML = `<th>固端反力</th><td class="v">反力 F = ${fmt(RA)} N（向上） ｜ 反力偶 = ${fmt(wallM / 1000)} N·m（逆时针）</td>`;
+    } else if (isFF) {
+      $("rowR").innerHTML = `<th>支反力与固端弯矩</th><td class="v">RA = ${fmt(RA)} N ｜ RB = ${fmt(RB)} N ｜ 端弯矩 m0 = ${fmt(m0 / 1000)} N·m，m1 = ${fmt(m1 / 1000)} N·m（正=下侧受拉）</td>`;
+    } else {
+      $("rowR").innerHTML = `<th>支反力（向上为正，负值=支座压住梁）</th><td class="v">左支座 RA = ${fmt(RA)} N（x=${fmt(s1)}） ｜ 右支座 RB = ${fmt(RB)} N（x=${fmt(s2)}）</td>`;
     }
     $("rV").textContent = fmt(Vmax) + " N";
     $("rM").textContent = fmt(Math.abs(Mmax) / 1000) + " N·m（x = " + fmt(xMmax) + " mm）";
@@ -346,7 +397,7 @@
       ? `<span class="ok">✔ 通过</span>（${fmt(Math.abs(fmax))} ≤ ${fmt(fAllow)} mm）`
       : `<span class="bad">✘ 不通过</span>（${fmt(Math.abs(fmax))} &gt; ${fmt(fAllow)} mm，请增大惯性矩或缩短跨度）`;
 
-    $("diagBox").innerHTML = draw(isSS, L, Ps, Qs, Ms, xArr, Mx, y);
+    $("diagBox").innerHTML = draw(st, s1, s2, L, Ps, Qs, Ms, xArr, Mx, y);
   }
 
   function fmt(x) {
@@ -357,7 +408,7 @@
   }
 
   // ---------- 示意图：受载图 + 弯矩图 + 挠度曲线 ----------
-  function draw(isSS, L, Ps, Qs, Ms, xArr, Mx, y) {
+  function draw(st, s1, s2, L, Ps, Qs, Ms, xArr, Mx, y) {
     const W = 760, x0 = 55, x1 = W - 55, yBeam = 60;
     const px = x => x0 + (x / L) * (x1 - x0);
     const n = Math.min(Mx.length, 201);
@@ -411,15 +462,23 @@
     });
 
     // 支座
-    if (isSS) {
-      [x0, x1].forEach((x, i) => {
+    if (st === "ss" || st === "oh") {
+      [px(s1), px(s2)].forEach(x => {
         s += `<path d="M ${x} ${yBeam} l -9 14 h 18 z" fill="none" stroke="#8a8177" stroke-width="2"/>
               <line x1="${x - 13}" y1="${yBeam + 15}" x2="${x + 13}" y2="${yBeam + 15}" stroke="#8a8177" stroke-width="2"/>`;
       });
-    } else {
+    } else if (st === "cb") {
       s += `<rect x="${x0 - 9}" y="${yBeam - 20}" width="10" height="60" fill="#c9beb2"/>
             <line x1="${x0 + 1}" y1="${yBeam - 20}" x2="${x0 + 15}" y2="${yBeam - 20}" stroke="#c9beb2" stroke-width="3"/>
             <line x1="${x0 + 1}" y1="${yBeam + 40}" x2="${x0 + 15}" y2="${yBeam + 40}" stroke="#c9beb2" stroke-width="3"/>`;
+    } else {
+      // 两端固支
+      s += `<rect x="${x0 - 9}" y="${yBeam - 20}" width="10" height="60" fill="#c9beb2"/>
+            <line x1="${x0 + 1}" y1="${yBeam - 20}" x2="${x0 + 15}" y2="${yBeam - 20}" stroke="#c9beb2" stroke-width="3"/>
+            <line x1="${x0 + 1}" y1="${yBeam + 40}" x2="${x0 + 15}" y2="${yBeam + 40}" stroke="#c9beb2" stroke-width="3"/>
+            <rect x="${x1 - 1}" y="${yBeam - 20}" width="10" height="60" fill="#c9beb2"/>
+            <line x1="${x1 - 15}" y1="${yBeam - 20}" x2="${x1 - 1}" y2="${yBeam - 20}" stroke="#c9beb2" stroke-width="3"/>
+            <line x1="${x1 - 15}" y1="${yBeam + 40}" x2="${x1 - 1}" y2="${yBeam + 40}" stroke="#c9beb2" stroke-width="3"/>`;
     }
     s += `<text x="${(x0 + x1) / 2}" y="${yBeam + 62}" fill="#8a8177" font-size="11.5" text-anchor="middle">L = ${fmt(L)} mm（载荷向下为正，力偶逆时针为正）</text>`;
 
