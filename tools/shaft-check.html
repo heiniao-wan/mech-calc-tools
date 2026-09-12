@@ -267,16 +267,16 @@
 
   // 轴截面示意图（含键槽）
   function draw(d, di, kf) {
-    const S = 85, cx = 130, cy = 70;
+    const S = 58, cx = 130, cy = 62; // 圆及标注全部限制在 260×150 画布内
     let s = `<svg class="diag" viewBox="0 0 260 150" xmlns="http://www.w3.org/2000/svg">`;
     s += `<circle cx="${cx}" cy="${cy}" r="${S}" fill="#ffe3d6" stroke="#e62e2e" stroke-width="2.5"/>`;
     if (di > 0) s += `<circle cx="${cx}" cy="${cy}" r="${S * di / d}" fill="#faf7f4" stroke="#e62e2e" stroke-width="1.5"/>`;
     if (kf < 1) {
-      const kw = S * 0.24, kh = S * 0.22; // 键槽（示意）
-      s += `<rect x="${cx - kw / 2}" y="${cy - S - kh + 4}" width="${kw}" height="${kh}" fill="#faf7f4" stroke="#e62e2e" stroke-width="1.5" rx="3"/>`;
+      const kw = S * 0.26, kh = S * 0.20; // 键槽开在圆内顶部（示意）
+      s += `<rect x="${cx - kw / 2}" y="${cy - S}" width="${kw}" height="${kh}" fill="#faf7f4" stroke="#e62e2e" stroke-width="1.5" rx="3"/>`;
     }
-    s += `<line x1="${cx - S - 12}" y1="${cy}" x2="${cx + S + 12}" y2="${cy}" stroke="#b9afa4" stroke-width="1" stroke-dasharray="5,4"/>
-          <text x="${cx + S + 14}" y="${cy + 4}" fill="#a89e92" font-size="10">z</text>
+    s += `<line x1="${cx - S - 10}" y1="${cy}" x2="${cx + S + 10}" y2="${cy}" stroke="#b9afa4" stroke-width="1" stroke-dasharray="5,4"/>
+          <text x="${cx + S + 12}" y="${cy + 4}" fill="#a89e92" font-size="10">z</text>
           <text x="${cx}" y="${cy + S + 18}" fill="#8a8177" font-size="12" text-anchor="middle">d = ${d} mm${di > 0 ? "，di = " + di + " mm" : ""}${kf < 1 ? "（含键槽）" : ""}</text></svg>`;
     return s;
   }
