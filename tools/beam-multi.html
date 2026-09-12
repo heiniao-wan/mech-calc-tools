@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>梁多载荷叠加校核 - 机械非标自动化设计计算工具集</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #faf7f4; color: #2d2a26; padding-bottom: 50px; }
+  header {
+    background: linear-gradient(135deg, #ff6b35 0%, #f7433b 50%, #e62e2e 100%);
+    color: #fff; padding: 26px 20px; text-align: center;
+  }
+  header h1 { font-size: 22px; }
+  header .back { position: absolute; left: 16px; top: 26px; color: #fff; text-decoration: none; font-size: 14px; opacity: .9; }
+  header p { font-size: 13px; opacity: .9; margin-top: 6px; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 24px 18px; }
+  .panel { background: #fff; border: 1px solid #eee5dc; border-radius: 14px; padding: 22px; margin-bottom: 18px; }
+  .panel h2 { font-size: 16px; color: #b3352b; margin-bottom: 14px; padding-left: 9px; border-left: 4px solid #f7433b; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  label { display: block; font-size: 13px; color: #6b645a; margin-bottom: 4px; }
+  input, select {
+    width: 100%; padding: 9px 11px; border: 1px solid #e5ddd5; border-radius: 9px;
+    font-size: 14px; outline: none; background: #fff; color: #2d2a26;
+  }
+  input:focus, select:focus { border-color: #f7433b; }
+  .row2 { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+  .row2 > div { flex: 1; min-width: 180px; }
+  .btn {
+    display: inline-block; margin-top: 18px; padding: 11px 34px; border: none; border-radius: 10px;
+    background: linear-gradient(135deg, #ff6b35, #e62e2e); color: #fff; font-size: 15px; cursor: pointer;
+  }
+  .btn:hover { opacity: .92; }
+  .btn-lite {
+    display: inline-block; margin-top: 14px; padding: 7px 18px; border: 1px dashed #f7a48b; border-radius: 9px;
+    background: #fff5ef; color: #d24a35; font-size: 13.5px; cursor: pointer;
+  }
+  .btn-lite:hover { background: #ffe9df; }
+  .load-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; padding: 12px 12px 0; margin-top: 10px; border-top: 1px dashed #f0e2d6; }
+  .load-row > div { flex: 1; min-width: 130px; }
+  .load-row .del { flex: 0 0 auto; padding: 8px 14px; }
+  .load-no { font-size: 12px; color: #c07f66; white-space: nowrap; padding-bottom: 12px; font-weight: bold; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { border: 1px solid #f0e7de; padding: 9px 12px; text-align: left; }
+  th { background: #fff3ec; color: #8c3220; font-weight: 600; white-space: nowrap; }
+  td { color: #2d2a26; }
+  td.v { font-weight: bold; color: #d24a35; white-space: nowrap; }
+  .ok { color: #1c8a43; font-weight: bold; }
+  .bad { color: #d2222a; font-weight: bold; }
+  .note { font-size: 12.5px; color: #a89e92; line-height: 1.8; margin-top: 12px; }
+  svg.diag { width: 100%; display: block; margin: 10px auto 0; }
+  .del { border: none; background: #fff0ec; color: #d24a35; border-radius: 8px; cursor: pointer; font-size: 13px; padding: 9px 12px; }
+  .del:hover { background: #ffe0d6; }
+</style>
+</head>
+<body>
+<header style="position:relative">
+  <a class="back" href="../index.html">← 返回工具集</a>
+  <h1>🏗️ 梁多载荷叠加校核</h1>
+  <p>简支梁 / 悬臂梁 · 集中力 + 均布段 + 集中力偶任意组合 · 支反力、剪力、弯矩、挠度全量校核（静力平衡 +挠度积分，精度等同叠加法）</p>
+</header>
+
+<div class="wrap">
+  <div class="panel">
+    <h2>① 梁与支承</h2>
+    <div class="form-grid">
+      <div>
+        <label>支承形式</label>
+        <select id="support">
+          <option value="ss">简支梁（左固定铰 + 右滚动）</option>
+          <option value="cb">悬臂梁（左端固支）</option>
+        </select>
+      </div>
+      <div>
+        <label>截面形式</label>
+        <select id="sec">
+          <option value="circle">实心圆 d</option>
+          <option value="pipe">圆管 D × t</option>
+          <option value="rect">矩形 b × h</option>
+          <option value="custom">自定义 I、c</option>
+        </select>
+      </div>
+      <div><label>梁长 L（mm）</label><input id="L" type="number" value="1500"></div>
+      <div><label>弹性模量 E（GPa）</label><input id="E" type="number" value="206" step="0.1"></div>
+    </div>
+    <div class="row2">
+      <div id="dWrap"><label>圆截面直径 d（mm）</label><input id="d" type="number" value="40"></div>
+      <div id="pipeD" style="display:none"><label>外径 D（mm）</label><input id="pD" type="number" value="60"></div>
+      <div id="pipeT" style="display:none"><label>壁厚 t（mm）</label><input id="pT" type="number" value="5"></div>
+      <div id="bWrap" style="display:none"><label>截面宽 b（mm）</label><input id="b" type="number" value="20"></div>
+      <div id="hWrap" style="display:none"><label>截面高 h（mm）</label><input id="h" type="number" value="40"></div>
+      <div id="iWrap" style="display:none"><label>惯性矩 I（mm⁴）</label><input id="I" type="number" value="1000000"></div>
+      <div id="cWrap" style="display:none"><label>边缘距中性轴 c（mm）</label><input id="c" type="number" value="20"></div>
+    </div>
+
+    <h2 style="margin-top:22px">② 载荷列表（可任意增删组合）</h2>
+    <div id="loadList"></div>
+    <button class="btn-lite" onclick="addLoad()">＋ 添加载荷</button>
+
+    <h2 style="margin-top:22px">③ 校核条件</h2>
+    <div class="row2">
+      <div><label>材料许用应力 [σ]（MPa）</label><input id="sigmaA" type="number" value="140"></div>
+      <div><label>许用挠度（跨度的 1/n）</label>
+        <select id="fLimit">
+          <option value="250">L/250（一般结构）</option>
+          <option value="500" selected>L/500（机械结构/吊装）</option>
+          <option value="1000">L/1000（精密框架）</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn" onclick="calc()">开始计算</button>
+  </div>
+
+  <div class="panel" id="resultPanel" style="display:none">
+    <h2>④ 截面属性</h2>
+    <table>
+      <tr><th>惯性矩 I（mm⁴）</th><td class="v" id="rI">—</td><th>抗弯截面模量 Z（mm³）</th><td class="v" id="rZ">—</td></tr>
+    </table>
+
+    <h2 style="margin-top:20px">⑤ 支反力与内力</h2>
+    <table>
+      <tr id="rowR"><th>支反力</th><td class="v" id="rR">—</td></tr>
+      <tr><th>最大剪力 |V|<sub>max</sub>（N）</th><td class="v" id="rV">—</td>
+          <th>最大弯矩 |M|<sub>max</sub>（N·m）及位置</th><td class="v" id="rM">—</td></tr>
+    </table>
+
+    <h2 style="margin-top:20px">⑥ 变形与校核</h2>
+    <table>
+      <tr><th>最大弯曲应力 σ<sub>max</sub>（MPa）</th><td class="v" id="rS">—</td>
+          <th>最大挠度 f<sub>max</sub>（mm）及位置</th><td class="v" id="rF">—</td></tr>
+      <tr><th>强度校核 σ<sub>max</sub> ≤ [σ]</th><td id="chkS">—</td>
+          <th>刚度校核 f<sub>max</sub> ≤ f<sub>许</sub></th><td id="chkF">—</td></tr>
+    </table>
+
+    <h2 style="margin-top:20px">⑦ 受载与弯矩图</h2>
+    <div id="diagBox"></div>
+
+    <div class="note">
+      <b>计算方法：</b><br>
+      · 支反力：由静力平衡 ΣF=0、ΣM=0 精确求解（集中力、均布段、集中力偶任意组合）<br>
+      · 弯矩 M(x)：自左端逐段解析累加（V(x)=dM/dx），集中力处剪力突变、集中力偶处弯矩突变<br>
+      · 挠度：由 y″ = M/(EI) 二次数值积分（2000+ 分割，梯形法收敛于解析解）；简支梁按 y(0)=y(L)=0 定解，悬臂梁按固端 y(0)=θ(0)=0 定解<br>
+      · 弯曲应力 σ = M<sub>max</sub>/Z；多载荷叠加结果与逐项叠加法一致（线弹性小变形）<br>
+      <b>符号约定：</b>集中力 P 向下为正（可输入负值表示向上）；均布载荷 q 向下为正；集中力偶 M 逆时针为正。<br>
+      <b>公式依据：</b>《机械设计手册》材料力学篇（梁的弯曲内力与变形）；挠度积分法与叠加法公式（PL³/48EI 等）结果一致，可覆盖手册全部单一载荷工况。
+    </div>
+  </div>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+
+  // ---------- 载荷行管理 ----------
+  let loadSeq = 0;
+
+  function addLoad(defaults) {
+    const d = defaults || { type: "P", v: 3000, a: 500, b: "" };
+    const id = loadSeq++;
+    const row = document.createElement("div");
+    row.className = "load-row";
+    row.id = "lr" + id;
+    row.innerHTML = `
+      <span class="load-no">#${id + 1}</span>
+      <div><label>载荷类型</label>
+        <select id="t${id}" onchange="renderRow(${id})">
+          <option value="P">集中力</option>
+          <option value="q">均布载荷段</option>
+          <option value="M">集中力偶</option>
+        </select></div>
+      <div id="f${id}"></div>
+      <button class="del" onclick="delLoad(${id})">删除</button>`;
+    $("loadList").appendChild(row);
+    $("t" + id).value = d.type;
+    renderRow(id, d);
+  }
+
+  function renderRow(id, d) {
+    const type = $("t" + id).value;
+    const box = $("f" + id);
+    const g = (k, dv) => `<div><label>${TYPE_LABEL[type === "q" && k === "v" ? "v" : k] || ""}</label></div>`;
+    if (type === "P") {
+      box.innerHTML = `<div style="display:flex;gap:10px">
+        <div style="flex:2"><label>大小 P（N，向下为正）</label><input id="v${id}" type="number" value="${(d && d.v) ?? 3000}"></div>
+        <div style="flex:1"><label>位置 a（mm）</label><input id="a${id}" type="number" value="${(d && d.a) ?? 500}"></div></div>`;
+    } else if (type === "q") {
+      box.innerHTML = `<div style="display:flex;gap:10px">
+        <div style="flex:1.2"><label>集度 q（N/mm，向下为正）</label><input id="v${id}" type="number" value="${(d && d.v) ?? 5}"></div>
+        <div style="flex:1"><label>起点 a（mm）</label><input id="a${id}" type="number" value="${(d && d.a) ?? 0}"></div>
+        <div style="flex:1"><label>终点 b（mm）</label><input id="b${id}" type="number" value="${(d && d.b) ?? ""}"></div></div>`;
+    } else {
+      box.innerHTML = `<div style="display:flex;gap:10px">
+        <div style="flex:2"><label>力偶矩 M（N·m，逆时针为正）</label><input id="v${id}" type="number" value="${(d && d.v) ?? 100}"></div>
+        <div style="flex:1"><label>作用位置 a（mm）</label><input id="a${id}" type="number" value="${(d && d.a) ?? 500}"></div></div>`;
+    }
+  }
+
+  function delLoad(id) { $("lr" + id).remove(); renumber(); }
+  function renumber() {
+    [...$("loadList").children].forEach((r, i) => r.querySelector(".load-no").textContent = "#" + (i + 1));
+  }
+
+  // 初始载荷：跨中集中力 + 全跨均布（默认演示）
+  addLoad({ type: "P", v: 3000, a: 750 });
+  addLoad({ type: "q", v: 5, a: 0, b: 1500 });
+
+  // ---------- 截面切换 ----------
+  $("sec").onchange = () => {
+    const s = $("sec").value;
+    $("dWrap").style.display = s === "circle" ? "" : "none";
+    $("pipeD").style.display = $("pipeT").style.display = s === "pipe" ? "" : "none";
+    $("bWrap").style.display = $("hWrap").style.display = s === "rect" ? "" : "none";
+    $("iWrap").style.display = $("cWrap").style.display = s === "custom" ? "" : "none";
+  };
+
+  // ---------- 主计算 ----------
+  function calc() {
+    const L = +$("L").value, E = +$("E").value * 1000; // GPa → MPa(N/mm²)
+    if (!(L > 0)) { alert("请输入有效的梁长 L"); return; }
+
+    // 收集载荷
+    const Ps = [], Qs = [], Ms = [];
+    [...$("loadList").children].forEach(r => {
+      const id = r.id.slice(2), type = $("t" + id).value;
+      const v = +$("v" + id).value, a = +$("a" + id).value;
+      if (type === "P") { if (a >= 0 && a <= L && v) Ps.push({ P: v, a }); }
+      else if (type === "q") {
+        let b = $("b" + id).value === "" ? L : +$("b" + id).value;
+        b = Math.min(b, L);
+        if (b > a && v) Qs.push({ q: v, a, b });
+      } else { if (a > 0 && a < L && v) Ms.push({ M: v * 1000, a }); } // N·m → N·mm
+    });
+    if (!Ps.length && !Qs.length && !Ms.length) { alert("请至少添加一个载荷"); return; }
+
+    // 截面属性
+    let I, Z, secDesc;
+    const s = $("sec").value;
+    if (s === "circle") {
+      const d = +$("d").value;
+      I = Math.PI * d ** 4 / 64; Z = Math.PI * d ** 3 / 32; secDesc = `实心圆 d=${d}`;
+    } else if (s === "pipe") {
+      const D = +$("pD").value, t = +$("pT").value, di = D - 2 * t;
+      I = Math.PI * (D ** 4 - di ** 4) / 64; Z = Math.PI * (D ** 4 - di ** 4) / (32 * D); secDesc = `圆管 D${D}×t${t}`;
+    } else if (s === "rect") {
+      const b = +$("b").value, h = +$("h").value;
+      I = b * h ** 3 / 12; Z = b * h ** 2 / 6; secDesc = `矩形 ${b}×${h}`;
+    } else {
+      I = +$("I").value; Z = I / +$("c").value; secDesc = "自定义";
+    }
+
+    const support = $("support").value;
+    const isSS = support === "ss";
+
+    // 竖向载荷合力与对左端之矩（顺时针为正）
+    let Fdown = 0, MaboutA = 0;
+    Ps.forEach(o => { Fdown += o.P; MaboutA += o.P * o.a; });
+    Qs.forEach(o => { const len = o.b - o.a; Fdown += o.q * len; MaboutA += o.q * len * (o.a + len / 2); });
+
+    let RA, RB, wallM = 0;
+    // 逆时针力偶合计（对左端取矩时与力矩反号）
+    let MccwSum = 0;
+    Ms.forEach(o => MccwSum += o.M);
+    if (isSS) {
+      RB = (MaboutA - MccwSum) / L; // 右支反力（向上为正），对左端取矩
+      RA = Fdown - RB;              // 左支反力
+    } else {
+      RA = Fdown;
+      // 固端反力偶（逆时针为正）：平衡全部外力对左端之矩
+      wallM = MaboutA - MccwSum;
+    }
+
+    // 弯矩采样（自左端解析累加）
+    // 约定：M 以正弯矩（下凸受拉）为正。M(x) = RA·x − ΣP(x−a) − Σq积分 − Σ力偶突变量(逆时针力偶使 M 突降)
+    // 悬臂梁：RA 为固端竖向反力，固端反力偶 wallM 在 x=0 处使弯矩突降（M(0⁺) = −wallM）
+    const N = 4000, dx = L / N;
+    const Mx = new Array(N + 1), xArr = new Array(N + 1);
+    for (let i = 0; i <= N; i++) {
+      const x = i * dx;
+      let m = RA * x;
+      if (!isSS) m -= wallM; // 固端反力偶作用（x ≥ 0 恒成立）
+      Ps.forEach(o => { if (x >= o.a) m -= o.P * (x - o.a); });
+      Qs.forEach(o => {
+        if (x <= o.a) return;
+        if (x < o.b) m -= o.q * (x - o.a) ** 2 / 2;
+        else { const len = o.b - o.a; m -= o.q * len * (x - (o.a + o.b) / 2); }
+      });
+      Ms.forEach(o => { if (x >= o.a) m -= o.M; });
+      Mx[i] = m; xArr[i] = x;
+    }
+
+    // 剪力采样
+    let Vmax = 0;
+    for (let i = 0; i <= N; i++) {
+      const x = xArr[i];
+      let v = RA;
+      Ps.forEach(o => { if (x > o.a) v -= o.P; });
+      Qs.forEach(o => {
+        if (x > o.b) v -= o.q * (o.b - o.a);
+        else if (x > o.a) v -= o.q * (x - o.a);
+      });
+      Vmax = Math.max(Vmax, Math.abs(v));
+    }
+
+    // 弯矩极值
+    let Mmax = 0, xMmax = 0;
+    for (let i = 0; i <= N; i++) if (Math.abs(Mx[i]) > Math.abs(Mmax)) { Mmax = Mx[i]; xMmax = xArr[i]; }
+
+    // 挠度：θ=y'=∫M/EI，y=∫θ；悬臂梁固定端 θ(0)=y(0)=0 直接积分；简支梁按 y(L)=0 修正线性项
+    const kapa = new Array(N + 1);
+    for (let i = 0; i <= N; i++) kapa[i] = Mx[i] / (E * I);
+    const th = new Array(N + 1).fill(0), yRaw = new Array(N + 1).fill(0);
+    for (let i = 1; i <= N; i++) {
+      th[i] = th[i - 1] + (kapa[i - 1] + kapa[i]) / 2 * dx;
+      yRaw[i] = yRaw[i - 1] + (th[i - 1] + th[i]) / 2 * dx;
+    }
+    let y = yRaw;
+    if (isSS) {
+      y = new Array(N + 1);
+      for (let i = 0; i <= N; i++) y[i] = yRaw[i] - yRaw[N] * xArr[i] / L;
+    }
+    let fmax = 0, xFmax = 0;
+    for (let i = 0; i <= N; i++) if (Math.abs(y[i]) > Math.abs(fmax)) { fmax = y[i]; xFmax = xArr[i]; }
+
+    // 应力与校核
+    const sigma = Math.abs(Mmax) / Z;
+    const sigmaA = +$("sigmaA").value;
+    const fAllow = L / +$("fLimit").value;
+    const passS = sigma <= sigmaA, passF = Math.abs(fmax) <= fAllow;
+
+    // 输出
+    $("resultPanel").style.display = "";
+    $("rI").textContent = fmt(I) + " mm⁴";
+    $("rZ").textContent = fmt(Z) + " mm³";
+    if (isSS) {
+      $("rowR").innerHTML = `<th>支反力（向上为正）</th><td class="v">左支座 RA = ${fmt(RA)} N ｜ 右支座 RB = ${fmt(RB)} N</td>`;
+    } else {
+      $("rowR").innerHTML = `<th>固端反力</th><td class="v">反力 F = ${fmt(RA)} N（向上） ｜ 反力偶 = ${fmt(wallM / 1000)} N·m（逆时针）</td>`;
+    }
+    $("rV").textContent = fmt(Vmax) + " N";
+    $("rM").textContent = fmt(Math.abs(Mmax) / 1000) + " N·m（x = " + fmt(xMmax) + " mm）";
+    $("rS").textContent = fmt(sigma) + " MPa";
+    $("rF").textContent = fmt(Math.abs(fmax)) + " mm（x = " + fmt(xFmax) + " mm，" + (fmax < 0 ? "向下" : "向上") + "）";
+    $("chkS").innerHTML = passS
+      ? `<span class="ok">✔ 通过</span>（${fmt(sigma)} ≤ ${sigmaA} MPa）`
+      : `<span class="bad">✘ 不通过</span>（${fmt(sigma)} &gt; ${sigmaA} MPa，请增大截面模量）`;
+    $("chkF").innerHTML = passF
+      ? `<span class="ok">✔ 通过</span>（${fmt(Math.abs(fmax))} ≤ ${fmt(fAllow)} mm）`
+      : `<span class="bad">✘ 不通过</span>（${fmt(Math.abs(fmax))} &gt; ${fmt(fAllow)} mm，请增大惯性矩或缩短跨度）`;
+
+    $("diagBox").innerHTML = draw(isSS, L, Ps, Qs, Ms, xArr, Mx, y);
+  }
+
+  function fmt(x) {
+    if (!isFinite(x)) return "—";
+    const a = Math.abs(x);
+    if (a >= 1e6 || (a > 0 && a < 0.01)) return x.toExponential(3);
+    return (+x.toPrecision(5)).toLocaleString("en-US", { maximumFractionDigits: 4 });
+  }
+
+  // ---------- 示意图：受载图 + 弯矩图 + 挠度曲线 ----------
+  function draw(isSS, L, Ps, Qs, Ms, xArr, Mx, y) {
+    const W = 760, x0 = 55, x1 = W - 55, yBeam = 60;
+    const px = x => x0 + (x / L) * (x1 - x0);
+    const n = Math.min(Mx.length, 201);
+    const step = (Mx.length - 1) / (n - 1);
+
+    // 弯矩极值（含符号）
+    let mMin = 0, mMax = 0;
+    for (const m of Mx) { if (m < mMin) mMin = m; if (m > mMax) mMax = m; }
+    const mAbsMax = Math.max(Math.abs(mMin), Math.abs(mMax), 1);
+    const yMBaseline = 150, mH = 62; // 弯矩图基线与半高
+    const ym = m => yMBaseline - (m / mAbsMax) * mH;
+
+    // 挠度
+    let yMin = 0, yMax = 0;
+    for (const v of y) { if (v < yMin) yMin = v; if (v > yMax) yMax = v; }
+    const yAbsMax = Math.max(Math.abs(yMin), Math.abs(yMax), 1e-9);
+    const yDBaseline = 258, yH = 34;
+    const yd = v => yDBaseline - (v / yAbsMax) * yH; // 计算值向上为正，向下位移画在基线下方
+
+    let s = `<svg class="diag" viewBox="0 0 ${W} 320" xmlns="http://www.w3.org/2000/svg">`;
+    s += `<text x="${x0}" y="16" fill="#8c3220" font-size="13" font-weight="bold">受载简图</text>`;
+
+    // 梁
+    s += `<line x1="${x0}" y1="${yBeam}" x2="${x1}" y2="${yBeam}" stroke="#8a8177" stroke-width="5"/>`;
+
+    // 均布段
+    Qs.forEach(o => {
+      const xa = px(o.a), xb = px(o.b);
+      for (let x = xa; x < xb; x += 14) {
+        s += `<line x1="${x}" y1="${yBeam - 22}" x2="${x}" y2="${yBeam - 5}" stroke="#e62e2e" stroke-width="1.6"/>
+              <path d="M ${x - 3.5} ${yBeam - 11} L ${x} ${yBeam - 4} L ${x + 3.5} ${yBeam - 11}" fill="#e62e2e"/>`;
+      }
+      s += `<line x1="${xa}" y1="${yBeam - 22}" x2="${xb}" y2="${yBeam - 22}" stroke="#e62e2e" stroke-width="1.6"/>
+            <text x="${(xa + xb) / 2}" y="${yBeam - 28}" fill="#d24a35" font-size="11.5" text-anchor="middle">q=${fmt(o.q)} N/mm</text>`;
+    });
+
+    // 集中力
+    Ps.forEach(o => {
+      const x = px(o.a), up = o.P < 0;
+      s += `<line x1="${x}" y1="${up ? yBeam + 34 : yBeam - 34}" x2="${x}" y2="${up ? yBeam + 5 : yBeam - 5}" stroke="#e62e2e" stroke-width="2.5"/>
+            <path d="M ${x - 5} ${up ? yBeam + 11 : yBeam - 12} L ${x} ${up ? yBeam + 4 : yBeam - 4} L ${x + 5} ${up ? yBeam + 11 : yBeam - 12}" fill="#e62e2e"/>
+            <text x="${x}" y="${up ? yBeam + 48 : yBeam - 40}" fill="#d24a35" font-size="11.5" text-anchor="middle">P=${fmt(o.P)}N</text>`;
+    });
+
+    // 集中力偶（逆时针圆弧箭头）
+    Ms.forEach(o => {
+      const x = px(o.a), r = 11;
+      s += `<path d="M ${x - r} ${yBeam - 40} A ${r} ${r} 0 1 ${(o.M >= 0 ? 1 : 0)} ${x + r * 0.6} ${yBeam - 40 - r * 0.75}" fill="none" stroke="#b3352b" stroke-width="2"/>
+            <path d="M ${x + r * 0.1} ${yBeam - 40 - r * 1.05} L ${x + r * 0.75} ${yBeam - 40 - r * 0.62} L ${x - r * 0.25} ${yBeam - 40 - r * 0.45}" fill="none" stroke="#b3352b" stroke-width="2"/>
+            <text x="${x}" y="${yBeam - 56}" fill="#b3352b" font-size="11.5" text-anchor="middle">M=${fmt(o.M / 1000)}N·m</text>`;
+    });
+
+    // 支座
+    if (isSS) {
+      [x0, x1].forEach((x, i) => {
+        s += `<path d="M ${x} ${yBeam} l -9 14 h 18 z" fill="none" stroke="#8a8177" stroke-width="2"/>
+              <line x1="${x - 13}" y1="${yBeam + 15}" x2="${x + 13}" y2="${yBeam + 15}" stroke="#8a8177" stroke-width="2"/>`;
+      });
+    } else {
+      s += `<rect x="${x0 - 9}" y="${yBeam - 20}" width="10" height="60" fill="#c9beb2"/>
+            <line x1="${x0 + 1}" y1="${yBeam - 20}" x2="${x0 + 15}" y2="${yBeam - 20}" stroke="#c9beb2" stroke-width="3"/>
+            <line x1="${x0 + 1}" y1="${yBeam + 40}" x2="${x0 + 15}" y2="${yBeam + 40}" stroke="#c9beb2" stroke-width="3"/>`;
+    }
+    s += `<text x="${(x0 + x1) / 2}" y="${yBeam + 62}" fill="#8a8177" font-size="11.5" text-anchor="middle">L = ${fmt(L)} mm（载荷向下为正，力偶逆时针为正）</text>`;
+
+    // 弯矩图
+    s += `<text x="${x0}" y="${yMBaseline - mH - 26}" fill="#8c3220" font-size="13" font-weight="bold">弯矩图 M(x)（N·m，正值向上）</text>`;
+    s += `<line x1="${x0}" y1="${yMBaseline}" x2="${x1}" y2="${yMBaseline}" stroke="#c9beb2" stroke-width="1.2" stroke-dasharray="4,3"/>`;
+    let pts = "";
+    for (let i = 0; i < n; i++) {
+      const idx = Math.round(i * step);
+      pts += `${px(xArr[idx])},${ym(Mx[idx])} `;
+    }
+    s += `<polyline points="${x0},${yMBaseline} ${pts} ${x1},${yMBaseline}" fill="#ffd9c9" fill-opacity=".75" stroke="#e62e2e" stroke-width="2"/>`;
+    s += `<text x="${x1}" y="${ym(mAbsMax) - 4}" fill="#d24a35" font-size="10.5" text-anchor="end">+${fmt(mAbsMax / 1000)}</text>
+          <text x="${x1}" y="${ym(-mAbsMax) + 12}" fill="#d24a35" font-size="10.5" text-anchor="end">-${fmt(mAbsMax / 1000)}</text>`;
+
+    // 挠度曲线
+    s += `<text x="${x0}" y="${yDBaseline - yH - 14}" fill="#8c3220" font-size="13" font-weight="bold">挠度曲线 y(x)（mm，向下位移画在下方）</text>`;
+    s += `<line x1="${x0}" y1="${yDBaseline}" x2="${x1}" y2="${yDBaseline}" stroke="#c9beb2" stroke-width="1.2" stroke-dasharray="4,3"/>`;
+    let pts2 = "";
+    for (let i = 0; i < n; i++) {
+      const idx = Math.round(i * step);
+      pts2 += `${px(xArr[idx])},${yd(y[idx])} `;
+    }
+    s += `<polyline points="${pts2}" fill="none" stroke="#2f6fb3" stroke-width="2.2"/>`;
+    s += `<text x="${x1}" y="${yDBaseline + yH + 14}" fill="#2f6fb3" font-size="10.5" text-anchor="end">fmax = ${fmt(Math.max(Math.abs(yMin), Math.abs(yMax)))} mm</text>`;
+
+    s += "</svg>";
+    return s;
+  }
+</script>
+</body>
+</html>

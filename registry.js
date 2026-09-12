@@ -5,6 +5,15 @@
 // ============================================================
 const TOOLS = [
   {
+    id: "beam-multi",
+    name: "梁多载荷叠加校核",
+    file: "tools/beam-multi.html",
+    category: "力学计算",
+    desc: "简支梁/悬臂梁在集中力+均布段+集中力偶任意组合下的支反力、剪力、弯矩图、挠度曲线与强度/刚度校核",
+    icon: "🏗️",
+    date: "2026-09-12"
+  },
+  {
     id: "section-props",
     name: "截面属性计算",
     file: "tools/section-props.html",
