@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>机械非标自动化设计计算工具集</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+    background: #faf7f4;
+    color: #2d2a26;
+    min-height: 100vh;
+  }
+  header {
+    background: linear-gradient(135deg, #ff6b35 0%, #f7433b 50%, #e62e2e 100%);
+    color: #fff;
+    padding: 48px 24px 40px;
+    text-align: center;
+  }
+  header h1 { font-size: 30px; letter-spacing: 2px; margin-bottom: 10px; }
+  header p { font-size: 15px; opacity: .92; max-width: 720px; margin: 0 auto; line-height: 1.7; }
+  .stats { margin-top: 18px; display: inline-flex; gap: 28px; background: rgba(255,255,255,.16); border-radius: 12px; padding: 10px 26px; font-size: 14px; }
+  .stats b { font-size: 20px; margin-right: 4px; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 32px 20px 60px; }
+  .toolbar { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 26px; align-items: center; }
+  .toolbar input {
+    flex: 1; min-width: 220px; padding: 11px 16px; border: 1px solid #e5ddd5;
+    border-radius: 10px; font-size: 15px; outline: none; background: #fff;
+  }
+  .toolbar input:focus { border-color: #f7433b; }
+  .cat-chip {
+    padding: 7px 16px; border-radius: 20px; border: 1px solid #e5ddd5;
+    background: #fff; cursor: pointer; font-size: 13.5px; color: #5a544c; transition: all .15s;
+  }
+  .cat-chip.active { background: linear-gradient(135deg,#ff6b35,#e62e2e); color: #fff; border-color: transparent; }
+  .section-title { font-size: 17px; font-weight: bold; color: #b3352b; margin: 26px 0 14px; padding-left: 10px; border-left: 4px solid #f7433b; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 16px; }
+  .card {
+    background: #fff; border: 1px solid #eee5dc; border-radius: 14px; padding: 20px;
+    text-decoration: none; color: inherit; display: block; transition: all .18s; position: relative; overflow: hidden;
+  }
+  .card:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(230,46,46,.12); border-color: #f7a08a; }
+  .card .icon {
+    width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #ffe3d6, #ffd0c4); font-size: 20px; margin-bottom: 12px;
+  }
+  .card h3 { font-size: 16.5px; margin-bottom: 7px; color: #2d2a26; }
+  .card p { font-size: 13px; color: #8a8177; line-height: 1.65; }
+  .card .meta { margin-top: 12px; font-size: 12px; color: #b9afa4; display: flex; justify-content: space-between; }
+  .card .tag { background: #fff1ec; color: #d24a35; padding: 2px 9px; border-radius: 10px; font-size: 11.5px; }
+  .empty { text-align: center; color: #b9afa4; padding: 60px 0; font-size: 15px; }
+  footer { text-align: center; padding: 30px 20px 44px; color: #b9afa4; font-size: 13px; line-height: 1.8; }
+  footer a { color: #d24a35; text-decoration: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>⚙️ 机械非标自动化设计计算工具集</h1>
+  <p>覆盖电机选型、滚珠丝杠、梯形丝杠、轴承、气缸、气爪、梁受力等非标设计常用计算，<br>依据《机械设计手册》及 SMC / THK / 米思米 / 嘉立创FA 等选型资料整理，持续每日更新。</p>
+  <div class="stats">
+    <span><b id="statTotal">0</b>个工具</span>
+    <span><b id="statCat">0</b>个分类</span>
+    <span><b id="statLatest">—</b>最近更新</span>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="toolbar">
+    <input id="search" type="text" placeholder="🔍 搜索计算工具，如：丝杠、电机、梁…">
+  </div>
+  <div class="toolbar" id="catBar"></div>
+  <div id="content"></div>
+</div>
+
+<footer>
+  公式来源：《机械设计手册》、SMC选型技术资料、THK/米思米/嘉立创FA选型手册<br>
+  计算结果仅供设计参考，关键场合请以厂商样本及规范校核为准 ·
+  <a href="https://github.com/heiniao-wan/mech-calc-tools" target="_blank">GitHub 开源仓库</a>
+</footer>
+
+<script src="registry.js"></script>
+<script>
+  let activeCat = "全部";
+  const $ = s => document.querySelector(s);
+
+  function getCats() { return ["全部", ...new Set(TOOLS.map(t => t.category))]; }
+
+  function render() {
+    const kw = $("#search").value.trim().toLowerCase();
+    const list = TOOLS.filter(t =>
+      (activeCat === "全部" || t.category === activeCat) &&
+      (!kw || (t.name + t.desc + t.category).toLowerCase().includes(kw)));
+
+    // 按分类分组渲染
+    const groups = {};
+    list.forEach(t => { (groups[t.category] = groups[t.category] || []).push(t); });
+    let html = "";
+    for (const cat of Object.keys(groups)) {
+      html += `<div class="section-title">${cat}</div><div class="grid">` +
+        groups[cat].map(t => `
+          <a class="card" href="${t.file}">
+            <div class="icon">${t.icon || "📐"}</div>
+            <h3>${t.name}</h3>
+            <p>${t.desc}</p>
+            <div class="meta"><span class="tag">${t.status || "可用"}</span><span>${t.date || ""}</span></div>
+          </a>`).join("") + `</div>`;
+    }
+    $("#content").innerHTML = html || `<div class="empty">暂无匹配的工具</div>`;
+  }
+
+  function renderCats() {
+    $("#catBar").innerHTML = getCats().map(c =>
+      `<button class="cat-chip ${c === activeCat ? "active" : ""}" data-cat="${c}">${c}</button>`).join("");
+    document.querySelectorAll(".cat-chip").forEach(b =>
+      b.onclick = () => { activeCat = b.dataset.cat; renderCats(); render(); });
+  }
+
+  // 统计
+  $("#statTotal").textContent = TOOLS.length;
+  $("#statCat").textContent = new Set(TOOLS.map(t => t.category)).size;
+  $("#statLatest").textContent = TOOLS.length ? TOOLS.map(t => t.date).sort().pop() : "—";
+
+  $("#search").oninput = render;
+  renderCats();
+  render();
+</script>
+</body>
+</html>

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>梁受力计算 - 机械非标自动化设计计算工具集</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #faf7f4; color: #2d2a26; padding-bottom: 50px; }
+  header {
+    background: linear-gradient(135deg, #ff6b35 0%, #f7433b 50%, #e62e2e 100%);
+    color: #fff; padding: 26px 20px; text-align: center;
+  }
+  header h1 { font-size: 22px; }
+  header .back { position: absolute; left: 16px; top: 26px; color: #fff; text-decoration: none; font-size: 14px; opacity: .9; }
+  header p { font-size: 13px; opacity: .9; margin-top: 6px; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 24px 18px; }
+  .panel { background: #fff; border: 1px solid #eee5dc; border-radius: 14px; padding: 22px; margin-bottom: 18px; }
+  .panel h2 { font-size: 16px; color: #b3352b; margin-bottom: 14px; padding-left: 9px; border-left: 4px solid #f7433b; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  label { display: block; font-size: 13px; color: #6b645a; margin-bottom: 4px; }
+  input, select {
+    width: 100%; padding: 9px 11px; border: 1px solid #e5ddd5; border-radius: 9px;
+    font-size: 14px; outline: none; background: #fff; color: #2d2a26;
+  }
+  input:focus, select:focus { border-color: #f7433b; }
+  .row2 { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+  .row2 > div { flex: 1; min-width: 180px; }
+  .btn {
+    display: inline-block; margin-top: 18px; padding: 11px 34px; border: none; border-radius: 10px;
+    background: linear-gradient(135deg, #ff6b35, #e62e2e); color: #fff; font-size: 15px; cursor: pointer;
+  }
+  .btn:hover { opacity: .92; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { border: 1px solid #f0e7de; padding: 9px 12px; text-align: left; }
+  th { background: #fff3ec; color: #8c3220; font-weight: 600; white-space: nowrap; }
+  td { color: #2d2a26; }
+  td.v { font-weight: bold; color: #d24a35; white-space: nowrap; }
+  .ok { color: #1c8a43; font-weight: bold; }
+  .bad { color: #d2222a; font-weight: bold; }
+  .note { font-size: 12.5px; color: #a89e92; line-height: 1.8; margin-top: 12px; }
+  svg.diag { width: 100%; max-width: 420px; display: block; margin: 6px auto 0; }
+</style>
+</head>
+<body>
+<header style="position:relative">
+  <a class="back" href="../index.html">← 返回工具集</a>
+  <h1>🏗️ 梁受力计算</h1>
+  <p>简支梁 / 悬臂梁 · 集中载荷 / 均布载荷 · 弯矩、弯曲应力与挠度校核（公式依据《机械设计手册》材料力学篇）</p>
+</header>
+
+<div class="wrap">
+  <div class="panel">
+    <h2>① 选择工况</h2>
+    <div class="form-grid">
+      <div>
+        <label>梁支承与载荷形式</label>
+        <select id="case">
+          <option value="ss-p">简支梁 · 跨中集中载荷 P</option>
+          <option value="ss-q">简支梁 · 全跨均布载荷 q</option>
+          <option value="cb-p">悬臂梁 · 端部集中载荷 P</option>
+          <option value="cb-q">悬臂梁 · 全跨均布载荷 q</option>
+        </select>
+      </div>
+      <div>
+        <label>截面形式</label>
+        <select id="sec">
+          <option value="circle">实心圆 d</option>
+          <option value="rect">矩形 b × h</option>
+          <option value="custom">自定义 I、c</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row2">
+      <div><label>梁长 L（mm）</label><input id="L" type="number" value="1000"></div>
+      <div><label>集中载荷 P（N）</label><input id="P" type="number" value="1000"></div>
+      <div><label>均布载荷 q（N/mm）</label><input id="q" type="number" value="5"></div>
+    </div>
+    <div class="row2">
+      <div><label>弹性模量 E（GPa）</label><input id="E" type="number" value="206" step="0.1"></div>
+      <div id="dWrap"><label>圆截面直径 d（mm）</label><input id="d" type="number" value="30"></div>
+      <div id="bWrap" style="display:none"><label>截面宽 b（mm）</label><input id="b" type="number" value="20"></div>
+      <div id="hWrap" style="display:none"><label>截面高 h（mm）</label><input id="h" type="number" value="40"></div>
+      <div id="iWrap" style="display:none"><label>惯性矩 I（mm⁴）</label><input id="I" type="number" value="10000"></div>
+      <div id="cWrap" style="display:none"><label>边缘距中性轴 c（mm）</label><input id="c" type="number" value="10"></div>
+    </div>
+    <div class="row2">
+      <div><label>材料许用应力 [σ]（MPa）</label><input id="sigmaA" type="number" value="140"></div>
+      <div><label>许用挠度（跨度的 1/n）</label>
+        <select id="fLimit">
+          <option value="250">L/250（一般结构）</option>
+          <option value="500" selected>L/500（机械结构/吊装）</option>
+          <option value="1000">L/1000（精密框架）</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn" onclick="calc()">开始计算</button>
+  </div>
+
+  <div class="panel" id="resultPanel" style="display:none">
+    <h2>② 截面属性</h2>
+    <table>
+      <tr><th>惯性矩 I（mm⁴）</th><td class="v" id="rI">—</td><th>抗弯截面模量 Z（mm³）</th><td class="v" id="rZ">—</td></tr>
+    </table>
+
+    <h2 style="margin-top:20px">③ 计算结果</h2>
+    <table>
+      <tr><th>支座反力</th><td class="v" id="rR">—</td>
+          <th>最大弯矩 M<sub>max</sub>（N·m）</th><td class="v" id="rM">—</td></tr>
+      <tr><th>最大弯曲应力 σ<sub>max</sub>（MPa）</th><td class="v" id="rS">—</td>
+          <th>最大挠度 f<sub>max</sub>（mm）</th><td class="v" id="rF">—</td></tr>
+    </table>
+
+    <h2 style="margin-top:20px">④ 校核结论</h2>
+    <table>
+      <tr><th>强度校核 σ<sub>max</sub> ≤ [σ]</th><td id="chkS">—</td>
+          <th>刚度校核 f<sub>max</sub> ≤ f<sub>许</sub></th><td id="chkF">—</td></tr>
+    </table>
+
+    <div id="diagBox"></div>
+
+    <div class="note">
+      <b>公式依据：</b><br>
+      · 简支梁·跨中集中载荷：R = P/2，M<sub>max</sub> = PL/4，f<sub>max</sub> = PL³/(48EI)<br>
+      · 简支梁·均布载荷：R = qL/2，M<sub>max</sub> = qL²/8，f<sub>max</sub> = 5qL⁴/(384EI)<br>
+      · 悬臂梁·端部集中载荷：M<sub>max</sub> = PL（固定端），f<sub>max</sub> = PL³/(3EI)<br>
+      · 悬臂梁·均布载荷：M<sub>max</sub> = qL²/2（固定端），f<sub>max</sub> = qL⁴/(8EI)<br>
+      · 圆截面：I = πd⁴/64，Z = πd³/32　·　矩形截面：I = bh³/12，Z = bh²/6<br>
+      · 弯曲应力：σ = M/Z　·　许用挠度参考《机械设计手册》及通用机械结构经验值
+    </div>
+  </div>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+
+  // 截面类型切换显隐
+  $("sec").onchange = () => {
+    const s = $("sec").value;
+    $("dWrap").style.display = s === "circle" ? "" : "none";
+    $("bWrap").style.display = $("hWrap").style.display = s === "rect" ? "" : "none";
+    $("iWrap").style.display = $("cWrap").style.display = s === "custom" ? "" : "none";
+  };
+
+  function calc() {
+    const k = $("case").value, L = +$("L").value, P = +$("P").value, q = +$("q").value;
+    const E = +$("E").value * 1000; // GPa → MPa
+    if (!(L > 0)) { alert("请输入有效的梁长 L"); return; }
+
+    // 截面属性
+    let I, Z, secDesc;
+    const s = $("sec").value;
+    if (s === "circle") {
+      const d = +$("d").value;
+      I = Math.PI * d ** 4 / 64; Z = Math.PI * d ** 3 / 32; secDesc = `实心圆 d=${d}`;
+    } else if (s === "rect") {
+      const b = +$("b").value, h = +$("h").value;
+      I = b * h ** 3 / 12; Z = b * h ** 2 / 6; secDesc = `矩形 ${b}×${h}`;
+    } else {
+      I = +$("I").value; Z = I / +$("c").value; secDesc = "自定义";
+    }
+
+    // 工况公式
+    let R, M, f, diag;
+    if (k === "ss-p") { R = P / 2; M = P * L / 4; f = P * L ** 3 / (48 * E * I); diag = "ss-p"; }
+    else if (k === "ss-q") { R = q * L / 2; M = q * L ** 2 / 8; f = 5 * q * L ** 4 / (384 * E * I); diag = "ss-q"; }
+    else if (k === "cb-p") { R = P; M = P * L; f = P * L ** 3 / (3 * E * I); diag = "cb-p"; }
+    else { R = q * L; M = q * L ** 2 / 2; f = q * L ** 4 / (8 * E * I); diag = "cb-q"; }
+
+    const sigma = M / Z;                       // N·mm / mm³ = MPa
+    const fAllow = L / +$("fLimit").value;
+    const sigmaA = +$("sigmaA").value;
+
+    // 输出
+    $("resultPanel").style.display = "";
+    $("rI").textContent = fmt(I) + " mm⁴";
+    $("rZ").textContent = fmt(Z) + " mm³";
+    $("rR").textContent = fmt(R) + " N";
+    $("rM").textContent = fmt(M / 1000) + " N·m";
+    $("rS").textContent = fmt(sigma) + " MPa";
+    $("rF").textContent = fmt(f) + " mm";
+
+    const passS = sigma <= sigmaA;
+    const passF = f <= fAllow;
+    $("chkS").innerHTML = passS
+      ? `<span class="ok">✔ 通过</span>（${fmt(sigma)} ≤ ${sigmaA} MPa）`
+      : `<span class="bad">✘ 不通过</span>（${fmt(sigma)} &gt; ${sigmaA} MPa，请增大截面）`;
+    $("chkF").innerHTML = passF
+      ? `<span class="ok">✔ 通过</span>（${fmt(f)} ≤ ${fmt(fAllow)} mm）`
+      : `<span class="bad">✘ 不通过</span>（${fmt(f)} &gt; ${fmt(fAllow)} mm，请增大惯性矩或缩短跨度）`;
+
+    $("diagBox").innerHTML = draw(diag, L);
+  }
+
+  function fmt(x) {
+    if (!isFinite(x)) return "—";
+    const a = Math.abs(x);
+    if (a >= 1e6 || (a > 0 && a < 0.01)) return x.toExponential(3);
+    return (+x.toPrecision(5)).toLocaleString("en-US", { maximumFractionDigits: 4 });
+  }
+
+  // 简易受力示意图（SVG）
+  function draw(type, L) {
+    const W = 400, x0 = 40, x1 = W - 40, y = 70, cy = y + 28;
+    let s = `<svg class="diag" viewBox="0 0 ${W} 130" xmlns="http://www.w3.org/2000/svg">`;
+    s += `<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="#8a8177" stroke-width="5"/>`;
+    const mid = (x0 + x1) / 2;
+    const arrow = (x, dir) => `<line x1="${x}" y1="${y-38}" x2="${x}" y2="${y-6}" stroke="#e62e2e" stroke-width="2.5"/>
+      <path d="M ${x-5} ${y-12} L ${x} ${y-4} L ${x+5} ${y-12}" fill="#e62e2e"/>`;
+    if (type === "ss-p") {
+      s += arrow(mid) + `<text x="${mid}" y="${y-44}" fill="#d24a35" font-size="12" text-anchor="middle">P</text>`;
+    } else if (type === "ss-q") {
+      for (let x = x0 + 8; x < x1; x += 16) s += arrow(x);
+      s += `<text x="${mid}" y="${y-44}" fill="#d24a35" font-size="12" text-anchor="middle">q 均布</text>`;
+    } else if (type === "cb-p") {
+      s += arrow(x1) + `<text x="${x1}" y="${y-44}" fill="#d24a35" font-size="12" text-anchor="middle">P</text>`;
+    } else {
+      for (let x = x0 + 8; x <= x1; x += 16) s += arrow(x);
+      s += `<text x="${mid}" y="${y-44}" fill="#d24a35" font-size="12" text-anchor="middle">q 均布</text>`;
+    }
+    // 支座
+    if (type.startsWith("ss")) {
+      [x0, x1].forEach(x => s += `<path d="M ${x} ${y} l -9 14 h 18 z" fill="none" stroke="#8a8177" stroke-width="2"/>
+        <line x1="${x-13}" y1="${y+15}" x2="${x+13}" y2="${y+15}" stroke="#8a8177" stroke-width="2"/>`);
+    } else {
+      s += `<rect x="${x0-8}" y="${y-16}" width="10" height="52" fill="#c9beb2"/>
+        <line x1="${x0+2}" y1="${y-16}" x2="${x0+14}" y2="${y-16}" stroke="#c9beb2" stroke-width="3"/>`;
+    }
+    s += `<text x="${mid}" y="${cy+34}" fill="#8a8177" font-size="12" text-anchor="middle">L = ${L} mm</text>
+      <line x1="${x0}" y1="${cy+22}" x2="${x1}" y2="${cy+22}" stroke="#c9beb2" stroke-width="1.5"/>
+      <line x1="${x0}" y1="${cy+17}" x2="${x0}" y2="${cy+27}" stroke="#c9beb2" stroke-width="1.5"/>
+      <line x1="${x1}" y1="${cy+17}" x2="${x1}" y2="${cy+27}" stroke="#c9beb2" stroke-width="1.5"/></svg>`;
+    return s;
+  }
+</script>
+</body>
+</html>
