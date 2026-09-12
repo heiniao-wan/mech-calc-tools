@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>截面属性计算 - 机械非标自动化设计计算工具集</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #faf7f4; color: #2d2a26; padding-bottom: 50px; }
+  header {
+    background: linear-gradient(135deg, #ff6b35 0%, #f7433b 50%, #e62e2e 100%);
+    color: #fff; padding: 26px 20px; text-align: center;
+  }
+  header .back { position: absolute; left: 16px; top: 26px; color: #fff; text-decoration: none; font-size: 14px; opacity: .9; }
+  header h1 { font-size: 22px; }
+  header p { font-size: 13px; opacity: .9; margin-top: 6px; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 24px 18px; }
+  .panel { background: #fff; border: 1px solid #eee5dc; border-radius: 14px; padding: 22px; margin-bottom: 18px; }
+  .panel h2 { font-size: 16px; color: #b3352b; margin-bottom: 14px; padding-left: 9px; border-left: 4px solid #f7433b; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 14px; }
+  label { display: block; font-size: 13px; color: #6b645a; margin-bottom: 4px; }
+  input, select {
+    width: 100%; padding: 9px 11px; border: 1px solid #e5ddd5; border-radius: 9px;
+    font-size: 14px; outline: none; background: #fff; color: #2d2a26;
+  }
+  input:focus, select:focus { border-color: #f7433b; }
+  .btn {
+    display: inline-block; margin-top: 18px; padding: 11px 34px; border: none; border-radius: 10px;
+    background: linear-gradient(135deg, #ff6b35, #e62e2e); color: #fff; font-size: 15px; cursor: pointer;
+  }
+  .btn:hover { opacity: .92; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { border: 1px solid #f0e7de; padding: 9px 12px; text-align: left; }
+  th { background: #fff3ec; color: #8c3220; font-weight: 600; white-space: nowrap; }
+  td { color: #2d2a26; }
+  td.v { font-weight: bold; color: #d24a35; white-space: nowrap; }
+  .note { font-size: 12.5px; color: #a89e92; line-height: 1.8; margin-top: 12px; }
+  svg.diag { width: 100%; max-width: 300px; display: block; margin: 8px auto 0; }
+</style>
+</head>
+<body>
+<header style="position:relative">
+  <a class="back" href="../index.html">← 返回工具集</a>
+  <h1>📐 截面属性计算</h1>
+  <p>实心圆 / 圆管 / 矩形 / 空心矩形（方管）/ 自定义截面 · 惯性矩、截面模量、回转半径、每米质量<br>（公式依据《机械设计手册》材料力学篇）</p>
+</header>
+
+<div class="wrap">
+  <div class="panel">
+    <h2>① 选择截面并输入尺寸</h2>
+    <div class="form-grid">
+      <div>
+        <label>截面类型</label>
+        <select id="sec">
+          <option value="tube">空心矩形（方管/矩形管）</option>
+          <option value="circle">实心圆</option>
+          <option value="pipe">圆管（空心圆）</option>
+          <option value="rect">矩形（实心）</option>
+          <option value="custom">自定义（输入 I / c）</option>
+        </select>
+      </div>
+      <div>
+        <label>材料密度（用于每米质量）</label>
+        <select id="mat">
+          <option value="7850">碳钢 / 合金钢（7850）</option>
+          <option value="7930">不锈钢 304（7930）</option>
+          <option value="2700">铝合金（2700）</option>
+          <option value="0">不计算质量</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-grid" style="margin-top:14px" id="fields">
+      <!-- 方管 -->
+      <div data-f="tube"><label>外宽 B（mm）</label><input id="tB" type="number" value="160"></div>
+      <div data-f="tube"><label>外高 H（mm）</label><input id="tH" type="number" value="160"></div>
+      <div data-f="tube"><label>壁厚 t（mm）</label><input id="tT" type="number" value="6"></div>
+      <!-- 实心圆 -->
+      <div data-f="circle" style="display:none"><label>直径 d（mm）</label><input id="cd" type="number" value="30"></div>
+      <!-- 圆管 -->
+      <div data-f="pipe" style="display:none"><label>外径 D（mm）</label><input id="pD" type="number" value="48"></div>
+      <div data-f="pipe" style="display:none"><label>壁厚 t（mm）</label><input id="pT" type="number" value="4"></div>
+      <!-- 矩形 -->
+      <div data-f="rect" style="display:none"><label>宽 b（mm，平行中性轴）</label><input id="rb" type="number" value="20"></div>
+      <div data-f="rect" style="display:none"><label>高 h（mm，垂直中性轴）</label><input id="rh" type="number" value="40"></div>
+      <!-- 自定义 -->
+      <div data-f="custom" style="display:none"><label>惯性矩 I（mm⁴）</label><input id="xI" type="number" value="10000"></div>
+      <div data-f="custom" style="display:none"><label>边缘距中性轴 c（mm）</label><input id="xc" type="number" value="10"></div>
+      <div data-f="custom" style="display:none"><label>截面积 A（mm²，可选）</label><input id="xA" type="number" value=""></div>
+    </div>
+    <button class="btn" onclick="calc()">开始计算</button>
+  </div>
+
+  <div class="panel" id="resultPanel" style="display:none">
+    <h2>② 计算结果</h2>
+    <table>
+      <tr>
+        <th>截面积 A（mm²）</th><td class="v" id="rA">—</td>
+        <th>轴惯性矩 I（mm⁴）</th><td class="v" id="rI">—</td>
+      </tr>
+      <tr>
+        <th>抗弯截面模量 Z（mm³）</th><td class="v" id="rZ">—</td>
+        <th>回转半径 i（mm）</th><td class="v" id="ri">—</td>
+      </tr>
+      <tr>
+        <th>极惯性矩 Ip（mm⁴）</th><td class="v" id="rIp">—</td>
+        <th>抗扭截面模量 Wt（mm³）</th><td class="v" id="rWt">—</td>
+      </tr>
+      <tr>
+        <th>理论质量（kg/m）</th><td class="v" id="rM">—</td>
+        <th>典型用途提示</th><td id="rTip">—</td>
+      </tr>
+    </table>
+    <div id="diagBox"></div>
+
+    <div class="note">
+      <b>公式依据（《机械设计手册》材料力学篇）：</b><br>
+      · 实心圆：A = πd²/4，I = Ip/2 = πd⁴/64，Z = πd³/32，Wt = πd³/16，i = d/4<br>
+      · 圆管：A = π(D²−d²)/4，I = π(D⁴−d⁴)/64，Z = π(D⁴−d⁴)/(32D)，Wt = π(D⁴−d⁴)/(16D)，i = √(D²+d²)/4<br>
+      · 矩形（绕水平中性轴弯）：A = b·h，I = b·h³/12，Z = b·h²/6，i = h/√12 ≈ 0.289h（圆截面外的抗扭用弹性扭转公式误差大，见提示）<br>
+      · 空心矩形（方管）：A = B·H − b·h，I = (B·H³ − b·h³)/12，Z = (B·H³ − b·h³)/(6H)（b=B−2t，h=H−2t）<br>
+      · 理论质量：m = ρ·A×10⁻⁶（kg/m，A 为 mm²）<br>
+      · 提示：扭转计算 Wt 精确式仅适用于圆/圆环形截面；矩形与方管的抗扭截面模量应按圣维南（Saint-Venant）近似式计算，本工具不输出其 Wt，抗扭校核请查手册专用表。<br>
+      · 型钢（工字钢、槽钢、角钢等）请直接查国标型钢表取 I、Z，或用"自定义"输入厂商样本值（铝型材样本通常直接给出 I 与截面模量）。
+    </div>
+  </div>
+</div>
+
+<script>
+  const $ = id => document.getElementById(id);
+
+  // 切换截面类型显隐
+  $("sec").onchange = () => {
+    const s = $("sec").value;
+    document.querySelectorAll("#fields > div").forEach(d =>
+      d.style.display = d.dataset.f === s ? "" : "none");
+  };
+
+  function calc() {
+    const s = $("sec").value;
+    const rho = +$("mat").value;
+    let A, I, Z, Ip, Wt, diag, tip;
+
+    if (s === "circle") {
+      const d = +$("cd").value;
+      if (!(d > 0)) return alert("请输入有效直径 d");
+      A = Math.PI * d ** 2 / 4;
+      I = Math.PI * d ** 4 / 64;
+      Z = Math.PI * d ** 3 / 32;
+      Ip = 2 * I; Wt = 2 * Z;
+      diag = "circle:" + d; tip = "轴、光轴、销轴常用";
+    } else if (s === "pipe") {
+      const D = +$("pD").value, t = +$("pT").value, d = D - 2 * t;
+      if (!(D > 0 && t > 0 && d > 0)) return alert("请检查外径 D 与壁厚 t（需满足 d = D−2t > 0）");
+      A = Math.PI * (D ** 2 - d ** 2) / 4;
+      I = Math.PI * (D ** 4 - d ** 4) / 64;
+      Z = Math.PI * (D ** 4 - d ** 4) / (32 * D);
+      Ip = 2 * I; Wt = 2 * Z;
+      diag = "pipe:" + D + ":" + d; tip = "传动轴、滚筒轴常用（省材料、抗弯效率高）";
+    } else if (s === "rect") {
+      const b = +$("rb").value, h = +$("rh").value;
+      if (!(b > 0 && h > 0)) return alert("请输入有效的宽 b 与高 h");
+      A = b * h;
+      I = b * h ** 3 / 12;
+      Z = b * h ** 2 / 6;
+      Ip = Wt = null;
+      diag = "rect:" + b + ":" + h; tip = "立板、加强筋常用；h 竖放抗弯更强";
+    } else if (s === "tube") {
+      const B = +$("tB").value, H = +$("tH").value, t = +$("tT").value;
+      const b = B - 2 * t, h = H - 2 * t;
+      if (!(B > 0 && H > 0 && t > 0 && b > 0 && h > 0)) return alert("请检查尺寸（需满足 2t < B、2t < H）");
+      A = B * H - b * h;
+      I = (B * H ** 3 - b * h ** 3) / 12;
+      Z = (B * H ** 3 - b * h ** 3) / (6 * H);
+      Ip = Wt = null;
+      diag = "tube:" + B + ":" + H + ":" + t;
+      tip = "机架立柱、横梁常用（如货架立柱 □160×160×6）";
+    } else {
+      const Iin = +$("xI").value, c = +$("xc").value, Ain = +$("xA").value;
+      if (!(Iin > 0 && c > 0)) return alert("请输入有效的 I 与 c");
+      I = Iin; Z = Iin / c; A = Ain > 0 ? Ain : null; Ip = Wt = null;
+      diag = null; tip = "型钢查表 / 铝型材样本值";
+    }
+
+    const i = A ? Math.sqrt(I / A) : null;
+    const m = (A && rho > 0) ? rho * A * 1e-6 : null;
+
+    $("resultPanel").style.display = "";
+    $("rA").textContent = A ? fmt(A) + " mm²" : "—";
+    $("rI").textContent = fmt(I) + " mm⁴";
+    $("rZ").textContent = fmt(Z) + " mm³";
+    $("ri").textContent = i ? fmt(i) + " mm" : "—";
+    $("rIp").textContent = Ip ? fmt(Ip) + " mm⁴" : "—";
+    $("rWt").textContent = Wt ? fmt(Wt) + " mm³" : "—";
+    $("rM").textContent = m ? fmt(m) + " kg/m" : "—";
+    $("rTip").textContent = tip;
+    $("diagBox").innerHTML = diag ? draw(diag) : "";
+  }
+
+  function fmt(x) {
+    if (x === null || x === undefined || !isFinite(x)) return "—";
+    const a = Math.abs(x);
+    if (a >= 1e6 || (a > 0 && a < 0.01)) return x.toExponential(4);
+    return (+x.toPrecision(6)).toLocaleString("en-US", { maximumFractionDigits: 3 });
+  }
+
+  // 截面示意图（SVG）
+  function draw(spec) {
+    const [type, ...v] = spec.split(":");
+    const W = 260, cx = W / 2, cy = 70, S = 90; // 归一化绘图尺寸
+    let s = `<svg class="diag" viewBox="0 0 ${W} 150" xmlns="http://www.w3.org/2000/svg">`;
+    // 中性轴虚线
+    s += `<line x1="${cx-S-14}" y1="${cy}" x2="${cx+S+14}" y2="${cy}" stroke="#b9afa4" stroke-width="1" stroke-dasharray="5,4"/>
+          <text x="${cx+S+16}" y="${cy+4}" fill="#a89e92" font-size="10">z</text>`;
+    if (type === "circle") {
+      s += `<circle cx="${cx}" cy="${cy}" r="${S}" fill="#ffe3d6" stroke="#e62e2e" stroke-width="2.5"/>
+            <text x="${cx}" y="${cy+S+16}" fill="#8a8177" font-size="12" text-anchor="middle">d = ${v[0]} mm</text>`;
+    } else if (type === "pipe") {
+      s += `<circle cx="${cx}" cy="${cy}" r="${S}" fill="#ffe3d6" stroke="#e62e2e" stroke-width="2.5"/>
+            <circle cx="${cx}" cy="${cy}" r="${S * (+v[1] / +v[0])}" fill="#faf7f4" stroke="#e62e2e" stroke-width="2"/>
+            <text x="${cx}" y="${cy+S+16}" fill="#8a8177" font-size="12" text-anchor="middle">D = ${v[0]} mm，d = ${v[1]} mm</text>`;
+    } else if (type === "rect") {
+      const bw = S * 2 * (+v[0] / (+v[0] + +v[1])), bh = S * 2 * (+v[1] / (+v[0] + +v[1]));
+      s += `<rect x="${cx-bw/2}" y="${cy-bh/2}" width="${bw}" height="${bh}" fill="#ffe3d6" stroke="#e62e2e" stroke-width="2.5"/>
+            <text x="${cx}" y="${cy+bh/2+16}" fill="#8a8177" font-size="12" text-anchor="middle">b = ${v[0]}，h = ${v[1]} mm</text>`;
+    } else if (type === "tube") {
+      const B = +v[0], H = +v[1], t = +v[2];
+      const sc = S / Math.max(B, H) * 2;
+      s += `<rect x="${cx-B*sc/2}" y="${cy-H*sc/2}" width="${B*sc}" height="${H*sc}" fill="#ffe3d6" stroke="#e62e2e" stroke-width="2.5"/>
+            <rect x="${cx-(B-2*t)*sc/2}" y="${cy-(H-2*t)*sc/2}" width="${(B-2*t)*sc}" height="${(H-2*t)*sc}" fill="#faf7f4" stroke="#e62e2e" stroke-width="1.5"/>
+            <text x="${cx}" y="${cy+H*sc/2+16}" fill="#8a8177" font-size="12" text-anchor="middle">B = ${B}，H = ${H}，t = ${t} mm</text>`;
+    }
+    s += "</svg>";
+    return s;
+  }
+</script>
+</body>
+</html>

@@ -5,6 +5,15 @@
 // ============================================================
 const TOOLS = [
   {
+    id: "section-props",
+    name: "截面属性计算",
+    file: "tools/section-props.html",
+    category: "力学计算",
+    desc: "实心圆/圆管/矩形/方管/自定义截面的面积、惯性矩、截面模量、回转半径、抗扭模量与每米质量计算",
+    icon: "📐",
+    date: "2026-09-12"
+  },
+  {
     id: "beam-calc",
     name: "梁受力计算",
     file: "tools/beam-calc.html",
