@@ -16,7 +16,10 @@
 6. **更新记录**：
    - `ROADMAP.md` 中对应项打 ✅ 并标日期；
    - 在 `~/.workbuddy/MEMORY.md` 的"进度"处更新已完成数量与最近日期。
-7. **（可选）提交 Git & 部署**：仓库建好后每日 `git add -A && git commit -m "add: 工具名"`，GitHub Pages 自动发布。
+7. **（可选）提交 Git & 部署**：
+   - 远程仓库：`https://github.com/heiniao-wan/mech-calc-tools`（GitHub Pages 在线地址：https://heiniao-wan.github.io/mech-calc-tools/）
+   - 每日提交：`git add -A && git commit -m "add: 工具名"`，然后 `git push origin main`
+   - 首次关联远程：`git remote add origin https://github.com/heiniao-wan/mech-calc-tools.git && git push -u origin main`
 
 ## 目录结构
 ```
