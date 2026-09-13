@@ -73,7 +73,9 @@
           <option value="pipe">圆管 D × d</option>
           <option value="rect">矩形 b × h</option>
           <option value="tube">空心矩形（方管）B × H × t</option>
-          <option value="custom">自定义 I、c（工字钢/H型钢查表值）</option>
+          <option value="ibeam">工字钢（GB/T 706-2016 选型）</option>
+          <option value="hbeam">H型钢（GB/T 11263-2017 选型）</option>
+          <option value="custom">自定义 I、c</option>
         </select>
       </div>
     </div>
@@ -94,6 +96,8 @@
       <div id="BW" style="display:none"><label>方管外宽 B（mm）</label><input id="B" type="number" value="160"></div>
       <div id="HW" style="display:none"><label>方管外高 H（mm）</label><input id="H" type="number" value="160"></div>
       <div id="tW" style="display:none"><label>壁厚 t（mm）</label><input id="t" type="number" value="6"></div>
+      <div id="ibWrap" style="display:none"><label>工字钢型号（按强轴弯曲）</label><select id="ibModel"></select></div>
+      <div id="hbWrap" style="display:none"><label>H型钢规格（按强轴弯曲）</label><select id="hbModel"></select></div>
       <div id="iWrap" style="display:none"><label>惯性矩 I（mm⁴）</label><input id="I" type="number" value="10000"></div>
       <div id="cWrap" style="display:none"><label>边缘距中性轴 c（mm）</label><input id="c" type="number" value="10"></div>
     </div>
@@ -145,14 +149,22 @@
       · 圆截面：I = πd⁴/64，Z = πd³/32　·　圆管：I = π(D⁴−d⁴)/64，Z = 2I/D<br>
       · 矩形截面：I = bh³/12，Z = bh²/6　·　空心矩形（方管）：I = (BH³−(B−2t)(H−2t)³)/12，Z = 2I/H<br>
       · 弯曲应力：σ = M/Z　·　许用挠度参考《机械设计手册》及通用机械结构经验值<br>
-      · 工字钢 / H 型钢：请用<a href="section-props.html">「截面属性计算」工具</a>查国标 I、c 值，再用「自定义」输入<br>
+      · 工字钢 / H 型钢：内置国标数据（GB/T 706-2016 / GB/T 11263-2017，与「截面属性计算」工具共用数据文件），按强轴 Ix 弯曲取值；如需弱轴校核请用<a href="section-props.html">「截面属性计算」工具</a><br>
       · 需要集中力 + 均布 + 力偶任意组合时，请用<a href="beam-multi.html">「梁多载荷叠加校核」工具</a>
     </div>
   </div>
 </div>
 
+<script src="gb-sections.js"></script>
 <script>
   const $ = id => document.getElementById(id);
+
+  // 填充国标型钢型号下拉框
+  $("ibModel").innerHTML = Object.keys(window.GB_IBEAM).map(k =>
+    `<option value="${k}">${k} 号工字钢（h${window.GB_IBEAM[k][0]}×b${window.GB_IBEAM[k][1]}）</option>`).join("");
+  $("hbModel").innerHTML = ["HW", "HM", "HN"].map(p =>
+    `<optgroup label="${p === "HW" ? "HW 宽翼缘（柱）" : p === "HM" ? "HM 中翼缘（梁柱两用）" : "HN 窄翼缘（梁）"}">` +
+    Object.keys(window.GB_HBEAM).filter(k => k.startsWith(p)).map(k => `<option value="${k}">${k}</option>`).join("") + "</optgroup>").join("");
 
   // 截面类型切换显隐
   $("sec").onchange = () => {
@@ -161,6 +173,8 @@
     $("DWrap").style.display = $("diWrap").style.display = s === "pipe" ? "" : "none";
     $("bWrap").style.display = $("hWrap").style.display = s === "rect" ? "" : "none";
     $("BW").style.display = $("HW").style.display = $("tW").style.display = s === "tube" ? "" : "none";
+    $("ibWrap").style.display = s === "ibeam" ? "" : "none";
+    $("hbWrap").style.display = s === "hbeam" ? "" : "none";
     $("iWrap").style.display = $("cWrap").style.display = s === "custom" ? "" : "none";
   };
   // 工况切换：外伸梁显示悬臂长 a
@@ -193,6 +207,12 @@
       const B = +$("B").value, H = +$("H").value, t = +$("t").value;
       if (!(B > 0) || !(H > 0) || !(t > 0) || 2 * t >= Math.min(B, H)) { alert("方管请输入 0 < 2t < min(B, H)"); return; }
       I = (B * H ** 3 - (B - 2 * t) * (H - 2 * t) ** 3) / 12; Z = I / (H / 2); secDesc = `方管 ${B}×${H}×${t}`;
+    } else if (s === "ibeam") {
+      const m = window.GB_IBEAM[$("ibModel").value];
+      I = m[6] * 1e4; Z = m[7] * 1e3; secDesc = `工字钢 ${$("ibModel").value}（Ix 强轴）`;
+    } else if (s === "hbeam") {
+      const m = window.GB_HBEAM[$("hbModel").value];
+      I = m[6] * 1e4; Z = m[7] * 1e3; secDesc = `H型钢 ${$("hbModel").value}（Ix 强轴）`;
     } else {
       I = +$("I").value; Z = I / +$("c").value; secDesc = "自定义";
     }
