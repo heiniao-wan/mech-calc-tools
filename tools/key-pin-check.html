@@ -256,9 +256,9 @@
     // 键标注（圆右侧，两行短文本避免超宽）
     s += `<text x="${cx + R + 14}" y="${ky + 12}" fill="#8a8177" font-size="11">键 b×h = ${k.b}×${k.h}</text>`;
     s += `<text x="${cx + R + 14}" y="${ky + 30}" fill="#8a8177" font-size="11">L = ${L}（${type}型）</text>`;
-    // 转矩箭头（圆内）
+    // 转矩箭头（圆内，箭头指向弧线行进方向=右）
     s += `<path d="M ${cx - 8} ${cy - 26} A 27 27 0 1 0 ${cx - 8} ${cy + 26}" fill="none" stroke="#e62e2e" stroke-width="2.5"/>`;
-    s += `<path d="M ${cx - 15} ${cy + 20} L ${cx - 8} ${cy + 29} L ${cx + 3} ${cy + 22}" fill="none" stroke="#e62e2e" stroke-width="2.5"/>`;
+    s += `<path d="M ${cx - 8} ${cy + 17} L ${cx + 6} ${cy + 26} L ${cx - 8} ${cy + 35}" fill="none" stroke="#e62e2e" stroke-width="2.5"/>`;
     s += `<text x="${cx + 6}" y="${cy + 5}" fill="#e62e2e" font-size="13" font-weight="700">T</text>`;
     // 轴径标注
     s += `<text x="${cx}" y="${cy + R + 18}" fill="#8a8177" font-size="12" text-anchor="middle">轴径 d = ${d} mm</text>`;
