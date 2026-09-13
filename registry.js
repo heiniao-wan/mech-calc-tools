@@ -5,6 +5,15 @@
 // ============================================================
 const TOOLS = [
   {
+    id: "key-pin-check",
+    name: "键/销剪切与挤压校核",
+    file: "tools/key-pin-check.html",
+    category: "力学计算",
+    desc: "普通平键（A/B/C型）静联接挤压与剪切强度校核，按轴径自动推荐 GB/T 1096 键尺寸；圆柱销传扭双剪校核与安全销剪断设计参考",
+    icon: "🔑",
+    date: "2026-09-13"
+  },
+  {
     id: "shaft-check",
     name: "轴扭转与弯扭合成校核",
     file: "tools/shaft-check.html",

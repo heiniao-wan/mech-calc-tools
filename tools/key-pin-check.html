@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>键/销剪切与挤压校核 - 机械计算工具集</title>
+<meta name="description" content="普通平键（A/B/C型）静联接挤压与剪切强度校核，圆柱销传扭剪切与挤压校核，自动按轴径推荐国标键尺寸（GB/T 1095/1096），含许用应力表。">
+<meta name="keywords" content="平键校核,键挤压应力,键剪切应力,销联接计算,GB/T 1096,键选型,机械设计计算">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #faf7f4; color: #3d3730; }
+  header { background: linear-gradient(135deg, #ff7a45 0%, #f7433b 60%, #d92b2b 100%); color: #fff; padding: 30px 20px 26px; position: relative; }
+  header h1 { font-size: 24px; }
+  header .back { position: absolute; left: 16px; top: 18px; display: inline-block; padding: 9px 20px; background: #ffffff; color: #c8342a; text-decoration: none; font-size: 16px; font-weight: 700; border-radius: 999px; box-shadow: 0 2px 8px rgba(120,20,10,.35); transition: transform .15s, box-shadow .15s; }
+  header .back:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(120,20,10,.5); background: #fff5ef; }
+  header p { font-size: 13px; opacity: .9; margin-top: 6px; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 24px 18px; }
+  .panel { background: #fff; border: 1px solid #eee5dc; border-radius: 14px; padding: 22px; margin-bottom: 18px; }
+  .panel h2 { font-size: 16px; color: #b3352b; margin-bottom: 14px; padding-left: 9px; border-left: 4px solid #f7433b; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  label { display: block; font-size: 13px; color: #6b645a; margin-bottom: 4px; }
+  input, select { width: 100%; padding: 8px 10px; border: 1px solid #d8cfc4; border-radius: 8px; font-size: 14px; background: #fffdfb; }
+  input:focus, select:focus { outline: none; border-color: #f7433b; }
+  .btn { background: linear-gradient(135deg, #ff7a45, #e62e2e); color: #fff; border: none; padding: 11px 30px; font-size: 15px; font-weight: 600; border-radius: 9px; cursor: pointer; margin-top: 16px; }
+  .btn:hover { filter: brightness(1.08); }
+  table.results { width: 100%; border-collapse: collapse; margin-top: 14px; }
+  table.results th, table.results td { border: 1px solid #eee5dc; padding: 9px 12px; font-size: 14px; text-align: left; }
+  table.results th { background: #fdf3ee; color: #8a5a4a; width: 190px; }
+  table.results td.v { font-weight: 600; color: #2f2a24; }
+  .ok { color: #1d9e57; font-weight: 700; }
+  .ng { color: #e62e2e; font-weight: 700; }
+  .note { background: #fdf8f2; border: 1px solid #f0e2d0; border-radius: 10px; padding: 14px 16px; font-size: 13px; color: #7a6f60; line-height: 1.9; margin-top: 16px; }
+  .note b { color: #b3352b; }
+  footer { text-align: center; color: #b9afa4; font-size: 12px; padding: 26px 0 34px; line-height: 1.8; }
+  .diag { display: block; margin: 14px auto 0; max-width: 420px; width: 100%; }
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="../index.html">← 返回工具集</a>
+  <h1>🔑 键/销剪切与挤压校核</h1>
+  <p>普通平键静联接（GB/T 1095/1096，自动推荐键尺寸）· 圆柱销传扭校核 · 公式依据《机械设计手册》键与销联接篇</p>
+</header>
+
+<div class="wrap">
+
+  <!-- ============ 平键 ============ -->
+  <div class="panel">
+    <h2>① 普通平键静联接校核</h2>
+    <div class="form-grid">
+      <div><label>传递转矩 T（N·m）</label><input id="kT" type="number" value="200"></div>
+      <div><label>轴径 d（mm）</label><input id="kd" type="number" value="45"></div>
+      <div><label>键型式</label>
+        <select id="kType">
+          <option value="A">A型（双圆头，工作长 l = L−b）</option>
+          <option value="B">B型（方头，工作长 l = L）</option>
+          <option value="C">C型（单圆头，工作长 l = L−b/2）</option>
+        </select>
+      </div>
+      <div><label>键宽 b × 键高 h（GB/T 1096）</label>
+        <select id="kbh">
+          <option value="">← 由轴径自动推荐 →</option>
+        </select>
+      </div>
+      <div><label>键公称长度 L（mm，标准系列）</label>
+        <select id="kL"></select>
+      </div>
+      <div><label>轮毂材料</label>
+        <select id="kHub">
+          <option value="steel">钢（静联接 [σp]=125 MPa）</option>
+          <option value="cast">铸铁（静联接 [σp]=75 MPa）</option>
+          <option value="dyn-steel">钢（动联接/导向键 [σp]=50 MPa）</option>
+          <option value="dyn-cast">铸铁（动联接 [σp]=40 MPa）</option>
+          <option value="custom">自定义 [σp]</option>
+        </select>
+      </div>
+      <div id="kSigWrap" style="display:none"><label>自定义 [σp]（MPa）</label><input id="kSig" type="number" value="120"></div>
+      <div><label>键许用剪切 [τ]（MPa）</label><input id="kTauA" type="number" value="90"></div>
+    </div>
+    <button class="btn" onclick="keyCalc()">开始校核</button>
+    <div id="keyResult" style="display:none">
+      <table class="results">
+        <tr><th>推荐/选定键尺寸</th><td class="v" id="krSize">—</td></tr>
+        <tr><th>工作长度 l</th><td class="v" id="krL">—</td></tr>
+        <tr><th>挤压应力 σp = 2T/(d·k·l)</th><td class="v" id="krSig">—</td></tr>
+        <tr><th>挤压校核（vs [σp]）</th><td class="v" id="krSigC">—</td></tr>
+        <tr><th>剪切应力 τ = 2T/(d·b·l)</th><td class="v" id="krTau">—</td></tr>
+        <tr><th>剪切校核（vs [τ]）</th><td class="v" id="krTauC">—</td></tr>
+        <tr><th>结论</th><td class="v" id="krConc">—</td></tr>
+      </table>
+      <div id="keyDiag"></div>
+    </div>
+    <div class="note">
+      <b>公式依据（《机械设计手册》键联接篇）：</b><br>
+      · 普通平键静联接的主要失效形式是较弱零件（通常是铸铁轮毂）工作面被<b>压溃</b>：σ<sub>p</sub> = 2T/(d·k·l)，k 为键侧与轮毂槽的接触高度，本工具取 k = h − t₂（毂槽深，按 GB/T 1095）<br>
+      · 剪切校核（防止键被剪断）：τ = 2T/(d·b·l)<br>
+      · 工作长度：A 型 l = L−b，B 型 l = L，C 型 l = L−b/2<br>
+      · 许用挤压应力（钢键/钢轴）：静联接钢毂 125~150、铸铁毂 70~80 MPa（本工具取下限保守值）；动联接（导向平键）按磨损限：钢 50~60、铸铁 40 MPa<br>
+      · 键的失效通常先于轴与轮毂，若挤压校核不通过，可增加键长、改双键（按 180° 布置，承载按 1.5 倍计）或改花键
+    </div>
+  </div>
+
+  <!-- ============ 销 ============ -->
+  <div class="panel">
+    <h2>② 圆柱销传扭校核（双剪）</h2>
+    <div class="form-grid">
+      <div><label>传递转矩 T（N·m）</label><input id="pT" type="number" value="50"></div>
+      <div><label>轴径 D（mm）</label><input id="pD" type="number" value="25"></div>
+      <div><label>销直径 d₀（mm）</label><input id="pd0" type="number" value="6"></div>
+      <div><label>销长 L（mm）</label><input id="pL" type="number" value="30"></div>
+      <div><label>销材料许用剪切 [τ]（MPa）</label><input id="pTauA" type="number" value="80"></div>
+      <div><label>许用挤压 [σp]（MPa）</label><input id="pSigA" type="number" value="120"></div>
+    </div>
+    <button class="btn" onclick="pinCalc()">开始校核</button>
+    <div id="pinResult" style="display:none">
+      <table class="results">
+        <tr><th>剪力（每剪切面）F = T/D</th><td class="v" id="prF">—</td></tr>
+        <tr><th>剪切应力 τ = 4T/(π·D·d₀²)</th><td class="v" id="prTau">—</td></tr>
+        <tr><th>剪切校核（vs [τ]）</th><td class="v" id="prTauC">—</td></tr>
+        <tr><th>挤压应力 σp = 2T/(D·d₀·L)</th><td class="v" id="prSig">—</td></tr>
+        <tr><th>挤压校核（vs [σp]）</th><td class="v" id="prSigC">—</td></tr>
+        <tr><th>结论</th><td class="v" id="prConc">—</td></tr>
+      </table>
+    </div>
+    <div class="note">
+      <b>公式依据（《机械设计手册》销联接篇）：</b><br>
+      · 销穿过轴与毂传扭时，在轴毂结合面两侧各形成一个剪切面（力臂 D/2，每面剪力 F = T/D）<br>
+      · 剪切：τ = F/A₀ = 4T/(π·D·d₀²)；挤压：σp = F/(d₀·L/2) = 2T/(D·d₀·L)（L/2 为每侧有效挤压长度）<br>
+      · 45 钢销 [τ]≈80 MPa、合金钢销可取 100~120 MPa；定位销不受力时仅需按结构选取<br>
+      · 过载保护用的<b>安全销</b>：剪断条件 τ ≥ τb（45 钢 τb≈300~350 MPa），直径按剪断设计而非校核<br>
+      · 圆锥销（1:50 锥度）靠楔紧传力，校核方法相同，d₀ 取平均直径
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  公式来源：《机械设计手册》键与销联接篇、GB/T 1095（键槽剖面尺寸）、GB/T 1096（普通平键型式尺寸）<br>
+  计算结果仅供设计参考，重要场合请按实际工况与材料手册复核
+</footer>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const fmt = (n, d = 3) => Number(n).toLocaleString("zh-CN", { maximumFractionDigits: d });
+
+  // ============ GB/T 1095/1096 平键数据：按轴径段 → [b, h, t1, t2] ============
+  const KEY_TBL = [
+    { max: 8,   b: 2,  h: 2,  t1: 1.2, t2: 1.0 },
+    { max: 10,  b: 3,  h: 3,  t1: 1.8, t2: 1.4 },
+    { max: 12,  b: 4,  h: 4,  t1: 2.5, t2: 1.8 },
+    { max: 17,  b: 5,  h: 5,  t1: 3.0, t2: 2.3 },
+    { max: 22,  b: 6,  h: 6,  t1: 3.5, t2: 2.8 },
+    { max: 30,  b: 8,  h: 7,  t1: 4.0, t2: 3.3 },
+    { max: 38,  b: 10, h: 8,  t1: 5.0, t2: 3.3 },
+    { max: 44,  b: 12, h: 8,  t1: 5.0, t2: 3.3 },
+    { max: 50,  b: 14, h: 9,  t1: 5.5, t2: 3.8 },
+    { max: 58,  b: 16, h: 10, t1: 6.0, t2: 4.3 },
+    { max: 65,  b: 18, h: 11, t1: 7.0, t2: 4.4 },
+    { max: 75,  b: 20, h: 12, t1: 7.5, t2: 4.9 },
+    { max: 85,  b: 22, h: 14, t1: 9.0, t2: 5.4 },
+    { max: 95,  b: 25, h: 14, t1: 9.0, t2: 5.4 },
+    { max: 110, b: 28, h: 16, t1: 10.0, t2: 6.4 },
+  ];
+  const KEY_LEN = [6,8,10,12,14,16,18,20,22,25,28,32,36,40,45,50,56,63,70,80,90,100,110,125,140,160,180,200,220,250];
+
+  // 初始化键长下拉 & 键尺寸下拉（手动覆盖用）
+  (function init() {
+    $("kL").innerHTML = KEY_LEN.map(v => `<option ${v === 70 ? "selected" : ""}>${v}</option>`).join("");
+    $("kbh").innerHTML = `<option value="">← 由轴径自动推荐 →</option>` +
+      KEY_TBL.map((r, i) => `<option value="${i}">${r.b}×${r.h}（t₁=${r.t1}，t₂=${r.t2}）</option>`).join("");
+  })();
+
+  function recommendKey(d) {
+    for (const r of KEY_TBL) if (d <= r.max) return r;
+    return KEY_TBL[KEY_TBL.length - 1];
+  }
+
+  // ============ 平键校核 ============
+  function keyCalc() {
+    const T = +$("kT").value * 1000, d = +$("kd").value;
+    if (!(T > 0) || !(d > 0)) { alert("请输入有效的转矩 T 和轴径 d"); return; }
+
+    const manual = $("kbh").value !== "";
+    const k = manual ? KEY_TBL[+$("kbh").value] : recommendKey(d);
+    if (!manual) {
+      if (d > 110) alert("轴径超过 110 mm，已按最大档 28×16 估算，请按手册大轴径表复核");
+      if (d < 6) { alert("轴径小于 6 mm，无对应国标键，请核查输入"); return; }
+    }
+
+    const L = +$("kL").value;
+    const type = $("kType").value;
+    const l = type === "A" ? L - k.b : type === "C" ? L - k.b / 2 : L;
+    if (l <= 0) { alert("键长 L 过短（小于键宽），请加大键长"); return; }
+
+    const kk = k.h - k.t2; // 接触高度
+    const sigP = 2 * T / (d * kk * l);
+    const tau = 2 * T / (d * k.b * l);
+
+    const hub = $("kHub").value;
+    const sigA = hub === "custom" ? +$("kSig").value
+      : hub === "steel" ? 125 : hub === "cast" ? 75 : hub === "dyn-steel" ? 50 : 40;
+    const tauA = +$("kTauA").value;
+
+    const passS = sigP <= sigA, passT = tau <= tauA;
+    $("keyResult").style.display = "";
+    $("krSize").textContent = `b×h = ${k.b}×${k.h} mm（t₁=${k.t1}，t₂=${k.t2}，k=${fmt(kk, 1)} mm）${manual ? "【手动选定】" : "【按轴径自动推荐】"}`;
+    $("krL").textContent = `L = ${L} mm → ${type} 型工作长 l = ${fmt(l, 1)} mm`;
+    $("krSig").textContent = fmt(sigP) + " MPa";
+    $("krSigC").innerHTML = passS ? `<span class="ok">✔ 通过（${fmt(sigP, 1)} ≤ [σp]=${sigA} MPa）</span>` : `<span class="ng">✘ 不通过（${fmt(sigP, 1)} &gt; [σp]=${sigA} MPa，建议加长键/双键/改花键）</span>`;
+    $("krTau").textContent = fmt(tau) + " MPa";
+    $("krTauC").innerHTML = passT ? `<span class="ok">✔ 通过（${fmt(tau, 1)} ≤ [τ]=${tauA} MPa）</span>` : `<span class="ng">✘ 不通过（${fmt(tau, 1)} &gt; [τ]=${tauA} MPa）</span>`;
+    $("krConc").innerHTML = passS && passT ? `<span class="ok">✔ 键联接强度满足要求</span>` : `<span class="ng">✘ 强度不足，需修改设计</span>`;
+    $("keyDiag").innerHTML = drawKey(k, L, type);
+  }
+
+  function drawKey(k, L, type) {
+    const W = 420, H = 190, cx = W / 2, cy = 84;
+    const sc = 150 / Math.max(k.h, 20); // 键高方向基准
+    const bw = Math.min(k.b * sc * 4, 130), hh = k.h * sc; // 键宽画大些便于看清
+    let s = `<svg class="diag" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+    // 轴（左半圆弧示意轴表面）
+    s += `<circle cx="${cx - 150}" cy="${cy}" r="130" fill="#fdf0e7" stroke="#d8a37a" stroke-width="2.5"/>`;
+    // 键（长方体侧视：放在轴顶键槽内）
+    const kx = cx - 40, ky = cy - 130 - hh / 2;
+    s += `<rect x="${kx}" y="${ky}" width="${Math.min(L * 0.9, 170)}" height="${hh}" fill="#ffe3d6" stroke="#e62e2e" stroke-width="2.5" rx="3"/>`;
+    // 挤压面标注（键侧）
+    s += `<line x1="${kx - 10}" y1="${ky}" x2="${kx - 10}" y2="${ky + hh}" stroke="#2f6fb3" stroke-width="2.5"/>`;
+    s += `<text x="${kx - 16}" y="${ky + hh / 2 + 4}" fill="#2f6fb3" font-size="11" text-anchor="end">σp 挤压面</text>`;
+    s += `<text x="${kx + 60}" y="${ky - 8}" fill="#8a8177" font-size="12">键 b×h=${k.b}×${k.h}，L=${L}</text>`;
+    // 转矩箭头
+    s += `<path d="M ${cx - 220} ${cy - 40} A 45 45 0 1 0 ${cx - 220} ${cy + 40}" fill="none" stroke="#e62e2e" stroke-width="2.5"/>`;
+    s += `<path d="M ${cx - 227} ${cy + 32} L ${cx - 220} ${cy + 44} L ${cx - 208} ${cy + 36}" fill="none" stroke="#e62e2e" stroke-width="2.5"/>`;
+    s += `<text x="${cx - 265}" y="${cy}" fill="#e62e2e" font-size="13">T</text>`;
+    s += `<text x="${cx}" y="${H - 12}" fill="#8a8177" font-size="12" text-anchor="middle">平键联接受力示意（键侧面承压传递转矩 T）</text>`;
+    s += "</svg>";
+    return s;
+  }
+
+  // ============ 销校核 ============
+  function pinCalc() {
+    const T = +$("pT").value * 1000, D = +$("pD").value, d0 = +$("pd0").value, L = +$("pL").value;
+    if (!(T > 0) || !(D > 0) || !(d0 > 0) || !(L > 0)) { alert("请输入有效的 T、D、d₀、L"); return; }
+    if (d0 >= D) { alert("销径 d₀ 应明显小于轴径 D"); return; }
+
+    const F = T / D;                 // 每个剪切面的剪力
+    const tau = 4 * T / (Math.PI * D * d0 ** 2);
+    const sigP = 2 * T / (D * d0 * L);
+    const tauA = +$("pTauA").value, sigA = +$("pSigA").value;
+
+    const passT = tau <= tauA, passS = sigP <= sigA;
+    $("pinResult").style.display = "";
+    $("prF").textContent = fmt(F) + " N";
+    $("prTau").textContent = fmt(tau) + " MPa";
+    $("prTauC").innerHTML = passT ? `<span class="ok">✔ 通过（${fmt(tau, 1)} ≤ [τ]=${tauA} MPa）</span>` : `<span class="ng">✘ 不通过（${fmt(tau, 1)} &gt; [τ]=${tauA} MPa，加大销径或改双销）</span>`;
+    $("prSig").textContent = fmt(sigP) + " MPa";
+    $("prSigC").innerHTML = passS ? `<span class="ok">✔ 通过（${fmt(sigP, 1)} ≤ [σp]=${sigA} MPa）</span>` : `<span class="ng">✘ 不通过（${fmt(sigP, 1)} &gt; [σp]=${sigA} MPa）</span>`;
+    $("prConc").innerHTML = passT && passS ? `<span class="ok">✔ 销联接强度满足要求</span>` : `<span class="ng">✘ 强度不足，需修改设计</span>`;
+  }
+</script>
+</body>
+</html>
