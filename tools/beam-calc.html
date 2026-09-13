@@ -46,7 +46,7 @@
 <header style="position:relative">
   <a class="back" href="../index.html">← 返回工具集</a>
   <h1>🏗️ 梁受力计算</h1>
-  <p>简支梁 / 悬臂梁 · 集中载荷 / 均布载荷 · 弯矩、弯曲应力与挠度校核（公式依据《机械设计手册》材料力学篇）</p>
+  <p>简支 / 外伸 / 悬臂 / 两端固支 · 集中与均布载荷 · 弯矩、弯曲应力与挠度校核（公式依据《机械设计手册》材料力学篇）</p>
 </header>
 
 <div class="wrap">
@@ -58,30 +58,42 @@
         <select id="case">
           <option value="ss-p">简支梁 · 跨中集中载荷 P</option>
           <option value="ss-q">简支梁 · 全跨均布载荷 q</option>
+          <option value="os-p">外伸梁 · 两端悬伸 a · 悬臂端各受力 P</option>
+          <option value="os-q">外伸梁 · 两端悬伸 a · 全长均布载荷 q</option>
           <option value="cb-p">悬臂梁 · 端部集中载荷 P</option>
           <option value="cb-q">悬臂梁 · 全跨均布载荷 q</option>
+          <option value="fx-p">两端固支梁 · 跨中集中载荷 P</option>
+          <option value="fx-q">两端固支梁 · 全跨均布载荷 q</option>
         </select>
       </div>
       <div>
         <label>截面形式</label>
         <select id="sec">
           <option value="circle">实心圆 d</option>
+          <option value="pipe">圆管 D × d</option>
           <option value="rect">矩形 b × h</option>
-          <option value="custom">自定义 I、c</option>
+          <option value="tube">空心矩形（方管）B × H × t</option>
+          <option value="custom">自定义 I、c（工字钢/H型钢查表值）</option>
         </select>
       </div>
     </div>
 
     <div class="row2">
       <div><label>梁长 L（mm）</label><input id="L" type="number" value="1000"></div>
+      <div id="aWrap" style="display:none"><label>两端悬伸长 a（mm，每侧）</label><input id="a" type="number" value="200"></div>
       <div><label>集中载荷 P（N）</label><input id="P" type="number" value="1000"></div>
       <div><label>均布载荷 q（N/mm）</label><input id="q" type="number" value="5"></div>
     </div>
     <div class="row2">
       <div><label>弹性模量 E（GPa）</label><input id="E" type="number" value="206" step="0.1"></div>
       <div id="dWrap"><label>圆截面直径 d（mm）</label><input id="d" type="number" value="30"></div>
+      <div id="DWrap" style="display:none"><label>圆管外径 D（mm）</label><input id="D" type="number" value="48"></div>
+      <div id="diWrap" style="display:none"><label>圆管内径 d（mm）</label><input id="di" type="number" value="40"></div>
       <div id="bWrap" style="display:none"><label>截面宽 b（mm）</label><input id="b" type="number" value="20"></div>
       <div id="hWrap" style="display:none"><label>截面高 h（mm）</label><input id="h" type="number" value="40"></div>
+      <div id="BW" style="display:none"><label>方管外宽 B（mm）</label><input id="B" type="number" value="160"></div>
+      <div id="HW" style="display:none"><label>方管外高 H（mm）</label><input id="H" type="number" value="160"></div>
+      <div id="tW" style="display:none"><label>壁厚 t（mm）</label><input id="t" type="number" value="6"></div>
       <div id="iWrap" style="display:none"><label>惯性矩 I（mm⁴）</label><input id="I" type="number" value="10000"></div>
       <div id="cWrap" style="display:none"><label>边缘距中性轴 c（mm）</label><input id="c" type="number" value="10"></div>
     </div>
@@ -124,10 +136,17 @@
       <b>公式依据：</b><br>
       · 简支梁·跨中集中载荷：R = P/2，M<sub>max</sub> = PL/4，f<sub>max</sub> = PL³/(48EI)<br>
       · 简支梁·均布载荷：R = qL/2，M<sub>max</sub> = qL²/8，f<sub>max</sub> = 5qL⁴/(384EI)<br>
+      · 外伸梁·两端对称悬伸 a·悬臂端受力 P：R = P，M<sub>max</sub> = Pa（支座处），f<sub>max</sub> = max[ PaL²/(8EI)（跨中上拱）, Pa²(3L+2a)/(6EI)（悬臂端下挠）]<br>
+      · 外伸梁·全长均布 q：R = q(L+2a)/2，M<sub>max</sub> = max[ qa²/2（支座）, |qL²/8 − qa²/2|（跨中）]，f<sub>max</sub> = max[ |5qL⁴/384 − qa²L²/16|, q|aL³/24 − a³L/4 + a⁴/8| ]/(EI)<br>
       · 悬臂梁·端部集中载荷：M<sub>max</sub> = PL（固定端），f<sub>max</sub> = PL³/(3EI)<br>
       · 悬臂梁·均布载荷：M<sub>max</sub> = qL²/2（固定端），f<sub>max</sub> = qL⁴/(8EI)<br>
-      · 圆截面：I = πd⁴/64，Z = πd³/32　·　矩形截面：I = bh³/12，Z = bh²/6<br>
-      · 弯曲应力：σ = M/Z　·　许用挠度参考《机械设计手册》及通用机械结构经验值
+      · 两端固支·跨中集中载荷：R = P/2，M<sub>max</sub> = PL/8（端部与跨中等值反号），f<sub>max</sub> = PL³/(192EI)<br>
+      · 两端固支·均布载荷：R = qL/2，M<sub>max</sub> = qL²/12（端部），跨中 = qL²/24，f<sub>max</sub> = qL⁴/(384EI)<br>
+      · 圆截面：I = πd⁴/64，Z = πd³/32　·　圆管：I = π(D⁴−d⁴)/64，Z = 2I/D<br>
+      · 矩形截面：I = bh³/12，Z = bh²/6　·　空心矩形（方管）：I = (BH³−(B−2t)(H−2t)³)/12，Z = 2I/H<br>
+      · 弯曲应力：σ = M/Z　·　许用挠度参考《机械设计手册》及通用机械结构经验值<br>
+      · 工字钢 / H 型钢：请用<a href="section-props.html">「截面属性计算」工具</a>查国标 I、c 值，再用「自定义」输入<br>
+      · 需要集中力 + 均布 + 力偶任意组合时，请用<a href="beam-multi.html">「梁多载荷叠加校核」工具</a>
     </div>
   </div>
 </div>
@@ -139,14 +158,23 @@
   $("sec").onchange = () => {
     const s = $("sec").value;
     $("dWrap").style.display = s === "circle" ? "" : "none";
+    $("DWrap").style.display = $("diWrap").style.display = s === "pipe" ? "" : "none";
     $("bWrap").style.display = $("hWrap").style.display = s === "rect" ? "" : "none";
+    $("BW").style.display = $("HW").style.display = $("tW").style.display = s === "tube" ? "" : "none";
     $("iWrap").style.display = $("cWrap").style.display = s === "custom" ? "" : "none";
+  };
+  // 工况切换：外伸梁显示悬臂长 a
+  $("case").onchange = () => {
+    $("aWrap").style.display = $("case").value.startsWith("os") ? "" : "none";
   };
 
   function calc() {
     const k = $("case").value, L = +$("L").value, P = +$("P").value, q = +$("q").value;
     const E = +$("E").value * 1000; // GPa → MPa
     if (!(L > 0)) { alert("请输入有效的梁长 L"); return; }
+    const isOS = k.startsWith("os");
+    const a = isOS ? +$("a").value : 0;
+    if (isOS && !(a > 0)) { alert("外伸梁请输入有效的悬伸长 a"); return; }
 
     // 截面属性
     let I, Z, secDesc;
@@ -154,19 +182,41 @@
     if (s === "circle") {
       const d = +$("d").value;
       I = Math.PI * d ** 4 / 64; Z = Math.PI * d ** 3 / 32; secDesc = `实心圆 d=${d}`;
+    } else if (s === "pipe") {
+      const D = +$("D").value, di = +$("di").value;
+      if (!(D > 0) || !(di >= 0) || di >= D) { alert("圆管请输入 0 ≤ d < D"); return; }
+      I = Math.PI * (D ** 4 - di ** 4) / 64; Z = I / (D / 2); secDesc = `圆管 D${D}×d${di}`;
     } else if (s === "rect") {
       const b = +$("b").value, h = +$("h").value;
       I = b * h ** 3 / 12; Z = b * h ** 2 / 6; secDesc = `矩形 ${b}×${h}`;
+    } else if (s === "tube") {
+      const B = +$("B").value, H = +$("H").value, t = +$("t").value;
+      if (!(B > 0) || !(H > 0) || !(t > 0) || 2 * t >= Math.min(B, H)) { alert("方管请输入 0 < 2t < min(B, H)"); return; }
+      I = (B * H ** 3 - (B - 2 * t) * (H - 2 * t) ** 3) / 12; Z = I / (H / 2); secDesc = `方管 ${B}×${H}×${t}`;
     } else {
       I = +$("I").value; Z = I / +$("c").value; secDesc = "自定义";
     }
+    if (!(I > 0) || !(Z > 0)) { alert("请输入有效的截面参数（I、Z 须大于 0）"); return; }
 
-    // 工况公式
-    let R, M, f, diag;
-    if (k === "ss-p") { R = P / 2; M = P * L / 4; f = P * L ** 3 / (48 * E * I); diag = "ss-p"; }
-    else if (k === "ss-q") { R = q * L / 2; M = q * L ** 2 / 8; f = 5 * q * L ** 4 / (384 * E * I); diag = "ss-q"; }
-    else if (k === "cb-p") { R = P; M = P * L; f = P * L ** 3 / (3 * E * I); diag = "cb-p"; }
-    else { R = q * L; M = q * L ** 2 / 2; f = q * L ** 4 / (8 * E * I); diag = "cb-q"; }
+    // 工况公式（L：简支/悬臂/固支 = 全长；外伸梁 = 支座间跨距，两端对称悬伸 a）
+    let R, M, f, rText;
+    if (k === "ss-p") { R = P / 2; M = P * L / 4; f = P * L ** 3 / (48 * E * I); rText = `RA = RB = ${fmt(R)} N`; }
+    else if (k === "ss-q") { R = q * L / 2; M = q * L ** 2 / 8; f = 5 * q * L ** 4 / (384 * E * I); rText = `RA = RB = ${fmt(R)} N`; }
+    else if (k === "os-p") {
+      R = P; M = P * a;
+      const fMid = P * a * L ** 2 / (8 * E * I);            // 跨中上拱
+      const fTip = P * a * a * (3 * L + 2 * a) / (6 * E * I); // 悬臂端下挠
+      f = Math.max(fMid, fTip); rText = `RA = RB = ${fmt(P)} N（对称，悬臂端）`;
+    } else if (k === "os-q") {
+      R = q * (L + 2 * a) / 2;
+      M = Math.max(q * a * a / 2, Math.abs(q * L * L / 8 - q * a * a / 2));
+      const fMidN = Math.abs(5 * q * L ** 4 / 384 - q * a * a * L * L / 16);
+      const fTipN = q * Math.abs(a * L ** 3 / 24 - a ** 3 * L / 4 + a ** 4 / 8);
+      f = Math.max(fMidN, fTipN) / (E * I); rText = `RA = RB = ${fmt(R)} N（对称）`;
+    } else if (k === "cb-p") { R = P; M = P * L; f = P * L ** 3 / (3 * E * I); rText = `固定端反力 = ${fmt(P)} N`; }
+    else if (k === "cb-q") { R = q * L; M = q * L ** 2 / 2; f = q * L ** 4 / (8 * E * I); rText = `固定端反力 = ${fmt(R)} N`; }
+    else if (k === "fx-p") { R = P / 2; M = P * L / 8; f = P * L ** 3 / (192 * E * I); rText = `RA = RB = ${fmt(R)} N，端弯矩 = ${fmt(M / 1000)} N·m`; }
+    else { R = q * L / 2; M = q * L ** 2 / 12; f = q * L ** 4 / (384 * E * I); rText = `RA = RB = ${fmt(R)} N，端弯矩 = ${fmt(M / 1000)} N·m（跨中 = ${fmt(q * L ** 2 / 24 / 1000)} N·m）`; }
 
     const sigma = M / Z;                       // N·mm / mm³ = MPa
     const fAllow = L / +$("fLimit").value;
@@ -176,7 +226,7 @@
     $("resultPanel").style.display = "";
     $("rI").textContent = fmt(I) + " mm⁴";
     $("rZ").textContent = fmt(Z) + " mm³";
-    $("rR").textContent = fmt(R) + " N";
+    $("rR").textContent = rText;
     $("rM").textContent = fmt(M / 1000) + " N·m";
     $("rS").textContent = fmt(sigma) + " MPa";
     $("rF").textContent = fmt(f) + " mm";
@@ -190,7 +240,7 @@
       ? `<span class="ok">✔ 通过</span>（${fmt(f)} ≤ ${fmt(fAllow)} mm）`
       : `<span class="bad">✘ 不通过</span>（${fmt(f)} &gt; ${fmt(fAllow)} mm，请增大惯性矩或缩短跨度）`;
 
-    $("diagBox").innerHTML = draw(diag, L);
+    $("diagBox").innerHTML = draw(k, L, a);
   }
 
   function fmt(x) {
@@ -200,37 +250,50 @@
     return (+x.toPrecision(5)).toLocaleString("en-US", { maximumFractionDigits: 4 });
   }
 
-  // 简易受力示意图（SVG）
-  function draw(type, L) {
+  // 简易受力示意图（SVG）。外伸梁：全长 L+2a，L 为支座间跨距
+  function draw(type, L, a) {
     const W = 400, x0 = 40, x1 = W - 40, y = 70, cy = y + 28;
+    const isOS = type.startsWith("os");
+    const TL = isOS ? L + 2 * a : L;              // 图上总长
+    const px = x => x0 + (x1 - x0) * x / TL;      // 梁坐标 → 画布坐标
+    const sxA = isOS ? px(a) : x0, sxB = isOS ? px(a + L) : x1;
     let s = `<svg class="diag" viewBox="0 0 ${W} 130" xmlns="http://www.w3.org/2000/svg">`;
     s += `<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="#8a8177" stroke-width="5"/>`;
     const mid = (x0 + x1) / 2;
-    const arrow = (x, dir) => `<line x1="${x}" y1="${y-38}" x2="${x}" y2="${y-6}" stroke="#e62e2e" stroke-width="2.5"/>
-      <path d="M ${x-5} ${y-12} L ${x} ${y-4} L ${x+5} ${y-12}" fill="#e62e2e"/>`;
-    if (type === "ss-p") {
+    const arrow = (x, txt) => `<line x1="${x}" y1="${y-38}" x2="${x}" y2="${y-6}" stroke="#e62e2e" stroke-width="2.5"/>
+      <path d="M ${x-5} ${y-12} L ${x} ${y-4} L ${x+5} ${y-12}" fill="#e62e2e"/>${txt || ""}`;
+    if (type === "ss-p" || type === "fx-p") {
       s += arrow(mid) + `<text x="${mid}" y="${y-44}" fill="#d24a35" font-size="12" text-anchor="middle">P</text>`;
-    } else if (type === "ss-q") {
-      for (let x = x0 + 8; x < x1; x += 16) s += arrow(x);
-      s += `<text x="${mid}" y="${y-44}" fill="#d24a35" font-size="12" text-anchor="middle">q 均布</text>`;
+    } else if (type === "os-p") {
+      s += arrow(x0, `<text x="${x0}" y="${y-44}" fill="#d24a35" font-size="12" text-anchor="middle">P</text>`);
+      s += arrow(x1, `<text x="${x1}" y="${y-44}" fill="#d24a35" font-size="12" text-anchor="middle">P</text>`);
     } else if (type === "cb-p") {
       s += arrow(x1) + `<text x="${x1}" y="${y-44}" fill="#d24a35" font-size="12" text-anchor="middle">P</text>`;
-    } else {
-      for (let x = x0 + 8; x <= x1; x += 16) s += arrow(x);
+    } else { // 均布：全长
+      for (let x = x0 + 8; x < x1; x += 16) s += arrow(x);
       s += `<text x="${mid}" y="${y-44}" fill="#d24a35" font-size="12" text-anchor="middle">q 均布</text>`;
     }
     // 支座
-    if (type.startsWith("ss")) {
-      [x0, x1].forEach(x => s += `<path d="M ${x} ${y} l -9 14 h 18 z" fill="none" stroke="#8a8177" stroke-width="2"/>
+    if (type === "ss-p" || type === "ss-q" || isOS) {
+      [sxA, sxB].forEach(x => s += `<path d="M ${x} ${y} l -9 14 h 18 z" fill="none" stroke="#8a8177" stroke-width="2"/>
         <line x1="${x-13}" y1="${y+15}" x2="${x+13}" y2="${y+15}" stroke="#8a8177" stroke-width="2"/>`);
-    } else {
+    } else if (type.startsWith("cb")) {
       s += `<rect x="${x0-8}" y="${y-16}" width="10" height="52" fill="#c9beb2"/>
         <line x1="${x0+2}" y1="${y-16}" x2="${x0+14}" y2="${y-16}" stroke="#c9beb2" stroke-width="3"/>`;
+    } else { // 两端固支
+      s += `<rect x="${x0-10}" y="${y-18}" width="9" height="56" fill="#c9beb2"/>
+        <line x1="${x0-2}" y1="${y-18}" x2="${x0+10}" y2="${y-18}" stroke="#c9beb2" stroke-width="3"/>
+        <line x1="${x0-2}" y1="${y+38}" x2="${x0+10}" y2="${y+38}" stroke="#c9beb2" stroke-width="3"/>
+        <rect x="${x1+1}" y="${y-18}" width="9" height="56" fill="#c9beb2"/>
+        <line x1="${x1-10}" y1="${y-18}" x2="${x1+2}" y2="${y-18}" stroke="#c9beb2" stroke-width="3"/>
+        <line x1="${x1-10}" y1="${y+38}" x2="${x1+2}" y2="${y+38}" stroke="#c9beb2" stroke-width="3"/>`;
     }
-    s += `<text x="${mid}" y="${cy+34}" fill="#8a8177" font-size="12" text-anchor="middle">L = ${L} mm</text>
-      <line x1="${x0}" y1="${cy+22}" x2="${x1}" y2="${cy+22}" stroke="#c9beb2" stroke-width="1.5"/>
-      <line x1="${x0}" y1="${cy+17}" x2="${x0}" y2="${cy+27}" stroke="#c9beb2" stroke-width="1.5"/>
-      <line x1="${x1}" y1="${cy+17}" x2="${x1}" y2="${cy+27}" stroke="#c9beb2" stroke-width="1.5"/></svg>`;
+    // 跨度标注
+    const dl = isOS ? `支座跨距 L = ${L} mm，两端悬伸 a = ${a} mm` : `L = ${L} mm`;
+    s += `<text x="${mid}" y="${cy+34}" fill="#8a8177" font-size="12" text-anchor="middle">${dl}</text>
+      <line x1="${sxA}" y1="${cy+22}" x2="${sxB}" y2="${cy+22}" stroke="#c9beb2" stroke-width="1.5"/>
+      <line x1="${sxA}" y1="${cy+17}" x2="${sxA}" y2="${cy+27}" stroke="#c9beb2" stroke-width="1.5"/>
+      <line x1="${sxB}" y1="${cy+17}" x2="${sxB}" y2="${cy+27}" stroke="#c9beb2" stroke-width="1.5"/></svg>`;
     return s;
   }
 </script>
