@@ -121,6 +121,7 @@
         <tr><th>挤压校核（vs [σp]）</th><td class="v" id="prSigC">—</td></tr>
         <tr><th>结论</th><td class="v" id="prConc">—</td></tr>
       </table>
+      <div id="pinDiag"></div>
     </div>
     <div class="note">
       <b>公式依据（《机械设计手册》销联接篇）：</b><br>
@@ -210,30 +211,7 @@
     $("krTau").textContent = fmt(tau) + " MPa";
     $("krTauC").innerHTML = passT ? `<span class="ok">✔ 通过（${fmt(tau, 1)} ≤ [τ]=${tauA} MPa）</span>` : `<span class="ng">✘ 不通过（${fmt(tau, 1)} &gt; [τ]=${tauA} MPa）</span>`;
     $("krConc").innerHTML = passS && passT ? `<span class="ok">✔ 键联接强度满足要求</span>` : `<span class="ng">✘ 强度不足，需修改设计</span>`;
-    $("keyDiag").innerHTML = drawKey(k, L, type);
-  }
-
-  function drawKey(k, L, type) {
-    const W = 420, H = 190, cx = W / 2, cy = 84;
-    const sc = 150 / Math.max(k.h, 20); // 键高方向基准
-    const bw = Math.min(k.b * sc * 4, 130), hh = k.h * sc; // 键宽画大些便于看清
-    let s = `<svg class="diag" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
-    // 轴（左半圆弧示意轴表面）
-    s += `<circle cx="${cx - 150}" cy="${cy}" r="130" fill="#fdf0e7" stroke="#d8a37a" stroke-width="2.5"/>`;
-    // 键（长方体侧视：放在轴顶键槽内）
-    const kx = cx - 40, ky = cy - 130 - hh / 2;
-    s += `<rect x="${kx}" y="${ky}" width="${Math.min(L * 0.9, 170)}" height="${hh}" fill="#ffe3d6" stroke="#e62e2e" stroke-width="2.5" rx="3"/>`;
-    // 挤压面标注（键侧）
-    s += `<line x1="${kx - 10}" y1="${ky}" x2="${kx - 10}" y2="${ky + hh}" stroke="#2f6fb3" stroke-width="2.5"/>`;
-    s += `<text x="${kx - 16}" y="${ky + hh / 2 + 4}" fill="#2f6fb3" font-size="11" text-anchor="end">σp 挤压面</text>`;
-    s += `<text x="${kx + 60}" y="${ky - 8}" fill="#8a8177" font-size="12">键 b×h=${k.b}×${k.h}，L=${L}</text>`;
-    // 转矩箭头
-    s += `<path d="M ${cx - 220} ${cy - 40} A 45 45 0 1 0 ${cx - 220} ${cy + 40}" fill="none" stroke="#e62e2e" stroke-width="2.5"/>`;
-    s += `<path d="M ${cx - 227} ${cy + 32} L ${cx - 220} ${cy + 44} L ${cx - 208} ${cy + 36}" fill="none" stroke="#e62e2e" stroke-width="2.5"/>`;
-    s += `<text x="${cx - 265}" y="${cy}" fill="#e62e2e" font-size="13">T</text>`;
-    s += `<text x="${cx}" y="${H - 12}" fill="#8a8177" font-size="12" text-anchor="middle">平键联接受力示意（键侧面承压传递转矩 T）</text>`;
-    s += "</svg>";
-    return s;
+    $("keyDiag").innerHTML = drawKey(k, L, type, d);
   }
 
   // ============ 销校核 ============
@@ -255,6 +233,77 @@
     $("prSig").textContent = fmt(sigP) + " MPa";
     $("prSigC").innerHTML = passS ? `<span class="ok">✔ 通过（${fmt(sigP, 1)} ≤ [σp]=${sigA} MPa）</span>` : `<span class="ng">✘ 不通过（${fmt(sigP, 1)} &gt; [σp]=${sigA} MPa）</span>`;
     $("prConc").innerHTML = passT && passS ? `<span class="ok">✔ 销联接强度满足要求</span>` : `<span class="ng">✘ 强度不足，需修改设计</span>`;
+    $("pinDiag").innerHTML = drawPin(D, d0, L);
+  }
+
+  // 平键受力示意图（侧视，全部元素限制在画布内）
+  function drawKey(k, L, type, d) {
+    const W = 420, H = 205, cx = 155, cy = 100, R = 62;
+    const kw = Math.min(120, 40 + L), kh = 16;           // 键示意尺寸
+    const kx = cx - kw / 2, ky = cy - R - kh + 4;        // 键嵌在轴顶键槽
+    let s = `<svg class="diag" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+    // 轴（端面圆）
+    s += `<circle cx="${cx}" cy="${cy}" r="${R}" fill="#fdf0e7" stroke="#d8a37a" stroke-width="2.5"/>`;
+    // 键槽口示意
+    s += `<rect x="${kx}" y="${cy - R - 2}" width="${kw}" height="8" fill="#faf7f4" stroke="none"/>`;
+    // 键
+    s += `<rect x="${kx}" y="${ky}" width="${kw}" height="${kh}" fill="#ffe3d6" stroke="#e62e2e" stroke-width="2.5" rx="3"/>`;
+    // 挤压面（键左右侧面）
+    s += `<line x1="${kx - 7}" y1="${ky}" x2="${kx - 7}" y2="${ky + kh}" stroke="#2f6fb3" stroke-width="3"/>`;
+    s += `<line x1="${kx + kw + 7}" y1="${ky}" x2="${kx + kw + 7}" y2="${ky + kh}" stroke="#2f6fb3" stroke-width="3"/>`;
+    s += `<text x="${kx - 12}" y="${ky + kh / 2 + 4}" fill="#2f6fb3" font-size="11" text-anchor="end">σp</text>`;
+    s += `<text x="${kx + kw + 12}" y="${ky + kh / 2 + 4}" fill="#2f6fb3" font-size="11">σp</text>`;
+    // 键标注（圆右侧，两行短文本避免超宽）
+    s += `<text x="${cx + R + 14}" y="${ky + 12}" fill="#8a8177" font-size="11">键 b×h = ${k.b}×${k.h}</text>`;
+    s += `<text x="${cx + R + 14}" y="${ky + 30}" fill="#8a8177" font-size="11">L = ${L}（${type}型）</text>`;
+    // 转矩箭头（圆内）
+    s += `<path d="M ${cx - 8} ${cy - 26} A 27 27 0 1 0 ${cx - 8} ${cy + 26}" fill="none" stroke="#e62e2e" stroke-width="2.5"/>`;
+    s += `<path d="M ${cx - 15} ${cy + 20} L ${cx - 8} ${cy + 29} L ${cx + 3} ${cy + 22}" fill="none" stroke="#e62e2e" stroke-width="2.5"/>`;
+    s += `<text x="${cx + 6}" y="${cy + 5}" fill="#e62e2e" font-size="13" font-weight="700">T</text>`;
+    // 轴径标注
+    s += `<text x="${cx}" y="${cy + R + 18}" fill="#8a8177" font-size="12" text-anchor="middle">轴径 d = ${d} mm</text>`;
+    s += `<text x="${cx}" y="${H - 8}" fill="#8a8177" font-size="12" text-anchor="middle">平键联接受力示意（键侧面承压传递转矩 T）</text>`;
+    s += "</svg>";
+    return s;
+  }
+
+  // 圆柱销传找示意图（侧视：轴穿过毂，销双剪）
+  function drawPin(D, d0, L) {
+    const W = 420, H = 205;
+    const ax = 55, ax2 = 355, ay = 96, ah = 26;          // 轴
+    const hx = 175, hx2 = 300, hy = 68, hh = 82;         // 毂
+    const pw = 14, px = 228, py = 44, ph = 116;          // 销
+    let s = `<svg class="diag" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">`;
+    // 毂（外筒，先画，轴穿过去）
+    s += `<rect x="${hx}" y="${hy}" width="${hx2 - hx}" height="${hh}" fill="#fdf0e7" stroke="#b09277" stroke-width="2.5"/>`;
+    // 轴（实心，穿过毂）
+    s += `<rect x="${ax}" y="${ay}" width="${ax2 - ax}" height="${ah}" fill="#ffe3d6" stroke="#d8a37a" stroke-width="2"/>`;
+    // 销（竖直穿过）
+    s += `<rect x="${px}" y="${py}" width="${pw}" height="${ph}" fill="#f7433b" fill-opacity=".85" stroke="#b32318" stroke-width="1.5" rx="3"/>`;
+    // 两个剪切面标注（轴毂结合面两侧：轴顶 y=ay 与轴底 y=ay+ah 与销交点）
+    [ay, ay + ah].forEach(yy => {
+      s += `<line x1="${px - 8}" y1="${yy}" x2="${px + pw + 8}" y2="${yy}" stroke="#2f6fb3" stroke-width="3" stroke-dasharray="6,3"/>`;
+    });
+    s += `<text x="${px + pw + 14}" y="${ay - 4}" fill="#2f6fb3" font-size="11">剪切面 τ</text>`;
+    s += `<text x="${px + pw + 14}" y="${ay + ah + 12}" fill="#2f6fb3" font-size="11">剪切面 τ</text>`;
+    // 尺寸：销长 L（左侧尺寸线）
+    s += `<line x1="${px - 22}" y1="${py}" x2="${px - 22}" y2="${py + ph}" stroke="#8a8177" stroke-width="1.5"/>`;
+    s += `<line x1="${px - 27}" y1="${py}" x2="${px - 17}" y2="${py}" stroke="#8a8177" stroke-width="1.5"/>`;
+    s += `<line x1="${px - 27}" y1="${py + ph}" x2="${px - 17}" y2="${py + ph}" stroke="#8a8177" stroke-width="1.5"/>`;
+    s += `<text x="${px - 28}" y="${py + ph / 2 + 4}" fill="#8a8177" font-size="11" text-anchor="end">L=${L}</text>`;
+    // 尺寸：销径 d0（顶部）
+    s += `<line x1="${px}" y1="${py - 10}" x2="${px + pw}" y2="${py - 10}" stroke="#8a8177" stroke-width="1.5"/>`;
+    s += `<text x="${px + pw / 2}" y="${py - 15}" fill="#8a8177" font-size="11" text-anchor="middle">d₀=${d0}</text>`;
+    // 轴径 D（左端）
+    s += `<text x="${ax + 4}" y="${ay - 8}" fill="#8a8177" font-size="11">轴 D=${D}</text>`;
+    // 毂标注
+    s += `<text x="${(hx + hx2) / 2}" y="${hy + hh + 16}" fill="#8a8177" font-size="11" text-anchor="middle">轮毂</text>`;
+    // 转矩箭头（轴左端）
+    s += `<path d="M ${ax - 22} ${ay + 4} A 16 16 0 1 0 ${ax - 22} ${ay + ah - 4}" fill="none" stroke="#e62e2e" stroke-width="2.5"/>`;
+    s += `<text x="${ax - 40}" y="${ay + ah / 2 + 5}" fill="#e62e2e" font-size="13" font-weight="700">T</text>`;
+    s += `<text x="${W / 2}" y="${H - 6}" fill="#8a8177" font-size="12" text-anchor="middle">圆柱销传扭示意（销在轴毂结合面两侧各受剪一次，双剪）</text>`;
+    s += "</svg>";
+    return s;
   }
 </script>
 </body>
