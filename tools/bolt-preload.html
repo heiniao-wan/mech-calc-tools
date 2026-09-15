@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>螺栓组预紧与夹紧力计算 - 机械计算工具集</title>
+<meta name="description" content="螺栓组联接预紧力计算：横向载荷防滑条件 F0=Ks·F/(m·f·n)、轴向载荷残余预紧与总拉力计算、拧紧力矩 T=Kt·F0·d、螺栓强度校核（GB/T 3098.1 性能等级），公式依据《机械设计手册》。">
+<meta name="keywords" content="螺栓预紧力计算,防滑条件,拧紧力矩,螺栓组联接,残余预紧力,GB/T 3098.1,螺栓强度校核">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #faf7f4; color: #3d3730; }
+  header { background: linear-gradient(135deg, #ff7a45 0%, #f7433b 60%, #d92b2b 100%); color: #fff; padding: 30px 20px 26px; position: relative; text-align: center; }
+  header h1 { font-size: 24px; }
+  header .back { position: absolute; left: 16px; top: 18px; display: inline-block; padding: 9px 20px; background: #ffffff; color: #c8342a; text-decoration: none; font-size: 16px; font-weight: 700; border-radius: 999px; box-shadow: 0 2px 8px rgba(120,20,10,.35); transition: transform .15s, box-shadow .15s; }
+  header .back:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(120,20,10,.5); background: #fff5ef; }
+  header p { font-size: 13px; opacity: .9; margin-top: 6px; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 24px 18px; }
+  .panel { background: #fff; border: 1px solid #eee5dc; border-radius: 14px; padding: 22px; margin-bottom: 18px; }
+  .panel h2 { font-size: 16px; color: #b3352b; margin-bottom: 14px; padding-left: 9px; border-left: 4px solid #f7433b; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  label { display: block; font-size: 13px; color: #6b645a; margin-bottom: 4px; }
+  input, select { width: 100%; padding: 8px 10px; border: 1px solid #d8cfc4; border-radius: 8px; font-size: 14px; background: #fffdfb; }
+  input:focus, select:focus { outline: none; border-color: #f7433b; }
+  .btn { background: linear-gradient(135deg, #ff7a45, #e62e2e); color: #fff; border: none; padding: 11px 30px; font-size: 15px; font-weight: 600; border-radius: 9px; cursor: pointer; margin-top: 16px; }
+  .btn:hover { filter: brightness(1.08); }
+  table.results { width: 100%; border-collapse: collapse; margin-top: 14px; }
+  table.results th, table.results td { border: 1px solid #eee5dc; padding: 9px 12px; font-size: 14px; text-align: left; }
+  table.results th { background: #fdf3ee; color: #8a5a4a; width: 210px; }
+  table.results td.v { font-weight: 600; color: #2f2a24; }
+  .ok { color: #1d9e57; font-weight: 700; }
+  .ng { color: #e62e2e; font-weight: 700; }
+  .note { background: #fdf8f2; border: 1px solid #f0e2d0; border-radius: 10px; padding: 14px 16px; font-size: 13px; color: #7a6f60; line-height: 1.9; margin-top: 16px; }
+  .note b { color: #b3352b; }
+  footer { text-align: center; color: #b9afa4; font-size: 12px; padding: 26px 0 34px; line-height: 1.8; }
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="../index.html">← 返回工具集</a>
+  <h1>🔩 螺栓组预紧与夹紧力计算</h1>
+  <p>横向载荷防滑预紧 · 轴向载荷残余预紧与强度校核 · 拧紧力矩换算 · 公式依据《机械设计手册》螺纹联接篇</p>
+</header>
+
+<div class="wrap">
+
+  <!-- ============ ① 防滑预紧 ============ -->
+  <div class="panel">
+    <h2>① 横向载荷防滑预紧计算（普通螺栓，靠摩擦传力）</h2>
+    <div class="form-grid">
+      <div><label>总横向载荷 F（N）</label><input id="hF" type="number" value="5000"></div>
+      <div><label>螺栓数量 n</label><input id="hn" type="number" value="4"></div>
+      <div><label>结合面数 m（1=单面，2=夹持式）</label>
+        <select id="hm"><option value="1">1（被联接件间 1 个摩擦面）</option><option value="2">2（夹持式，2 个摩擦面）</option></select>
+      </div>
+      <div><label>结合面摩擦系数 f</label>
+        <select id="hf">
+          <option value="0.15">钢-钢，干燥（0.15）</option>
+          <option value="0.10">钢-钢，有油（0.10）</option>
+          <option value="0.12">钢-铸铁，干燥（0.12）</option>
+          <option value="0.10">铸铁-铸铁，干燥（0.10）</option>
+          <option value="custom">自定义</option>
+        </select>
+      </div>
+      <div id="hfWrap" style="display:none"><label>自定义摩擦系数 f</label><input id="hfC" type="number" value="0.15" step="0.01"></div>
+      <div><label>防滑安全系数 Ks（1.1~1.3）</label><input id="hKs" type="number" value="1.2" step="0.05"></div>
+      <div><label>螺纹规格 d（拧紧力矩用）</label>
+        <select id="hd">
+          <option>M6</option><option>M8</option><option selected>M12</option><option>M16</option><option>M20</option><option>M24</option>
+        </select>
+      </div>
+      <div><label>拧紧力矩系数 Kt（0.1~0.3，一般 0.2）</label><input id="hKt" type="number" value="0.2" step="0.01"></div>
+    </div>
+    <button class="btn" onclick="slideCalc()">开始计算</button>
+    <div id="hResult" style="display:none">
+      <table class="results">
+        <tr><th>单个螺栓所需预紧力 F0 = Ks·F/(m·f·n)</th><td class="v" id="hrF0">—</td></tr>
+        <tr><th>防滑条件验算（m·f·F0·n ≥ Ks·F）</th><td class="v" id="hrChk">—</td></tr>
+        <tr><th>夹紧力（总夹持力 = n·F0）</th><td class="v" id="hrClamp">—</td></tr>
+        <tr><th>单个螺栓拧紧力矩 T = Kt·F0·d</th><td class="v" id="hrT">—</td></tr>
+        <tr><th>提示</th><td class="v" id="hrTip">—</td></tr>
+      </table>
+    </div>
+    <div class="note">
+      <b>公式依据（《机械设计手册》螺纹联接篇）：</b><br>
+      · 普通螺栓联接受横向载荷时靠结合面摩擦力传力，防滑条件：K<sub>s</sub>·F ≤ m·f·F₀·n，即每螺栓预紧力 F₀ = K<sub>s</sub>·F/(m·f·n)<br>
+      · 拧紧力矩：T = K<sub>t</sub>·F₀·d（K<sub>t</sub> 综合了螺纹副与支承面摩擦，一般取 0.2）<br>
+      · 预紧力过大易拧断（≤ σs 的 ~70% 对应值），普通粗牙 M12 按经验预紧力不宜超过 20~30 kN，过大时建议改铰制孔螺栓或增减摩擦措施
+    </div>
+  </div>
+
+  <!-- ============ ② 轴向预紧 + 强度 ============ -->
+  <div class="panel">
+    <h2>② 轴向载荷预紧计算与螺栓强度校核</h2>
+    <div class="form-grid">
+      <div><label>单个螺栓工作拉力 F（N，= 总轴向力/n）</label><input id="aF" type="number" value="2000"></div>
+      <div><label>螺栓规格</label>
+        <select id="aM">
+          <option>M6</option><option>M8</option><option selected>M12</option><option>M14</option><option>M16</option><option>M20</option><option>M24</option><option>M30</option>
+        </select>
+      </div>
+      <div><label>性能等级（GB/T 3098.1）</label>
+        <select id="aGr">
+          <option value="4.6">4.6（σs=240）</option><option value="4.8">4.8（σs=320）</option>
+          <option value="5.8">5.8（σs=400）</option><option value="6.8">6.8（σs=480）</option>
+          <option value="8.8" selected>8.8（σs=640）</option><option value="9.8">9.8（σs=720）</option>
+          <option value="10.9">10.9（σs=900）</option><option value="12.9">12.9（σs=1080）</option>
+        </select>
+      </div>
+      <div><label>残余预紧力系数 K（1.5~1.8 平稳 / 2~2.5 冲击）</label><input id="aK" type="number" value="1.8" step="0.1"></div>
+      <div><label>螺栓相对刚度 χ = c₁/(c₁+c₂)</label>
+        <select id="aChi">
+          <option value="0.25">钢垫+金属垫（0.25，默认）</option>
+          <option value="0.2">无垫/金属直接贴合（0.2）</option>
+          <option value="0.75">皮革垫（0.75）</option>
+          <option value="0.9">橡胶/石棉垫（0.9）</option>
+        </select>
+      </div>
+      <div><label>安全系数 n（2.5~4 不控制预紧力 / 1.2~1.7 精确控制）</label><input id="aN" type="number" value="2.5" step="0.1"></div>
+      <div><label>拧紧力矩系数 Kt</label><input id="aKt" type="number" value="0.2" step="0.01"></div>
+    </div>
+    <button class="btn" onclick="axialCalc()">开始计算</button>
+    <div id="aResult" style="display:none">
+      <table class="results">
+        <tr><th>螺纹小径 d₁（查表）</th><td class="v" id="arD1">—</td></tr>
+        <tr><th>残余预紧力 F₁ = K·F</th><td class="v" id="arF1">—</td></tr>
+        <tr><th>预紧力 F₀ = F₁ − (1−χ)·F</th><td class="v" id="arF0">—</td></tr>
+        <tr><th>总拉力 F₂ = F₀ + χ·F</th><td class="v" id="arF2">—</td></tr>
+        <tr><th>计算应力 σca = 1.3·F₂/(π·d₁²/4)</th><td class="v" id="arSig">—</td></tr>
+        <tr><th>许用应力 [σ] = σs/n</th><td class="v" id="arSigA">—</td></tr>
+        <tr><th>强度校核</th><td class="v" id="arChk">—</td></tr>
+        <tr><th>所需拧紧力矩 T = Kt·F₀·d</th><td class="v" id="arT">—</td></tr>
+      </table>
+    </div>
+    <div class="note">
+      <b>公式依据（《机械设计手册》受轴向载荷螺栓联接）：</b><br>
+      · 残余预紧力 F₁ = K·F（K 按工作要求选：一般联接 1.5~1.8，有冲击 2~2.5，紧密联接 2.5~3）<br>
+      · 预紧力反推：F₀ = F₁ − (1−χ)·F；受载后总拉力 F₂ = F₀ + χ·F（χ 为螺栓相对刚度）<br>
+      · 强度校核（考虑扭转切应力合成，系数 1.3）：σ<sub>ca</sub> = 1.3·F₂/(π·d₁²/4) ≤ [σ] = σ<sub>s</sub>/n<br>
+      · 螺栓性能等级 X.Y：σ<sub>b</sub> = X×100 MPa，σ<sub>s</sub> = X·Y×10 MPa（如 8.8 → 640 MPa）
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  公式来源：《机械设计手册》螺纹联接与紧固件篇、GB/T 3098.1（螺栓机械性能）<br>
+  计算结果仅供设计参考，重要场合请按实际工况复核（疲劳、密封、防松措施另计）
+</footer>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const fmt = (n, d = 3) => Number(n).toLocaleString("zh-CN", { maximumFractionDigits: d });
+
+  // 粗牙普通螺纹小径 d1（GB/T 196）
+  const D1 = { M6: 4.917, M8: 6.647, M12: 10.106, M14: 11.835, M16: 13.835, M20: 16.933, M24: 20.752, M30: 26.211 };
+
+  // ① 防滑预紧
+  function slideCalc() {
+    const F = +$("hF").value, n = Math.round(+$("hn").value), m = +$("hm").value;
+    const f = $("hf").value === "custom" ? +$("hfC").value : +$("hf").value;
+    const Ks = +$("hKs").value, Kt = +$("hKt").value;
+    const dNom = { M6: 6, M8: 8, M12: 12, M16: 16, M20: 20, M24: 24 }[$("hd").value];
+    if (!(F > 0) || !(n > 0) || !(f > 0) || !(Ks > 0)) { alert("请输入有效的载荷、数量、摩擦系数与安全系数"); return; }
+
+    const F0 = Ks * F / (m * f * n);
+    const grip = n * F0;
+    const T = Kt * F0 * dNom; // N·mm
+
+    $("hResult").style.display = "";
+    $("hrF0").textContent = fmt(F0) + " N";
+    $("hrChk").innerHTML = `<span class="ok">✔ ${fmt(m * f * F0 * n)} N ≥ Ks·F = ${fmt(Ks * F)} N</span>`;
+    $("hrClamp").textContent = fmt(grip) + " N";
+    $("hrT").textContent = fmt(T / 1000) + " N·m（公称直径 " + $("hd").value + "）";
+    let tip = "";
+    if (F0 > 30000) tip = "预紧力过大，普通螺栓难以可靠拧紧，建议增加螺栓数量或改铰制孔用螺栓（承剪）；";
+    else if (F0 > 20000) tip = "预紧力较大，建议用测力扳手控制拧紧；";
+    else tip = "预紧力适中，普通手动/气动扳手即可满足；";
+    tip += "防松：受振场合需加弹簧垫圈/双螺母/螺纹胶。";
+    $("hrTip").textContent = tip;
+  }
+
+  // ② 轴向预紧 + 强度
+  function axialCalc() {
+    const F = +$("aF").value, K = +$("aK").value, chi = +$("aChi").value, Nn = +$("aN").value, Kt = +$("aKt").value;
+    const M = $("aM").value, d1 = D1[M], dNom = +M.slice(1);
+    const gr = $("aGr").value, [gx, gy] = gr.split(".").map(Number);
+    const sigS = gx * gy * 10;
+    if (!(F > 0) || !(K >= 1) || !(Nn > 0)) { alert("请输入有效的工作拉力、残余预紧系数与安全系数"); return; }
+
+    const F1 = K * F;                 // 残余预紧力
+    const F0 = F1 - (1 - chi) * F;    // 预紧力 = (K-1+χ)·F，K≥1 时恒为正
+    const F2 = F0 + chi * F;
+    const A1 = Math.PI * d1 ** 2 / 4;
+    const sig = 1.3 * F2 / A1;
+    const sigA = sigS / Nn;
+
+    $("aResult").style.display = "";
+    $("arD1").textContent = fmt(d1) + " mm（" + M + "）";
+    $("arF1").textContent = fmt(F1) + " N";
+    $("arF0").textContent = fmt(F0) + " N";
+    $("arF2").textContent = fmt(F2) + " N";
+    $("arSig").textContent = fmt(sig) + " MPa";
+    $("arSigA").textContent = fmt(sigA) + " MPa（" + gr + " 级，σs=" + sigS + " MPa）";
+    $("arChk").innerHTML = sig <= sigA
+      ? `<span class="ok">✔ 通过（${fmt(sig, 1)} ≤ ${fmt(sigA, 1)} MPa）</span>`
+      : `<span class="ng">✘ 不通过（${fmt(sig, 1)} &gt; ${fmt(sigA, 1)} MPa，加大规格或提高性能等级）</span>`;
+    $("arT").textContent = fmt(Kt * F0 * dNom / 1000) + " N·m";
+  }
+
+  // 联动显隐
+  $("hf").onchange = () => { $("hfWrap").style.display = $("hf").value === "custom" ? "" : "none"; };
+</script>
+</body>
+</html>

@@ -5,6 +5,15 @@
 // ============================================================
 const TOOLS = [
   {
+    id: "bolt-preload",
+    name: "螺栓组预紧与夹紧力计算",
+    file: "tools/bolt-preload.html",
+    category: "力学计算",
+    desc: "横向载荷防滑预紧 F0=Ks·F/(m·f·n)、夹紧力与拧紧力矩换算；轴向载荷残余预紧、总拉力与螺栓强度校核（GB/T 3098.1 性能等级、按规格查螺纹小径）",
+    icon: "🔩",
+    date: "2026-09-15"
+  },
+  {
     id: "key-pin-check",
     name: "键/销剪切与挤压校核",
     file: "tools/key-pin-check.html",
