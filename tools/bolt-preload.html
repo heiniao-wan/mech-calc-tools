@@ -31,6 +31,8 @@
   .ng { color: #e62e2e; font-weight: 700; }
   .note { background: #fdf8f2; border: 1px solid #f0e2d0; border-radius: 10px; padding: 14px 16px; font-size: 13px; color: #7a6f60; line-height: 1.9; margin-top: 16px; }
   .note b { color: #b3352b; }
+  .fig { text-align: center; margin: 4px 0 14px; }
+  .fig svg { max-width: 100%; height: auto; }
   footer { text-align: center; color: #b9afa4; font-size: 12px; padding: 26px 0 34px; line-height: 1.8; }
 </style>
 </head>
@@ -46,6 +48,34 @@
   <!-- ============ ① 防滑预紧 ============ -->
   <div class="panel">
     <h2>① 横向载荷防滑预紧计算（普通螺栓，靠摩擦传力）</h2>
+    <div class="fig">
+      <svg viewBox="0 0 680 270" width="680" height="270" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="普通螺栓联接受横向载荷示意图">
+        <!-- 被联接件：上板 -->
+        <rect x="120" y="118" width="380" height="60" fill="#fbe3d0" stroke="#c87a4a" stroke-width="2"/>
+        <!-- 被联接件：下板 -->
+        <rect x="120" y="178" width="380" height="32" fill="#f0e0cf" stroke="#b98a5f" stroke-width="2"/>
+        <!-- 结合面（摩擦面） -->
+        <line x1="120" y1="178" x2="500" y2="178" stroke="#e62e2e" stroke-width="2" stroke-dasharray="7 5"/>
+        <text x="508" y="182" font-size="12" fill="#b3352b">结合面（摩擦面 m=1）</text>
+        <!-- 螺栓 -->
+        <rect x="300" y="58" width="20" height="160" fill="#b9c0ca" stroke="#6f7680" stroke-width="1.5"/>
+        <rect x="282" y="42" width="56" height="18" rx="3" fill="#8f98a3" stroke="#6f7680" stroke-width="1.5"/>
+        <rect x="282" y="212" width="56" height="15" rx="3" fill="#8f98a3" stroke="#6f7680" stroke-width="1.5"/>
+        <!-- 预紧力标注 -->
+        <text x="310" y="28" font-size="13" font-weight="700" fill="#b3352b" text-anchor="middle">预紧力 F₀（将两板压紧）</text>
+        <line x1="310" y1="33" x2="310" y2="41" stroke="#b3352b" stroke-width="1.5"/>
+        <!-- 横向载荷 F -->
+        <line x1="600" y1="148" x2="518" y2="148" stroke="#e62e2e" stroke-width="5"/>
+        <polygon points="514,148 532,139 532,157" fill="#e62e2e"/>
+        <text x="600" y="132" font-size="14" font-weight="700" fill="#e62e2e" text-anchor="middle">横向载荷 F</text>
+        <!-- 摩擦力 -->
+        <line x1="235" y1="192" x2="320" y2="192" stroke="#1d9e57" stroke-width="4"/>
+        <polygon points="326,192 310,184 310,200" fill="#1d9e57"/>
+        <text x="336" y="197" font-size="12" fill="#1d9e57">结合面摩擦力 m·f·F₀ 抵抗滑移</text>
+        <!-- m=2 说明 -->
+        <text x="340" y="250" font-size="12" fill="#7a6f60" text-anchor="middle">夹持式布置（m=2）：螺栓对夹，摩擦面数×2，所需预紧力减半；防滑条件：Ks·F ≤ m·f·F₀·n</text>
+      </svg>
+    </div>
     <div class="form-grid">
       <div><label>总横向载荷 F（N）</label><input id="hF" type="number" value="5000"></div>
       <div><label>螺栓数量 n</label><input id="hn" type="number" value="4"></div>
@@ -91,6 +121,48 @@
   <!-- ============ ② 轴向预紧 + 强度 ============ -->
   <div class="panel">
     <h2>② 轴向载荷预紧计算与螺栓强度校核</h2>
+    <div class="fig">
+      <svg viewBox="0 0 680 300" width="680" height="300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="螺栓受力-变形线图：F0、F1、F2 与相对刚度 χ 的关系">
+        <!-- 坐标轴 -->
+        <line x1="90" y1="260" x2="620" y2="260" stroke="#8a8378" stroke-width="2"/>
+        <polygon points="628,260 612,253 612,267" fill="#8a8378"/>
+        <line x1="90" y1="260" x2="90" y2="32" stroke="#8a8378" stroke-width="2"/>
+        <polygon points="90,24 83,40 97,40" fill="#8a8378"/>
+        <text x="620" y="280" font-size="13" fill="#6b645a" text-anchor="middle">变形量 λ</text>
+        <text x="66" y="30" font-size="13" fill="#6b645a" text-anchor="middle">力</text>
+        <!-- 预紧状态点 A（F0, λ0） -->
+        <circle cx="90" cy="140" r="4" fill="#b3352b"/>
+        <!-- 螺栓线（刚度 c1，受载后继续伸长） -->
+        <line x1="90" y1="140" x2="250" y2="84" stroke="#e62e2e" stroke-width="3"/>
+        <circle cx="250" cy="84" r="4" fill="#e62e2e"/>
+        <!-- 被联接件线（刚度 c2，受载后回弹） -->
+        <line x1="90" y1="140" x2="250" y2="216" stroke="#2f7bbf" stroke-width="3"/>
+        <circle cx="250" cy="216" r="4" fill="#2f7bbf"/>
+        <!-- 辅助虚线 -->
+        <line x1="250" y1="84" x2="250" y2="260" stroke="#c9c0b4" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <line x1="250" y1="216" x2="250" y2="260" stroke="#c9c0b4" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <line x1="90" y1="84" x2="250" y2="84" stroke="#c9c0b4" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <line x1="90" y1="216" x2="250" y2="216" stroke="#c9c0b4" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <!-- 工作拉力 F 标注（B、C 之间的竖向距离） -->
+        <line x1="264" y1="90" x2="264" y2="210" stroke="#b3352b" stroke-width="2"/>
+        <polygon points="264,84 258,98 270,98" fill="#b3352b"/>
+        <polygon points="264,216 258,202 270,202" fill="#b3352b"/>
+        <text x="276" y="152" font-size="13" font-weight="700" fill="#b3352b">F（工作拉力）</text>
+        <!-- 线标签 -->
+        <text x="182" y="94" font-size="12" font-weight="700" fill="#e62e2e" text-anchor="middle">螺栓（刚度 c₁）</text>
+        <text x="178" y="208" font-size="12" font-weight="700" fill="#2f7bbf" text-anchor="middle">被联接件（刚度 c₂）</text>
+        <!-- 纵轴力值标注 -->
+        <text x="82" y="88" font-size="13" font-weight="700" fill="#b3352b" text-anchor="end">F₂ 总拉力</text>
+        <text x="82" y="116" font-size="11" fill="#b3352b" text-anchor="end">χ·F</text>
+        <text x="82" y="145" font-size="13" font-weight="700" fill="#b3352b" text-anchor="end">F₀ 预紧力</text>
+        <text x="82" y="184" font-size="11" fill="#2f7bbf" text-anchor="end">(1−χ)·F</text>
+        <text x="82" y="221" font-size="13" font-weight="700" fill="#2f7bbf" text-anchor="end">F₁ 残余预紧力</text>
+        <!-- 横轴附加变形标注 -->
+        <text x="170" y="252" font-size="11" fill="#6b645a" text-anchor="middle">Δλ（受载后附加变形）</text>
+        <!-- 公式说明 -->
+        <text x="360" y="290" font-size="12" fill="#7a6f60" text-anchor="middle">受载后螺栓分担 χ·F 继续伸长，被联接件回弹 (1−χ)·F：F₂ = F₀ + χ·F，F₁ = F₀ − (1−χ)·F</text>
+      </svg>
+    </div>
     <div class="form-grid">
       <div><label>单个螺栓工作拉力 F（N，= 总轴向力/n）</label><input id="aF" type="number" value="2000"></div>
       <div><label>螺栓规格</label>
