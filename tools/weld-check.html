@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>焊缝强度计算（角焊缝/对接焊缝） - 机械计算工具集</title>
+<meta name="description" content="焊缝强度校核计算：角焊缝轴向载荷 τ=F/(0.7hf·lw)（正面焊缝 βf=1.22）、牛腿角焊缝受弯+剪合成校核、对接焊缝拉弯剪校核，公式依据 GB/T 50017-2017《钢结构设计标准》与《机械设计手册》焊接结构篇。">
+<meta name="keywords" content="焊缝强度计算,角焊缝计算,对接焊缝校核,焊脚尺寸,焊缝有效厚度,GB/T 50017,牛腿焊缝,焊接结构设计">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #faf7f4; color: #3d3730; }
+  header { background: linear-gradient(135deg, #ff7a45 0%, #f7433b 60%, #d92b2b 100%); color: #fff; padding: 30px 20px 26px; position: relative; text-align: center; }
+  header h1 { font-size: 24px; }
+  header .back { position: absolute; left: 16px; top: 18px; display: inline-block; padding: 9px 20px; background: #ffffff; color: #c8342a; text-decoration: none; font-size: 16px; font-weight: 700; border-radius: 999px; box-shadow: 0 2px 8px rgba(120,20,10,.35); transition: transform .15s, box-shadow .15s; }
+  header .back:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(120,20,10,.5); background: #fff5ef; }
+  header p { font-size: 13px; opacity: .9; margin-top: 6px; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 24px 18px; }
+  .panel { background: #fff; border: 1px solid #eee5dc; border-radius: 14px; padding: 22px; margin-bottom: 18px; }
+  .panel h2 { font-size: 16px; color: #b3352b; margin-bottom: 14px; padding-left: 9px; border-left: 4px solid #f7433b; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  label { display: block; font-size: 13px; color: #6b645a; margin-bottom: 4px; }
+  input, select { width: 100%; padding: 8px 10px; border: 1px solid #d8cfc4; border-radius: 8px; font-size: 14px; background: #fffdfb; }
+  input:focus, select:focus { outline: none; border-color: #f7433b; }
+  .btn { background: linear-gradient(135deg, #ff7a45, #e62e2e); color: #fff; border: none; padding: 11px 30px; font-size: 15px; font-weight: 600; border-radius: 9px; cursor: pointer; margin-top: 16px; }
+  .btn:hover { filter: brightness(1.08); }
+  table.results { width: 100%; border-collapse: collapse; margin-top: 14px; }
+  table.results th, table.results td { border: 1px solid #eee5dc; padding: 9px 12px; font-size: 14px; text-align: left; }
+  table.results th { background: #fdf3ee; color: #8a5a4a; width: 250px; }
+  table.results td.v { font-weight: 600; color: #2f2a24; }
+  .ok { color: #1d9e57; font-weight: 700; }
+  .ng { color: #e62e2e; font-weight: 700; }
+  .note { background: #fdf8f2; border: 1px solid #f0e2d0; border-radius: 10px; padding: 14px 16px; font-size: 13px; color: #7a6f60; line-height: 1.9; margin-top: 16px; }
+  .note b { color: #b3352b; }
+  .fig { text-align: center; margin: 4px 0 14px; }
+  .fig svg { max-width: 100%; height: auto; }
+  footer { text-align: center; color: #b9afa4; font-size: 12px; padding: 26px 0 34px; line-height: 1.8; }
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="../index.html">← 返回工具集</a>
+  <h1>🔥 焊缝强度计算</h1>
+  <p>角焊缝轴向载荷 · 牛腿角焊缝受弯+剪 · 对接焊缝拉弯剪 · 公式依据 GB/T 50017-2017 与《机械设计手册》焊接结构篇</p>
+</header>
+
+<div class="wrap">
+
+  <!-- ============ ① 角焊缝轴向载荷 ============ -->
+  <div class="panel">
+    <h2>① 角焊缝轴向载荷校核（搭接 / T 型接头）</h2>
+    <div class="fig">
+      <svg viewBox="0 0 680 250" width="680" height="250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="搭接接头侧面角焊缝受力示意图">
+        <!-- 下板 -->
+        <rect x="90" y="140" width="440" height="36" fill="#f0e0cf" stroke="#b98a5f" stroke-width="2"/>
+        <!-- 上板（搭接） -->
+        <rect x="90" y="104" width="330" height="36" fill="#fbe3d0" stroke="#c87a4a" stroke-width="2"/>
+        <!-- 两条端面角焊缝（三角形焊脚） -->
+        <polygon points="420,104 452,104 420,140" fill="#8f98a3" stroke="#6f7680" stroke-width="1.5"/>
+        <polygon points="90,104 122,104 90,140" fill="#8f98a3" stroke="#6f7680" stroke-width="1.5"/>
+        <!-- 焊脚 hf 标注 -->
+        <line x1="458" y1="104" x2="470" y2="104" stroke="#b3352b" stroke-width="1"/>
+        <line x1="470" y1="104" x2="470" y2="140" stroke="#b3352b" stroke-width="1"/>
+        <text x="476" y="126" font-size="12" font-weight="700" fill="#b3352b">焊脚 hf</text>
+        <!-- 焊缝长度 lw 标注 -->
+        <line x1="122" y1="188" x2="420" y2="188" stroke="#b3352b" stroke-width="1"/>
+        <line x1="122" y1="180" x2="122" y2="196" stroke="#b3352b" stroke-width="1"/>
+        <line x1="420" y1="180" x2="420" y2="196" stroke="#b3352b" stroke-width="1"/>
+        <text x="271" y="207" font-size="12" font-weight="700" fill="#b3352b" text-anchor="middle">焊缝长度 L（计算长度 lw = L − 2hf）</text>
+        <!-- 轴向力 N -->
+        <line x1="530" y1="158" x2="612" y2="158" stroke="#e62e2e" stroke-width="5"/>
+        <polygon points="620,158 602,149 602,167" fill="#e62e2e"/>
+        <text x="570" y="142" font-size="14" font-weight="700" fill="#e62e2e" text-anchor="middle">轴向力 N</text>
+        <!-- 说明 -->
+        <text x="340" y="236" font-size="12" fill="#7a6f60" text-anchor="middle">有效厚度 he = 0.7hf（45° 喉部截面）；正面角焊缝（力垂直于焊缝）承载力可提高 βf = 1.22 倍</text>
+      </svg>
+    </div>
+    <div class="form-grid">
+      <div><label>轴向力 N（N，拉/压/剪均按此式）</label><input id="fN" type="number" value="100000"></div>
+      <div><label>焊缝条数 n（双面搭接为 2）</label><input id="fn" type="number" value="2"></div>
+      <div><label>每条焊缝几何长度 L（mm）</label><input id="fL" type="number" value="150"></div>
+      <div><label>焊脚尺寸 hf（mm）</label><input id="fhf" type="number" value="8"></div>
+      <div><label>受力方向</label>
+        <select id="fdir">
+          <option value="side" selected>侧面角焊缝（力平行焊缝长度）</option>
+          <option value="front">正面角焊缝（力垂直焊缝长度）</option>
+        </select>
+      </div>
+      <div><label>母材 / 焊条匹配（角焊缝设计值 ffw）</label>
+        <select id="fmat">
+          <option value="160">Q235 + E43 型（ffw=160 MPa）</option>
+          <option value="200">Q355 + E50 型（ffw=200 MPa）</option>
+          <option value="220">Q390 + E55 型（ffw=220 MPa）</option>
+          <option value="custom">自定义</option>
+        </select>
+      </div>
+      <div id="fmatWrap" style="display:none"><label>自定义 ffw（MPa）</label><input id="fmatC" type="number" value="160"></div>
+    </div>
+    <button class="btn" onclick="filletCalc()">开始计算</button>
+    <div id="fResult" style="display:none">
+      <table class="results">
+        <tr><th>焊缝有效厚度 he = 0.7·hf</th><td class="v" id="frHe">—</td></tr>
+        <tr><th>每条计算长度 lw = L − 2hf（未用引弧板）</th><td class="v" id="frLw">—</td></tr>
+        <tr><th>有效总面积 A = n·he·lw</th><td class="v" id="frA">—</td></tr>
+        <tr><th>计算应力（侧面 τf / 正面 σf）</th><td class="v" id="frSig">—</td></tr>
+        <tr><th>许用值（正面焊缝乘 βf=1.22）</th><td class="v" id="frSigA">—</td></tr>
+        <tr><th>强度校核</th><td class="v" id="frChk">—</td></tr>
+        <tr><th>满足时每条焊缝最小长度</th><td class="v" id="frLmin">—</td></tr>
+      </table>
+    </div>
+    <div class="note">
+      <b>公式依据（GB/T 50017-2017 第 11.2.3 条）：</b><br>
+      · 直角角焊缝有效厚度 h<sub>e</sub> = 0.7h<sub>f</sub>（45° 喉部）；计算长度 l<sub>w</sub> = 每条实际长度 − 2h<sub>f</sub>（两端起灭弧缺陷扣除；采用引弧板时取全长）<br>
+      · 侧面角焊缝：τ<sub>f</sub> = N/(h<sub>e</sub>·l<sub>w</sub>·n) ≤ f<sub>f</sub><sup>w</sup>；正面角焊缝：σ<sub>f</sub> = N/(h<sub>e</sub>·l<sub>w</sub>·n) ≤ β<sub>f</sub>·f<sub>f</sub><sup>w</sup>（静载 β<sub>f</sub>=1.22）<br>
+      · 构造要求：h<sub>f</sub> ≥ 1.5√t<sub>max</sub>（t 为较厚板厚，取整）；且 h<sub>f</sub> ≤ 较薄板厚 −(1~2) mm；侧面焊缝长度不宜 > 60h<sub>f</sub>（超限承载力折减）、不得 < 40 mm<br>
+      · 设计值来源：GB/T 50017-2017 表 4.4.5（自动焊/半自动焊/E43~E55 焊条，与母材匹配）
+    </div>
+  </div>
+
+  <!-- ============ ② 角焊缝受弯 + 剪 ============ -->
+  <div class="panel">
+    <h2>② 角焊缝受弯 + 剪校核（牛腿 / 托架）</h2>
+    <div class="fig">
+      <svg viewBox="0 0 680 260" width="680" height="260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="牛腿角焊缝受弯剪示意图">
+        <!-- 立柱 -->
+        <rect x="120" y="40" width="46" height="180" fill="#f0e0cf" stroke="#b98a5f" stroke-width="2"/>
+        <!-- 牛腿（水平板/臂） -->
+        <rect x="166" y="118" width="260" height="30" fill="#fbe3d0" stroke="#c87a4a" stroke-width="2"/>
+        <!-- 两条竖向角焊缝 -->
+        <rect x="166" y="66" width="10" height="120" fill="#8f98a3" stroke="#6f7680" stroke-width="1.2"/>
+        <rect x="196" y="66" width="10" height="120" fill="#8f98a3" stroke="#6f7680" stroke-width="1.2"/>
+        <text x="186" y="58" font-size="12" font-weight="700" fill="#b3352b" text-anchor="middle">竖焊缝 h</text>
+        <!-- 弯矩 M 弧形箭头 -->
+        <path d="M 320 96 A 34 34 0 1 1 321 95.5" fill="none" stroke="#e62e2e" stroke-width="3"/>
+        <polygon points="320,96 316,80 330,88" fill="#e62e2e"/>
+        <text x="320" y="62" font-size="14" font-weight="700" fill="#e62e2e" text-anchor="middle">弯矩 M</text>
+        <!-- 剪力 V -->
+        <line x1="470" y1="120" x2="470" y2="196" stroke="#2f7bbf" stroke-width="5"/>
+        <polygon points="470,206 461,188 479,188" fill="#2f7bbf"/>
+        <text x="490" y="168" font-size="14" font-weight="700" fill="#2f7bbf">剪力 V</text>
+        <!-- 说明 -->
+        <text x="340" y="244" font-size="12" fill="#7a6f60" text-anchor="middle">弯矩由焊缝群截面模量 Ww 承担，剪力由有效面积 A 承担：√(σ² + τ²) ≤ ffw（偏保守，未计 βf 增大）</text>
+      </svg>
+    </div>
+    <div class="form-grid">
+      <div><label>弯矩 M（N·m）</label><input id="bM" type="number" value="5000"></div>
+      <div><label>剪力 V（N，纯弯可填 0）</label><input id="bV" type="number" value="50000"></div>
+      <div><label>焊缝布置</label>
+        <select id="blayout">
+          <option value="2v" selected>两条竖直角焊缝（牛腿贴板）</option>
+          <option value="4w">四面围焊（矩形焊缝群 b×h）</option>
+        </select>
+      </div>
+      <div><label>竖焊缝高度 h（mm）</label><input id="bh" type="number" value="200"></div>
+      <div><label>两条焊缝间距 b（mm，围焊为水平边长）</label><input id="bb" type="number" value="150"></div>
+      <div><label>焊脚尺寸 hf（mm）</label><input id="bhf" type="number" value="8"></div>
+      <div><label>母材 / 焊条匹配（ffw）</label>
+        <select id="bmat">
+          <option value="160">Q235 + E43 型（160 MPa）</option>
+          <option value="200">Q355 + E50 型（200 MPa）</option>
+          <option value="220">Q390 + E55 型（220 MPa）</option>
+          <option value="custom">自定义</option>
+        </select>
+      </div>
+      <div id="bmatWrap" style="display:none"><label>自定义 ffw（MPa）</label><input id="bmatC" type="number" value="160"></div>
+    </div>
+    <button class="btn" onclick="bracketCalc()">开始计算</button>
+    <div id="bResult" style="display:none">
+      <table class="results">
+        <tr><th>焊缝群有效截面模量 Ww</th><td class="v" id="brW">—</td></tr>
+        <tr><th>有效抗剪面积 A</th><td class="v" id="brA">—</td></tr>
+        <tr><th>弯曲应力 σ = M/Ww</th><td class="v" id="brSig">—</td></tr>
+        <tr><th>剪应力 τ = V/A</th><td class="v" id="brTau">—</td></tr>
+        <tr><th>合成应力 √(σ² + τ²)</th><td class="v" id="brE">—</td></tr>
+        <tr><th>强度校核（≤ ffw）</th><td class="v" id="brChk">—</td></tr>
+      </table>
+    </div>
+    <div class="note">
+      <b>公式依据（GB/T 50017-2017、钢结构牛腿节点常规算法）：</b><br>
+      · 两条竖焊缝（高度 h、有效厚度 h<sub>e</sub>）：I = 2·h<sub>e</sub>·h³/12，W<sub>w</sub> = I/(h/2) = h<sub>e</sub>·h²/3；A = 2·h<sub>e</sub>·h<br>
+      · 四面围焊（宽 b × 高 h）：I = 2·h<sub>e</sub>·h³/12 + 2·b·h<sub>e</sub>·(h/2)²，W<sub>w</sub> = I/(h/2)；A = 2(h+b)·h<sub>e</sub><br>
+      · σ = M/W<sub>w</sub>，τ = V/A，合成 √(σ² + τ²) ≤ f<sub>f</sub><sup>w</sup>（未计 β<sub>f</sub> 增大，结果偏安全）<br>
+      · 提示：牛腿竖焊缝上端应力最大，弯矩大时优先加大 h（σ 与 h² 成反比）而非加大 hf；动载工况建议按疲劳另核
+    </div>
+  </div>
+
+  <!-- ============ ③ 对接焊缝 ============ -->
+  <div class="panel">
+    <h2>③ 对接焊缝校核（全熔透，拉 / 弯 / 剪）</h2>
+    <div class="fig">
+      <svg viewBox="0 0 680 210" width="680" height="210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="对接焊缝受拉示意图">
+        <!-- 左右板 -->
+        <rect x="90" y="88" width="220" height="34" fill="#fbe3d0" stroke="#c87a4a" stroke-width="2"/>
+        <rect x="370" y="88" width="220" height="34" fill="#fbe3d0" stroke="#c87a4a" stroke-width="2"/>
+        <!-- 对接焊缝（X 坡口余高） -->
+        <polygon points="310,88 350,88 340,80 320,80" fill="#8f98a3" stroke="#6f7680" stroke-width="1.5"/>
+        <polygon points="310,122 350,122 340,130 320,130" fill="#8f98a3" stroke="#6f7680" stroke-width="1.5"/>
+        <text x="330" y="66" font-size="12" font-weight="700" fill="#b3352b" text-anchor="middle">对接焊缝（全熔透）</text>
+        <!-- 板宽 b -->
+        <line x1="120" y1="150" x2="120" y2="164" stroke="#2f7bbf" stroke-width="1"/>
+        <text x="120" y="182" font-size="12" fill="#2f7bbf" text-anchor="middle">板宽 b</text>
+        <!-- 板厚 t -->
+        <line x1="300" y1="88" x2="288" y2="88" stroke="#2f7bbf" stroke-width="1"/>
+        <text x="276" y="98" font-size="12" fill="#2f7bbf" text-anchor="end">板厚 t</text>
+        <!-- 拉力 N -->
+        <line x1="590" y1="105" x2="648" y2="105" stroke="#e62e2e" stroke-width="5"/>
+        <polygon points="656,105 638,96 638,114" fill="#e62e2e"/>
+        <line x1="90" y1="105" x2="32" y2="105" stroke="#e62e2e" stroke-width="5"/>
+        <polygon points="24,105 42,96 42,114" fill="#e62e2e"/>
+        <text x="330" y="146" font-size="13" font-weight="700" fill="#e62e2e" text-anchor="middle">轴向力 N（σ = N/(t·b) + M/(t·b²/6)，τ = V/(t·b)）</text>
+      </svg>
+    </div>
+    <div class="form-grid">
+      <div><label>轴向力 N（N，压力填负值按绝对值）</label><input id="dN" type="number" value="100000"></div>
+      <div><label>弯矩 M（N·m，无则填 0）</label><input id="dM" type="number" value="0"></div>
+      <div><label>剪力 V（N，无则填 0）</label><input id="dV" type="number" value="0"></div>
+      <div><label>板宽 b（mm，受力方向宽度）</label><input id="db" type="number" value="100"></div>
+      <div><label>板厚 t（mm，取较薄板）</label><input id="dt" type="number" value="10"></div>
+      <div><label>母材（对接焊缝设计值）</label>
+        <select id="dmat">
+          <option value="215,125">Q235（f=215 / fv=125 MPa）</option>
+          <option value="305,175">Q355（f=305 / fv=175 MPa）</option>
+          <option value="350,205">Q390（f=350 / fv=205 MPa）</option>
+          <option value="custom">自定义</option>
+        </select>
+      </div>
+      <div id="dmatWrap" style="display:none"><label>自定义 f / fv（MPa，逗号分隔）</label><input id="dmatC" type="text" value="215,125"></div>
+    </div>
+    <button class="btn" onclick="buttCalc()">开始计算</button>
+    <div id="dResult" style="display:none">
+      <table class="results">
+        <tr><th>焊缝有效截面积 A = t·b</th><td class="v" id="drA">—</td></tr>
+        <tr><th>抗弯截面模量 W = t·b²/6</th><td class="v" id="drW">—</td></tr>
+        <tr><th>正应力 σ = N/A + M/W</th><td class="v" id="drSig">—</td></tr>
+        <tr><th>剪应力 τ = V/A</th><td class="v" id="drTau">—</td></tr>
+        <tr><th>正应力校核（≤ f）</th><td class="v" id="drChk1">—</td></tr>
+        <tr><th>剪应力校核（≤ fv）</th><td class="v" id="drChk2">—</td></tr>
+        <tr><th>折算应力（σ 与 τ 同大时）</th><td class="v" id="drChk3">—</td></tr>
+      </table>
+    </div>
+    <div class="note">
+      <b>公式依据（GB/T 50017-2017 第 11.2.1 条、机械设计手册焊接结构篇）：</b><br>
+      · 全熔透对接焊缝视为母材截面的一部分：σ = N/(t·b) + M/(t·b²/6) ≤ f；τ = V/(t·b) ≤ f<sub>v</sub><br>
+      · 正应力与剪应力均较大处验算折算应力：√(σ² + 3τ²) ≤ 1.1f（仅验算同时出现大应力的点）<br>
+      · 折减：无垫板单面施焊 ×0.85；高空安装施焊条件差 ×0.9；l<sub>w</sub> = 板宽 − 2t（未用引弧板时本工具按板宽偏保守计算）<br>
+      · 一、二级焊缝可等强取母材设计值；三级焊缝抗拉按 0.85f 折减
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  公式来源：GB/T 50017-2017《钢结构设计标准》焊缝连接条款、《机械设计手册》焊接结构篇<br>
+  计算结果仅供设计参考，动载/疲劳/低温工况请按专项规范复核，重要焊缝须探伤检验
+</footer>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const fmt = (n, d = 3) => Number(n).toLocaleString("zh-CN", { maximumFractionDigits: d });
+
+  // ① 角焊缝轴向载荷
+  function filletCalc() {
+    const N = Math.abs(+$("fN").value), n = Math.round(+$("fn").value);
+    const L = +$("fL").value, hf = +$("fhf").value, dir = $("fdir").value;
+    const ffw = $("fmat").value === "custom" ? +$("fmatC").value : +$("fmat").value;
+    if (!(N > 0) || !(n > 0) || !(L > 0) || !(hf > 0) || !(ffw > 0)) { alert("请输入有效的力、长度、焊脚与设计值"); return; }
+
+    const he = 0.7 * hf;
+    const lw = L - 2 * hf;
+    if (lw <= 0) { alert("焊缝几何长度需大于 2hf（每端扣除一个焊脚）；建议 L ≥ " + fmt(2 * hf + 40, 0) + " mm"); return; }
+    const A = n * he * lw;
+    const sig = N / A;
+    const allow = dir === "front" ? 1.22 * ffw : ffw;
+
+    $("fResult").style.display = "";
+    $("frHe").textContent = fmt(he) + " mm";
+    $("frLw").textContent = fmt(lw, 1) + " mm（每条）";
+    $("frA").textContent = fmt(A, 1) + " mm²";
+    $("frSig").textContent = fmt(sig, 1) + " MPa（" + (dir === "front" ? "σf，正面" : "τf，侧面") + "）";
+    $("frSigA").textContent = fmt(allow, 1) + " MPa" + (dir === "front" ? "（1.22 × " + fmt(ffw, 0) + "）" : "");
+    $("frChk").innerHTML = sig <= allow
+      ? `<span class="ok">✔ 通过（${fmt(sig, 1)} ≤ ${fmt(allow, 1)} MPa，利用率 ${fmt(sig / allow * 100, 1)}%）</span>`
+      : `<span class="ng">✘ 不通过（${fmt(sig, 1)} &gt; ${fmt(allow, 1)} MPa，加大焊脚/长度或条数）</span>`;
+    const lwMin = N / (n * he * allow);
+    $("frLmin").textContent = sig <= allow ? fmt(lwMin + 2 * hf, 1) + " mm（≥ 计算长 " + fmt(lwMin, 1) + " + 2hf）" : "—（先解决不通过问题）";
+  }
+
+  // ② 角焊缝受弯 + 剪
+  function bracketCalc() {
+    const M = +$("bM").value * 1000, V = +$("bV").value;
+    const h = +$("bh").value, b = +$("bb").value, hf = +$("bhf").value, layout = $("blayout").value;
+    const ffw = $("bmat").value === "custom" ? +$("bmatC").value : +$("bmat").value;
+    if (!(M > 0) || !(h > 0) || !(hf > 0) || !(ffw > 0) || (V < 0)) { alert("请输入有效的弯矩、焊缝高度与设计值"); return; }
+    if (layout === "4w" && !(b > 0)) { alert("四面围焊需输入水平边长 b"); return; }
+
+    const he = 0.7 * hf;
+    let I, W, A;
+    if (layout === "2v") {
+      I = 2 * he * h ** 3 / 12;         // 两条竖焊缝绕水平形心轴
+      A = 2 * he * h;
+    } else {
+      I = 2 * he * h ** 3 / 12 + 2 * (b * he) * (h / 2) ** 2;
+      A = 2 * (h + b) * he;
+    }
+    W = I / (h / 2);
+    const sig = M / W, tau = V > 0 ? V / A : 0;
+    const e = Math.sqrt(sig ** 2 + tau ** 2);
+
+    $("bResult").style.display = "";
+    $("brW").textContent = fmt(W) + " mm³（he=" + fmt(he) + " mm）";
+    $("brA").textContent = fmt(A, 1) + " mm²";
+    $("brSig").textContent = fmt(sig, 1) + " MPa";
+    $("brTau").textContent = V > 0 ? fmt(tau, 1) + " MPa" : "0（未输入剪力）";
+    $("brE").textContent = fmt(e, 1) + " MPa";
+    $("brChk").innerHTML = e <= ffw
+      ? `<span class="ok">✔ 通过（${fmt(e, 1)} ≤ ${fmt(ffw, 0)} MPa，利用率 ${fmt(e / ffw * 100, 1)}%）</span>`
+      : `<span class="ng">✘ 不通过（${fmt(e, 1)} &gt; ${fmt(ffw, 0)} MPa，优先加大焊缝高度 h）</span>`;
+  }
+
+  // ③ 对接焊缝
+  function buttCalc() {
+    const N = Math.abs(+$("dN").value), M = +$("dM").value * 1000, V = Math.abs(+$("dV").value);
+    const b = +$("db").value, t = +$("dt").value;
+    let f, fv;
+    if ($("dmat").value === "custom") {
+      [f, fv] = $("dmatC").value.split(",").map(Number);
+    } else {
+      [f, fv] = $("dmat").value.split(",").map(Number);
+    }
+    if (!(N > 0) && !(M > 0)) { alert("请输入轴向力或弯矩"); return; }
+    if (!(b > 0) || !(t > 0) || !(f > 0) || !(fv > 0)) { alert("请输入有效的板宽、板厚与设计值"); return; }
+
+    const A = t * b, W = t * b ** 2 / 6;
+    const sig = N / A + (M > 0 ? M / W : 0);
+    const tau = V > 0 ? V / A : 0;
+
+    $("dResult").style.display = "";
+    $("drA").textContent = fmt(A, 1) + " mm²";
+    $("drW").textContent = fmt(W) + " mm³";
+    $("drSig").textContent = fmt(sig, 1) + " MPa";
+    $("drTau").textContent = V > 0 ? fmt(tau, 1) + " MPa" : "0（未输入剪力）";
+    $("drChk1").innerHTML = sig <= f
+      ? `<span class="ok">✔ ${fmt(sig, 1)} ≤ ${fmt(f, 0)} MPa</span>`
+      : `<span class="ng">✘ ${fmt(sig, 1)} &gt; ${fmt(f, 0)} MPa</span>`;
+    if (V > 0) {
+      $("drChk2").innerHTML = tau <= fv
+        ? `<span class="ok">✔ ${fmt(tau, 1)} ≤ ${fmt(fv, 0)} MPa</span>`
+        : `<span class="ng">✘ ${fmt(tau, 1)} &gt; ${fmt(fv, 0)} MPa</span>`;
+      const e = Math.sqrt(sig ** 2 + 3 * tau ** 2);
+      $("drChk3").innerHTML = e <= 1.1 * f
+        ? `<span class="ok">✔ ${fmt(e, 1)} ≤ 1.1f = ${fmt(1.1 * f, 1)} MPa</span>`
+        : `<span class="ng">✘ ${fmt(e, 1)} &gt; 1.1f = ${fmt(1.1 * f, 1)} MPa</span>`;
+    } else {
+      $("drChk2").textContent = "—";
+      $("drChk3").textContent = "—";
+    }
+  }
+
+  // 联动显隐
+  $("fmat").onchange = () => { $("fmatWrap").style.display = $("fmat").value === "custom" ? "" : "none"; };
+  $("bmat").onchange = () => { $("bmatWrap").style.display = $("bmat").value === "custom" ? "" : "none"; };
+  $("dmat").onchange = () => { $("dmatWrap").style.display = $("dmat").value === "custom" ? "" : "none"; };
+</script>
+</body>
+</html>

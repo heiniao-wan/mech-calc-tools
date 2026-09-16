@@ -5,6 +5,15 @@
 // ============================================================
 const TOOLS = [
   {
+    id: "weld-check",
+    name: "焊缝强度计算（角焊缝/对接焊缝）",
+    file: "tools/weld-check.html",
+    category: "力学计算",
+    desc: "角焊缝轴向载荷校核（he=0.7hf、lw=L−2hf、正面焊缝 βf=1.22）、牛腿角焊缝受弯+剪合成校核（两条竖焊缝/四面围焊）、对接焊缝拉弯剪与折算应力校核，设计值按 GB/T 50017-2017 母材-焊条匹配",
+    icon: "🔥",
+    date: "2026-09-16"
+  },
+  {
     id: "bolt-preload",
     name: "螺栓组预紧与夹紧力计算",
     file: "tools/bolt-preload.html",

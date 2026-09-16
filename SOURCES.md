@@ -36,6 +36,13 @@
 | Mechtool 梁挠度与应力分析 | 6 种典型支承/载荷的 δmax、θ、Mmax 公式表、容许挠度参考（L/250~L/1000） | https://www.mechtool.cn/formular/staticloadbeam_beamdeflectionandstressanalysissimulator.html |
 | 铝型材承载强度校核（机械设计手册节选） | 悬臂/简支、集中/均布载荷反力弯矩挠度表 | 腾讯 ima 知识库 |
 
+## 六、焊缝连接（2026-09-16 搜索整理）
+| 来源 | 覆盖内容 | 链接 |
+|------|---------|------|
+| GB/T 50017-2017《钢结构设计标准》焊缝条款 | 角焊缝 he=0.7hf、lw=实长−2hf、正面焊缝 βf=1.22、综合应力 √((σf/βf)²+τf²)≤ffw；对接焊缝 σ=N/(lw·t)、剪 τ=V/(lw·t)、折算应力 √(σ²+3τ²)≤1.1ftw | 原文条款镜像（结构设计院教案） https://design.zafu.edu.cn/ 与 gf.cabr-fire.com/m/article-15083.htm |
+| 焊接强度计算标准（TrueSight） | 角焊缝 τ=F/(0.7hL) 例题（E43 焊缝抗剪设计值≈150~160）、对接/角焊缝适用场景选择 | https://tsight.io/articles/9883378 |
+| 钢结构设计类公式大全 | 角焊缝 σf=√((N/βf·he·lw)²+(V/he·lw)²)≤ffw、钢材 f/fv 设计值（Q235: 215/125，Q355: 305/175） | https://www.52bishe.com/yunpanweb/gjgformula.html |
+
 ## 待补充方向
 - [ ] THK 滚珠丝杠/直线导轨选型手册（thk.com 技术资料）
 - [ ] 米思米 MISUMI 选型计算资料（fa.misumi-vona.cn）
