@@ -43,6 +43,14 @@
 | 焊接强度计算标准（TrueSight） | 角焊缝 τ=F/(0.7hL) 例题（E43 焊缝抗剪设计值≈150~160）、对接/角焊缝适用场景选择 | https://tsight.io/articles/9883378 |
 | 钢结构设计类公式大全 | 角焊缝 σf=√((N/βf·he·lw)²+(V/he·lw)²)≤ffw、钢材 f/fv 设计值（Q235: 215/125，Q355: 305/175） | https://www.52bishe.com/yunpanweb/gjgformula.html |
 
+## 七、弹簧（2026-09-22 搜索整理）
+| 来源 | 覆盖内容 | 链接 |
+|------|---------|------|
+| GB/T 23935-2009《圆柱螺旋弹簧设计计算》 | 压缩/拉伸刚度 k=G·d⁴/(8·D³·n)、扭转刚度 M=E·d⁴·φ/(64·D·n)（≈3670 系数 N·mm/°）、Wahl 曲度系数 K=(4C−1)/(4C−4)+0.615/C、τ=K·8FD/(πd³)、扭转曲度系数 K1=(4C−1)/(4C−4)（张开旋向） | 权威期刊引用（隔震支座论文全文） https://pubs.cstam.org.cn/em/article/Y2024/I10/212 |
+| MachiningCalc 弹簧计算器 | C=4~12 推荐（最优 6~9）、屈曲 Haringx 判据（两端铰支 H0/D>5.26）、GB/T 2089 应用例 | https://machiningcalc.com/zh/spring-calculator |
+| 弹簧计算公式汇总（bodocs） | G 取值：碳钢 78500、琴钢丝 80000、不锈钢 71500 MPa；E：碳素钢丝 206000、不锈钢 188000 MPa；扭转 K1 顺旋向取 1 | http://www.bodocs.net/doc/2d8004685.html |
+| 亨特五金弹簧技术文章 | 有效圈数 3~10、支承圈 1.5~2.5 并紧磨平、反算圈数 n=G·d⁴/(8·D³·k) | https://www.tanhuang1.com/yashuotanhuang/page/88 |
+
 ## 待补充方向
 - [ ] THK 滚珠丝杠/直线导轨选型手册（thk.com 技术资料）
 - [ ] 米思米 MISUMI 选型计算资料（fa.misumi-vona.cn）

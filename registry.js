@@ -5,6 +5,15 @@
 // ============================================================
 const TOOLS = [
   {
+    id: "spring-calc",
+    name: "弹簧计算（压缩/扭转）",
+    file: "tools/spring-calc.html",
+    category: "力学计算",
+    desc: "压缩弹簧：刚度 k=Gd⁴/(8D³n)、Wahl 曲度系数切应力校核、旋绕比推荐、高径比屈曲稳定性、压并高度与压并载荷余量；扭转弹簧：刚度 kT=Ed⁴/(64Dn)、转角、曲度系数弯曲应力校核（GB/T 23935-2009）",
+    icon: "🌀",
+    date: "2026-09-22"
+  },
+  {
     id: "weld-check",
     name: "焊缝强度计算（角焊缝/对接焊缝）",
     file: "tools/weld-check.html",

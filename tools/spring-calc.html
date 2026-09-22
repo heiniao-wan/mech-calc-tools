@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>弹簧计算（压缩/扭转） - 机械计算工具集</title>
+<meta name="description" content="圆柱螺旋弹簧计算：压缩弹簧刚度 k=Gd⁴/(8D³n)、Wahl 曲度系数切应力校核、旋绕比与高径比稳定性、压并高度与压并载荷；扭转弹簧刚度 kT=Ed⁴/(64Dn)、转角与弯曲应力校核，公式依据 GB/T 23935-2009。">
+<meta name="keywords" content="弹簧计算,压缩弹簧,扭转弹簧,弹簧刚度,Wahl系数,曲度系数,旋绕比,压并高度,GB/T 23935,弹簧选型">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #faf7f4; color: #3d3730; }
+  header { background: linear-gradient(135deg, #ff7a45 0%, #f7433b 60%, #d92b2b 100%); color: #fff; padding: 30px 20px 26px; position: relative; text-align: center; }
+  header h1 { font-size: 24px; }
+  header .back { position: absolute; left: 16px; top: 18px; display: inline-block; padding: 9px 20px; background: #ffffff; color: #c8342a; text-decoration: none; font-size: 16px; font-weight: 700; border-radius: 999px; box-shadow: 0 2px 8px rgba(120,20,10,.35); transition: transform .15s, box-shadow .15s; }
+  header .back:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(120,20,10,.5); background: #fff5ef; }
+  header p { font-size: 13px; opacity: .9; margin-top: 6px; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 24px 18px; }
+  .panel { background: #fff; border: 1px solid #eee5dc; border-radius: 14px; padding: 22px; margin-bottom: 18px; }
+  .panel h2 { font-size: 16px; color: #b3352b; margin-bottom: 14px; padding-left: 9px; border-left: 4px solid #f7433b; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  label { display: block; font-size: 13px; color: #6b645a; margin-bottom: 4px; }
+  input, select { width: 100%; padding: 8px 10px; border: 1px solid #d8cfc4; border-radius: 8px; font-size: 14px; background: #fffdfb; }
+  input:focus, select:focus { outline: none; border-color: #f7433b; }
+  .btn { background: linear-gradient(135deg, #ff7a45, #e62e2e); color: #fff; border: none; padding: 11px 30px; font-size: 15px; font-weight: 600; border-radius: 9px; cursor: pointer; margin-top: 16px; }
+  .btn:hover { filter: brightness(1.08); }
+  table.results { width: 100%; border-collapse: collapse; margin-top: 14px; }
+  table.results th, table.results td { border: 1px solid #eee5dc; padding: 9px 12px; font-size: 14px; text-align: left; }
+  table.results th { background: #fdf3ee; color: #8a5a4a; width: 250px; }
+  table.results td.v { font-weight: 600; color: #2f2a24; }
+  .ok { color: #1d9e57; font-weight: 700; }
+  .ng { color: #e62e2e; font-weight: 700; }
+  .warn { color: #c07a00; font-weight: 700; }
+  .note { background: #fdf8f2; border: 1px solid #f0e2d0; border-radius: 10px; padding: 14px 16px; font-size: 13px; color: #7a6f60; line-height: 1.9; margin-top: 16px; }
+  .note b { color: #b3352b; }
+  .fig { text-align: center; margin: 4px 0 14px; }
+  .fig svg { max-width: 100%; height: auto; }
+  footer { text-align: center; color: #b9afa4; font-size: 12px; padding: 26px 0 34px; line-height: 1.8; }
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="../index.html">← 返回工具集</a>
+  <h1>🌀 弹簧计算（压缩 / 扭转）</h1>
+  <p>压缩弹簧刚度与强度 · 高径比稳定性 · 压并校核 · 扭转弹簧刚度与转角 · 公式依据 GB/T 23935-2009《圆柱螺旋弹簧设计计算》</p>
+</header>
+
+<div class="wrap">
+
+  <!-- ============ ① 压缩弹簧 ============ -->
+  <div class="panel">
+    <h2>① 圆柱螺旋压缩弹簧（刚度 · 变形 · 强度 · 稳定性）</h2>
+    <div class="fig">
+      <svg viewBox="0 0 680 290" width="680" height="290" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="圆柱螺旋压缩弹簧受力与几何参数示意图">
+        <!-- 工作载荷 F -->
+        <line x1="340" y1="26" x2="340" y2="52" stroke="#e62e2e" stroke-width="5"/>
+        <polygon points="340,62 331,44 349,44" fill="#e62e2e"/>
+        <text x="360" y="46" font-size="14" font-weight="700" fill="#e62e2e">F 工作载荷</text>
+        <!-- 上支承板 -->
+        <rect x="270" y="64" width="140" height="10" fill="#b9c0ca" stroke="#6f7680" stroke-width="1.5"/>
+        <!-- 压缩后位置（虚线） -->
+        <rect x="270" y="94" width="140" height="10" fill="none" stroke="#8f98a3" stroke-width="1.5" stroke-dasharray="6 4"/>
+        <!-- 变形量 λ 标注 -->
+        <line x1="252" y1="74" x2="252" y2="94" stroke="#2f7bbf" stroke-width="1.5"/>
+        <polygon points="252,64 246,78 258,78" fill="#2f7bbf"/>
+        <polygon points="252,104 246,90 258,90" fill="#2f7bbf"/>
+        <text x="240" y="88" font-size="12" font-weight="700" fill="#2f7bbf" text-anchor="end">λ = F/k</text>
+        <!-- 弹簧圈（椭圆堆叠） -->
+        <ellipse cx="340" cy="94" rx="60" ry="11" fill="none" stroke="#8f98a3" stroke-width="2.5"/>
+        <ellipse cx="340" cy="112" rx="60" ry="11" fill="none" stroke="#8f98a3" stroke-width="2.5"/>
+        <ellipse cx="340" cy="130" rx="60" ry="11" fill="none" stroke="#8f98a3" stroke-width="2.5"/>
+        <ellipse cx="340" cy="148" rx="60" ry="11" fill="none" stroke="#8f98a3" stroke-width="2.5"/>
+        <ellipse cx="340" cy="166" rx="60" ry="11" fill="none" stroke="#8f98a3" stroke-width="2.5"/>
+        <ellipse cx="340" cy="184" rx="60" ry="11" fill="none" stroke="#8f98a3" stroke-width="2.5"/>
+        <ellipse cx="340" cy="202" rx="60" ry="11" fill="none" stroke="#8f98a3" stroke-width="2.5"/>
+        <ellipse cx="340" cy="220" rx="60" ry="11" fill="none" stroke="#8f98a3" stroke-width="2.5"/>
+        <!-- 下支承板（固定，加地面斜线） -->
+        <rect x="270" y="222" width="140" height="10" fill="#b9c0ca" stroke="#6f7680" stroke-width="1.5"/>
+        <line x1="280" y1="244" x2="296" y2="232" stroke="#8a8378" stroke-width="1.5"/>
+        <line x1="308" y1="244" x2="324" y2="232" stroke="#8a8378" stroke-width="1.5"/>
+        <line x1="336" y1="244" x2="352" y2="232" stroke="#8a8378" stroke-width="1.5"/>
+        <line x1="364" y1="244" x2="380" y2="232" stroke="#8a8378" stroke-width="1.5"/>
+        <line x1="270" y1="244" x2="410" y2="244" stroke="#8a8378" stroke-width="2"/>
+        <!-- 中径 D 标注 -->
+        <line x1="280" y1="148" x2="400" y2="148" stroke="#b3352b" stroke-width="1"/>
+        <polygon points="280,148 292,142 292,154" fill="#b3352b"/>
+        <polygon points="400,148 388,142 388,154" fill="#b3352b"/>
+        <text x="340" y="140" font-size="12" font-weight="700" fill="#b3352b" text-anchor="middle">中径 D</text>
+        <!-- 簧丝直径 d 标注 -->
+        <text x="480" y="106" font-size="12" font-weight="700" fill="#b3352b">簧丝直径 d</text>
+        <line x1="476" y1="102" x2="402" y2="92" stroke="#b3352b" stroke-width="1"/>
+        <!-- 自由高度 H0 标注 -->
+        <line x1="452" y1="64" x2="452" y2="232" stroke="#2f7bbf" stroke-width="1"/>
+        <line x1="440" y1="64" x2="464" y2="64" stroke="#2f7bbf" stroke-width="1"/>
+        <line x1="440" y1="232" x2="464" y2="232" stroke="#2f7bbf" stroke-width="1"/>
+        <text x="472" y="160" font-size="12" font-weight="700" fill="#2f7bbf">自由高 H0</text>
+        <!-- 有效圈数 -->
+        <text x="196" y="176" font-size="12" font-weight="700" fill="#6b645a" text-anchor="middle">有效圈数 n</text>
+        <text x="340" y="272" font-size="12" fill="#7a6f60" text-anchor="middle">刚度 k = G·d⁴/(8·D³·n)，轴向力 F = k·λ；高径比 b = H0/D 过大需防屈曲（加导柱/导套）</text>
+      </svg>
+    </div>
+    <div class="form-grid">
+      <div><label>簧丝直径 d（mm）</label><input id="cd" type="number" value="5"></div>
+      <div><label>弹簧中径 D（mm）</label><input id="cD" type="number" value="25"></div>
+      <div><label>有效圈数 n（≥3）</label><input id="cn" type="number" value="8"></div>
+      <div><label>支承圈数 n₂（并紧端圈）</label>
+        <select id="cn2"><option value="1.5">1.5</option><option value="2" selected>2</option><option value="2.5">2.5</option></select>
+      </div>
+      <div><label>工作载荷 F（N）</label><input id="cF" type="number" value="400"></div>
+      <div><label>自由高度 H0（mm，0=不校核稳定性）</label><input id="cH0" type="number" value="60"></div>
+      <div><label>端部支承方式（稳定性判据）</label>
+        <select id="cfix">
+          <option value="5.3">两端固定（b ≤ 5.3）</option>
+          <option value="3.7" selected>一端固定一端回转（b ≤ 3.7）</option>
+          <option value="2.6">两端回转（b ≤ 2.6）</option>
+        </select>
+      </div>
+      <div><label>弹簧材料（G 与 σb）</label>
+        <select id="cmat">
+          <option value="79000,1400">碳素弹簧钢丝 C 级（G=79000，σb≈1400）</option>
+          <option value="78500,1000">65Mn（G=78500，σb≈1000）</option>
+          <option value="78500,1300">60Si2Mn（G=78500，σb≈1300）</option>
+          <option value="78500,1300b">50CrVA（G=78500，σb≈1300）</option>
+          <option value="71500,1100">304 不锈钢丝（G=71500，σb≈1100）</option>
+          <option value="custom">自定义</option>
+        </select>
+      </div>
+      <div id="ccustomWrap" style="display:none"><label>自定义 G / σb（MPa，逗号分隔）</label><input id="ccustom" type="text" value="79000,1400"></div>
+      <div><label>载荷类别（许用切应力系数）</label>
+        <select id="ccat">
+          <option value="0.50">III 类：静载 / 变载 &lt;10⁴ 次（[τ]=0.50σb）</option>
+          <option value="0.42">II 类：变载 10⁴~10⁶ 次（[τ]≈0.42σb）</option>
+          <option value="0.35">I 类：变载 &gt;10⁶ 次（[τ]≈0.35σb）</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn" onclick="compCalc()">开始计算</button>
+    <div id="cResult" style="display:none">
+      <table class="results">
+        <tr><th>旋绕比 C = D/d（推荐 4~9）</th><td class="v" id="crC">—</td></tr>
+        <tr><th>Wahl 曲度系数 K</th><td class="v" id="crK">—</td></tr>
+        <tr><th>弹簧刚度 k = G·d⁴/(8·D³·n)</th><td class="v" id="crk">—</td></tr>
+        <tr><th>工作变形量 λ = F/k</th><td class="v" id="crLam">—</td></tr>
+        <tr><th>切应力 τ = K·8·F·D/(π·d³)</th><td class="v" id="crTau">—</td></tr>
+        <tr><th>许用切应力 [τ]</th><td class="v" id="crTauA">—</td></tr>
+        <tr><th>强度校核</th><td class="v" id="crChk1">—</td></tr>
+        <tr><th>最大许用载荷 Fmax</th><td class="v" id="crFmax">—</td></tr>
+        <tr><th>总圈数 n₁ = n + n₂ 与压并高 Hb</th><td class="v" id="crHb">—</td></tr>
+        <tr><th>压并载荷 Fb = k·(H0−Hb) 与余量</th><td class="v" id="crFb">—</td></tr>
+        <tr><th>高径比 b = H0/D 稳定性</th><td class="v" id="crStab">—</td></tr>
+      </table>
+    </div>
+    <div class="note">
+      <b>公式依据（GB/T 23935-2009《圆柱螺旋弹簧设计计算》）：</b><br>
+      · 刚度 k = G·d⁴/(8·D³·n)；变形 λ = F/k（F = k·λ，n 为有效圈数，不含支承圈）<br>
+      · 切应力 τ = K·8F·D/(π·d³)，Wahl 曲度系数 K = (4C−1)/(4C−4) + 0.615/C，C = D/d（推荐 4~9，过大易松散、过小卷制困难）<br>
+      · 许用切应力：III 类（静载）[τ]=0.5σb；II 类（10⁴~10⁶ 次）≈0.42σb；I 类（&gt;10⁶ 次）≈0.35σb（II/I 为规范区间中值）<br>
+      · 稳定性：高径比 b = H0/D 超限时弹簧侧向屈曲——两端固定 b≤5.3、一端固定 b≤3.7、两端回转 b≤2.6，超限需加导柱/导套<br>
+      · 压并高（两端并紧磨平）Hb ≈ (n₁−0.5)·d，n₁ = n+n₂；建议工作载荷 ≤ 0.8·压并载荷，否则易压实失效<br>
+      · σb 与丝径强相关（碳素钢丝丝径越粗 σb 越低），此处取常用中值，精确设计请查 GB/T 23935 材料表
+    </div>
+  </div>
+
+  <!-- ============ ② 扭转弹簧 ============ -->
+  <div class="panel">
+    <h2>② 圆柱螺旋扭转弹簧（刚度 · 转角 · 弯曲应力）</h2>
+    <div class="fig">
+      <svg viewBox="0 0 680 270" width="680" height="270" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="扭转弹簧受力与转角示意图">
+        <!-- 弹簧圈（椭圆堆叠） -->
+        <ellipse cx="340" cy="120" rx="52" ry="10" fill="none" stroke="#8f98a3" stroke-width="2.5"/>
+        <ellipse cx="340" cy="134" rx="52" ry="10" fill="none" stroke="#8f98a3" stroke-width="2.5"/>
+        <ellipse cx="340" cy="148" rx="52" ry="10" fill="none" stroke="#8f98a3" stroke-width="2.5"/>
+        <ellipse cx="340" cy="162" rx="52" ry="10" fill="none" stroke="#8f98a3" stroke-width="2.5"/>
+        <!-- 两腿（切向伸出的直臂） -->
+        <line x1="288" y1="120" x2="170" y2="120" stroke="#c87a4a" stroke-width="6"/>
+        <line x1="392" y1="162" x2="510" y2="162" stroke="#c87a4a" stroke-width="6"/>
+        <circle cx="170" cy="120" r="4" fill="#c87a4a"/>
+        <circle cx="510" cy="162" r="4" fill="#c87a4a"/>
+        <!-- 工作转矩 T 弧形箭头 -->
+        <path d="M 420 76 A 86 86 0 0 1 424 148" fill="none" stroke="#e62e2e" stroke-width="3"/>
+        <polygon points="424,148 415,133 430,133" fill="#e62e2e"/>
+        <text x="452" y="108" font-size="14" font-weight="700" fill="#e62e2e">T 工作转矩</text>
+        <!-- 转角 φ 弧线标注 -->
+        <path d="M 234 92 A 120 120 0 0 1 452 118" fill="none" stroke="#2f7bbf" stroke-width="1.5" stroke-dasharray="5 4"/>
+        <text x="340" y="66" font-size="12" font-weight="700" fill="#2f7bbf" text-anchor="middle">两腿相对转角 φ = T/kT</text>
+        <!-- 中径 D 标注 -->
+        <line x1="288" y1="190" x2="392" y2="190" stroke="#b3352b" stroke-width="1"/>
+        <polygon points="288,190 300,184 300,196" fill="#b3352b"/>
+        <polygon points="392,190 380,184 380,196" fill="#b3352b"/>
+        <text x="340" y="206" font-size="12" font-weight="700" fill="#b3352b" text-anchor="middle">中径 D</text>
+        <!-- 簧丝直径 d -->
+        <text x="208" y="86" font-size="12" font-weight="700" fill="#b3352b">簧丝直径 d</text>
+        <line x1="252" y1="90" x2="300" y2="118" stroke="#b3352b" stroke-width="1"/>
+        <!-- 有效圈数 -->
+        <text x="340" y="240" font-size="12" font-weight="700" fill="#6b645a" text-anchor="middle">有效圈数 n</text>
+        <text x="340" y="260" font-size="12" fill="#7a6f60" text-anchor="middle">簧丝受弯曲应力 σ = K₁·32·T/(π·d³)；力臂较长时端部弯矩影响需另行复核</text>
+      </svg>
+    </div>
+    <div class="form-grid">
+      <div><label>簧丝直径 d（mm）</label><input id="td" type="number" value="4"></div>
+      <div><label>弹簧中径 D（mm）</label><input id="tD" type="number" value="25"></div>
+      <div><label>有效圈数 n</label><input id="tn" type="number" value="10"></div>
+      <div><label>工作转矩 T（N·mm）</label><input id="tT" type="number" value="2000"></div>
+      <div><label>弹簧材料（E 与 σb）</label>
+        <select id="tmat">
+          <option value="206000,1400">碳素弹簧钢丝 C 级（E=206000，σb≈1400）</option>
+          <option value="200000,1000">65Mn（E=200000，σb≈1000）</option>
+          <option value="200000,1300">60Si2Mn（E=200000，σb≈1300）</option>
+          <option value="188000,1100">304 不锈钢丝（E=188000，σb≈1100）</option>
+          <option value="custom">自定义</option>
+        </select>
+      </div>
+      <div id="tcustomWrap" style="display:none"><label>自定义 E / σb（MPa，逗号分隔）</label><input id="tcustom" type="text" value="206000,1400"></div>
+      <div><label>载荷类别（许用弯曲应力系数）</label>
+        <select id="tcat">
+          <option value="0.80">III 类：静载（[σb]≈0.80σb）</option>
+          <option value="0.62">II 类：变载（[σb]≈0.62σb）</option>
+          <option value="0.50">I 类：交变载荷（[σb]≈0.50σb）</option>
+        </select>
+      </div>
+      <div><label>加载旋向</label>
+        <select id="tdir">
+          <option value="open" selected>扭开（并圈方向相反，应力增大取 K₁）</option>
+          <option value="close">并紧（顺圈方向，曲度效应减小 K₁=1）</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn" onclick="torsCalc()">开始计算</button>
+    <div id="tResult" style="display:none">
+      <table class="results">
+        <tr><th>旋绕比 C = D/d（推荐 4~9）</th><td class="v" id="trC">—</td></tr>
+        <tr><th>弯曲曲度系数 K₁</th><td class="v" id="trK">—</td></tr>
+        <tr><th>扭转刚度 kT = E·d⁴/(64·D·n)</th><td class="v" id="trk">—</td></tr>
+        <tr><th>工作转角 φ = T/kT</th><td class="v" id="trPhi">—</td></tr>
+        <tr><th>弯曲应力 σ = K₁·32·T/(π·d³)</th><td class="v" id="trSig">—</td></tr>
+        <tr><th>许用弯曲应力 [σb]</th><td class="v" id="trSigA">—</td></tr>
+        <tr><th>强度校核</th><td class="v" id="trChk">—</td></tr>
+        <tr><th>最大许用转矩 Tmax</th><td class="v" id="trTmax">—</td></tr>
+        <tr><th>簧丝展开长度 L ≈ π·D·n（不含腿）</th><td class="v" id="trLen">—</td></tr>
+      </table>
+    </div>
+    <div class="note">
+      <b>公式依据（GB/T 23935-2009 扭转弹簧）：</b><br>
+      · 刚度 k<sub>T</sub> = E·d⁴/(64·D·n)（N·mm/rad）≈ E·d⁴/(3670·D·n)（N·mm/°）；转角 φ = T/k<sub>T</sub><br>
+      · 弯曲应力 σ = K₁·32·T/(π·d³)；曲度系数 K₁ = (4C−1)/(4C−4)（扭开旋向），并紧旋向取 K₁=1<br>
+      · 许用弯曲应力：III 类（静载）≈0.8σb，II 类 ≈0.62σb，I 类（交变）≈0.5σb（近似值，精确查规范表）<br>
+      · 转角大时注意：簧丝内径缩小（扭开时 D 内 −= φ·d/(360°·n) 圈数修正），装配芯轴需留余量，避免抱死<br>
+      · E 取值：碳素弹簧钢丝 206000、合金弹簧钢 200000、304 不锈钢 188000 MPa（GB/T 23935）
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  公式来源：GB/T 23935-2009《圆柱螺旋弹簧设计计算》、《机械设计手册》弹簧篇<br>
+  计算结果仅供设计参考；疲劳工况须按规范做疲劳强度校核，弹簧成品以厂家样品实测刚度为准
+</footer>
+
+<script>
+  const $ = id => document.getElementById(id);
+  const fmt = (n, d = 3) => Number(n).toLocaleString("zh-CN", { maximumFractionDigits: d });
+
+  // ① 压缩弹簧
+  function compCalc() {
+    const d = +$("cd").value, D = +$("cD").value, n = +$("cn").value, n2 = +$("cn2").value;
+    const F = +$("cF").value, H0 = +$("cH0").value, bLim = +$("cfix").value, cat = +$("ccat").value;
+    let G, sb;
+    if ($("cmat").value === "custom") { [G, sb] = $("ccustom").value.split(",").map(Number); }
+    else { [G, sb] = $("cmat").value.split(",").map(Number); }
+    if (!(d > 0) || !(D > 0) || !(n >= 3) || !(G > 0) || !(sb > 0)) { alert("请输入有效的簧丝直径、中径、圈数（有效圈数≥3）与材料参数"); return; }
+
+    const C = D / d;
+    const K = (4 * C - 1) / (4 * C - 4) + 0.615 / C;
+    const k = G * d ** 4 / (8 * D ** 3 * n);
+    const lam = F / k;
+    const tau = K * 8 * F * D / (Math.PI * d ** 3);
+    const tauA = cat * sb;
+    const Fmax = tauA * Math.PI * d ** 3 / (8 * K * D);
+    const n1 = n + n2;
+    const Hb = (n1 - 0.5) * d;
+    const lamMax = H0 - Hb;
+    const Fb = lamMax > 0 ? k * lamMax : 0;
+
+    $("cResult").style.display = "";
+    $("crC").textContent = fmt(C, 2) + (C >= 4 && C <= 9 ? "（推荐范围内 ✔）" : C > 9 ? "（偏大：弹簧松散、易晃动）" : "（偏小：卷制困难、应力集中大）");
+    $("crK").textContent = fmt(K, 4);
+    $("crk").textContent = fmt(k, 2) + " N/mm";
+    $("crLam").textContent = fmt(lam, 2) + " mm";
+    $("crTau").textContent = fmt(tau, 1) + " MPa";
+    $("crTauA").textContent = fmt(tauA, 0) + " MPa（" + fmt(cat, 2) + " × σb=" + fmt(sb, 0) + "）";
+    $("crChk1").innerHTML = tau <= tauA
+      ? `<span class="ok">✔ 通过（${fmt(tau, 1)} ≤ ${fmt(tauA, 0)} MPa，利用率 ${fmt(tau / tauA * 100, 1)}%）</span>`
+      : `<span class="ng">✘ 不通过（加大簧丝直径 d 或降低工作载荷）</span>`;
+    $("crFmax").textContent = fmt(Fmax, 1) + " N（对应 [τ]）";
+    $("crHb").textContent = "n₁=" + fmt(n1, 1) + " 圈，Hb=" + fmt(Hb, 1) + " mm（磨平端）";
+    let fbMsg;
+    if (!H0 || H0 <= Hb) fbMsg = H0 ? `<span class="ng">✘ H0 ≤ 压并高，弹簧无法工作</span>` : `<span class="warn">未输入 H0，不校核压并</span>`;
+    else {
+      const ratio = F / Fb * 100;
+      fbMsg = `Fb = ${fmt(Fb, 1)} N，工作载荷占 ${fmt(ratio, 1)}% ` +
+        (ratio <= 80 ? `<span class="ok">✔（建议 ≤80%）</span>` : `<span class="warn">⚠ 超过 80%，余量不足</span>`);
+    }
+    $("crFb").innerHTML = fbMsg;
+    if (H0 > 0) {
+      const b = H0 / D;
+      $("crStab").innerHTML = `b = ${fmt(b, 2)} ` + (b <= bLim
+        ? `<span class="ok">✔ ≤ ${fmt(bLim, 1)}（${$("cfix").selectedOptions[0].text.split("（")[0]}），不易屈曲</span>`
+        : `<span class="ng">✘ &gt; ${fmt(bLim, 1)}，有屈曲风险——加导柱/导套或减小 H0</span>`);
+    } else {
+      $("crStab").textContent = "—（未输入 H0）";
+    }
+  }
+
+  // ② 扭转弹簧
+  function torsCalc() {
+    const d = +$("td").value, D = +$("tD").value, n = +$("tn").value, T = +$("tT").value;
+    const cat = +$("tcat").value, dir = $("tdir").value;
+    let E, sb;
+    if ($("tmat").value === "custom") { [E, sb] = $("tcustom").value.split(",").map(Number); }
+    else { [E, sb] = $("tmat").value.split(",").map(Number); }
+    if (!(d > 0) || !(D > 0) || !(n >= 3) || !(E > 0) || !(sb > 0) || !(T > 0)) { alert("请输入有效的簧丝直径、中径、圈数（≥3）、转矩与材料参数"); return; }
+
+    const C = D / d;
+    const Kb = dir === "open" ? (4 * C - 1) / (4 * C - 4) : 1;
+    const kTr = E * d ** 4 / (64 * D * n);          // N·mm/rad
+    const kTd = kTr * Math.PI / 180;                // N·mm/°（1 rad = 57.2958°，每度刚度更小）
+    const phi = T / kTd;
+    const sig = Kb * 32 * T / (Math.PI * d ** 3);
+    const sigA = cat * sb;
+    const Tmax = sigA * Math.PI * d ** 3 / (32 * Kb);
+    const L = Math.PI * D * n;
+
+    $("tResult").style.display = "";
+    $("trC").textContent = fmt(C, 2) + (C >= 4 && C <= 9 ? "（推荐范围内 ✔）" : "（建议 4~9）");
+    $("trK").textContent = fmt(Kb, 4) + (dir === "open" ? "（扭开旋向）" : "（并紧旋向，取 1）");
+    $("trk").textContent = fmt(kTd, 2) + " N·mm/°（" + fmt(kTr, 1) + " N·mm/rad）";
+    $("trPhi").textContent = fmt(phi, 2) + "°（" + fmt(phi * Math.PI / 180, 3) + " rad）";
+    $("trSig").textContent = fmt(sig, 1) + " MPa";
+    $("trSigA").textContent = fmt(sigA, 0) + " MPa（" + fmt(cat, 2) + " × σb=" + fmt(sb, 0) + "）";
+    $("trChk").innerHTML = sig <= sigA
+      ? `<span class="ok">✔ 通过（${fmt(sig, 1)} ≤ ${fmt(sigA, 0)} MPa，利用率 ${fmt(sig / sigA * 100, 1)}%）</span>`
+      : `<span class="ng">✘ 不通过（加大簧丝直径 d 或减小转矩）</span>`;
+    $("trTmax").textContent = fmt(Tmax, 1) + " N·mm（对应转角 " + fmt(Tmax / kTd, 1) + "°）";
+    $("trLen").textContent = fmt(L, 1) + " mm";
+  }
+
+  // 联动显隐
+  $("cmat").onchange = () => { $("ccustomWrap").style.display = $("cmat").value === "custom" ? "" : "none"; };
+  $("tmat").onchange = () => { $("tcustomWrap").style.display = $("tmat").value === "custom" ? "" : "none"; };
+</script>
+</body>
+</html>
