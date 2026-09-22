@@ -18,6 +18,7 @@
   .panel { background: #fff; border: 1px solid #eee5dc; border-radius: 14px; padding: 22px; margin-bottom: 18px; }
   .panel h2 { font-size: 16px; color: #b3352b; margin-bottom: 14px; padding-left: 9px; border-left: 4px solid #f7433b; }
   .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  .form-grid .wide { grid-column: 1 / -1; }
   label { display: block; font-size: 13px; color: #6b645a; margin-bottom: 4px; }
   input, select { width: 100%; padding: 8px 10px; border: 1px solid #d8cfc4; border-radius: 8px; font-size: 14px; background: #fffdfb; }
   input:focus, select:focus { outline: none; border-color: #f7433b; }
@@ -84,13 +85,13 @@
       <div><label>焊缝条数 n（双面搭接为 2）</label><input id="fn" type="number" value="2"></div>
       <div><label>每条焊缝几何长度 L（mm）</label><input id="fL" type="number" value="150"></div>
       <div><label>焊脚尺寸 hf（mm）</label><input id="fhf" type="number" value="8"></div>
-      <div><label>受力方向</label>
+      <div class="wide"><label>受力方向</label>
         <select id="fdir">
           <option value="side" selected>侧面角焊缝（力平行焊缝长度）</option>
           <option value="front">正面角焊缝（力垂直焊缝长度）</option>
         </select>
       </div>
-      <div><label>母材 / 焊条匹配（角焊缝设计值 ffw）</label>
+      <div class="wide"><label>母材 / 焊条匹配（角焊缝设计值 ffw）</label>
         <select id="fmat">
           <option value="160">Q235 + E43 型（ffw=160 MPa）</option>
           <option value="200">Q355 + E50 型（ffw=200 MPa）</option>
@@ -98,7 +99,7 @@
           <option value="custom">自定义</option>
         </select>
       </div>
-      <div id="fmatWrap" style="display:none"><label>自定义 ffw（MPa）</label><input id="fmatC" type="number" value="160"></div>
+      <div class="wide" id="fmatWrap" style="display:none"><label>自定义 ffw（MPa）</label><input id="fmatC" type="number" value="160"></div>
     </div>
     <button class="btn" onclick="filletCalc()">开始计算</button>
     <div id="fResult" style="display:none">
@@ -157,7 +158,7 @@
     <div class="form-grid">
       <div><label>弯矩 M（N·m）</label><input id="bM" type="number" value="5000"></div>
       <div><label>剪力 V（N，纯弯可填 0）</label><input id="bV" type="number" value="50000"></div>
-      <div><label>焊缝布置</label>
+      <div class="wide"><label>焊缝布置</label>
         <select id="blayout">
           <option value="2v" selected>两条竖直角焊缝（牛腿贴板）</option>
           <option value="4w">四面围焊（矩形焊缝群 b×h）</option>
@@ -166,7 +167,7 @@
       <div><label>竖焊缝高度 h（mm）</label><input id="bh" type="number" value="200"></div>
       <div><label>两条焊缝间距 b（mm，围焊为水平边长）</label><input id="bb" type="number" value="150"></div>
       <div><label>焊脚尺寸 hf（mm）</label><input id="bhf" type="number" value="8"></div>
-      <div><label>母材 / 焊条匹配（ffw）</label>
+      <div class="wide"><label>母材 / 焊条匹配（ffw）</label>
         <select id="bmat">
           <option value="160">Q235 + E43 型（160 MPa）</option>
           <option value="200">Q355 + E50 型（200 MPa）</option>
@@ -174,7 +175,7 @@
           <option value="custom">自定义</option>
         </select>
       </div>
-      <div id="bmatWrap" style="display:none"><label>自定义 ffw（MPa）</label><input id="bmatC" type="number" value="160"></div>
+      <div class="wide" id="bmatWrap" style="display:none"><label>自定义 ffw（MPa）</label><input id="bmatC" type="number" value="160"></div>
     </div>
     <button class="btn" onclick="bracketCalc()">开始计算</button>
     <div id="bResult" style="display:none">
@@ -228,7 +229,7 @@
       <div><label>剪力 V（N，无则填 0）</label><input id="dV" type="number" value="0"></div>
       <div><label>板宽 b（mm，受力方向宽度）</label><input id="db" type="number" value="100"></div>
       <div><label>板厚 t（mm，取较薄板）</label><input id="dt" type="number" value="10"></div>
-      <div><label>母材（对接焊缝设计值）</label>
+      <div class="wide"><label>母材（对接焊缝设计值）</label>
         <select id="dmat">
           <option value="215,125">Q235（f=215 / fv=125 MPa）</option>
           <option value="305,175">Q355（f=305 / fv=175 MPa）</option>
@@ -236,7 +237,7 @@
           <option value="custom">自定义</option>
         </select>
       </div>
-      <div id="dmatWrap" style="display:none"><label>自定义 f / fv（MPa，逗号分隔）</label><input id="dmatC" type="text" value="215,125"></div>
+      <div class="wide" id="dmatWrap" style="display:none"><label>自定义 f / fv（MPa，逗号分隔）</label><input id="dmatC" type="text" value="215,125"></div>
     </div>
     <button class="btn" onclick="buttCalc()">开始计算</button>
     <div id="dResult" style="display:none">

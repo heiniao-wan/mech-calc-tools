@@ -18,6 +18,7 @@
   .panel { background: #fff; border: 1px solid #eee5dc; border-radius: 14px; padding: 22px; margin-bottom: 18px; }
   .panel h2 { font-size: 16px; color: #b3352b; margin-bottom: 14px; padding-left: 9px; border-left: 4px solid #f7433b; }
   .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  .form-grid .wide { grid-column: 1 / -1; }
   label { display: block; font-size: 13px; color: #6b645a; margin-bottom: 4px; }
   input, select { width: 100%; padding: 8px 10px; border: 1px solid #d8cfc4; border-radius: 8px; font-size: 14px; background: #fffdfb; }
   input:focus, select:focus { outline: none; border-color: #f7433b; }
@@ -107,14 +108,14 @@
       </div>
       <div><label>工作载荷 F（N）</label><input id="cF" type="number" value="400"></div>
       <div><label>自由高度 H0（mm，0=不校核稳定性）</label><input id="cH0" type="number" value="60"></div>
-      <div><label>端部支承方式（稳定性判据）</label>
+      <div class="wide"><label>端部支承方式（稳定性判据）</label>
         <select id="cfix">
           <option value="5.3">两端固定（b ≤ 5.3）</option>
           <option value="3.7" selected>一端固定一端回转（b ≤ 3.7）</option>
           <option value="2.6">两端回转（b ≤ 2.6）</option>
         </select>
       </div>
-      <div><label>弹簧材料（G 与 σb）</label>
+      <div class="wide"><label>弹簧材料（G 与 σb）</label>
         <select id="cmat">
           <option value="79000,1400">碳素弹簧钢丝 C 级（G=79000，σb≈1400）</option>
           <option value="78500,1000">65Mn（G=78500，σb≈1000）</option>
@@ -124,8 +125,8 @@
           <option value="custom">自定义</option>
         </select>
       </div>
-      <div id="ccustomWrap" style="display:none"><label>自定义 G / σb（MPa，逗号分隔）</label><input id="ccustom" type="text" value="79000,1400"></div>
-      <div><label>载荷类别（许用切应力系数）</label>
+      <div class="wide" id="ccustomWrap" style="display:none"><label>自定义 G / σb（MPa，逗号分隔）</label><input id="ccustom" type="text" value="79000,1400"></div>
+      <div class="wide"><label>载荷类别（许用切应力系数）</label>
         <select id="ccat">
           <option value="0.50">III 类：静载 / 变载 &lt;10⁴ 次（[τ]=0.50σb）</option>
           <option value="0.42">II 类：变载 10⁴~10⁶ 次（[τ]≈0.42σb）</option>
@@ -200,7 +201,7 @@
       <div><label>弹簧中径 D（mm）</label><input id="tD" type="number" value="25"></div>
       <div><label>有效圈数 n</label><input id="tn" type="number" value="10"></div>
       <div><label>工作转矩 T（N·mm）</label><input id="tT" type="number" value="2000"></div>
-      <div><label>弹簧材料（E 与 σb）</label>
+      <div class="wide"><label>弹簧材料（E 与 σb）</label>
         <select id="tmat">
           <option value="206000,1400">碳素弹簧钢丝 C 级（E=206000，σb≈1400）</option>
           <option value="200000,1000">65Mn（E=200000，σb≈1000）</option>
@@ -209,15 +210,15 @@
           <option value="custom">自定义</option>
         </select>
       </div>
-      <div id="tcustomWrap" style="display:none"><label>自定义 E / σb（MPa，逗号分隔）</label><input id="tcustom" type="text" value="206000,1400"></div>
-      <div><label>载荷类别（许用弯曲应力系数）</label>
+      <div class="wide" id="tcustomWrap" style="display:none"><label>自定义 E / σb（MPa，逗号分隔）</label><input id="tcustom" type="text" value="206000,1400"></div>
+      <div class="wide"><label>载荷类别（许用弯曲应力系数）</label>
         <select id="tcat">
           <option value="0.80">III 类：静载（[σb]≈0.80σb）</option>
           <option value="0.62">II 类：变载（[σb]≈0.62σb）</option>
           <option value="0.50">I 类：交变载荷（[σb]≈0.50σb）</option>
         </select>
       </div>
-      <div><label>加载旋向</label>
+      <div class="wide"><label>加载旋向</label>
         <select id="tdir">
           <option value="open" selected>扭开（并圈方向相反，应力增大取 K₁）</option>
           <option value="close">并紧（顺圈方向，曲度效应减小 K₁=1）</option>
