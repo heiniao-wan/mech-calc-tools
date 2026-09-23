@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>伺服电机选型（丝杠驱动）· 机械非标自动化设计计算</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #f7f4f0; color: #3a342e; line-height: 1.6; }
+  header { background: linear-gradient(135deg, #ff7a3c 0%, #e8442b 100%); color: #fff; padding: 22px 28px; }
+  header h1 { font-size: 22px; font-weight: 800; letter-spacing: 1px; }
+  header p { font-size: 13px; opacity: .92; margin-top: 6px; }
+  .back { display: inline-block; margin: 14px 0 0 28px; padding: 10px 20px; background: linear-gradient(135deg,#ff7a3c,#e8442b); color: #fff;
+    text-decoration: none; font-weight: 700; font-size: 15px; border-radius: 8px; box-shadow: 0 3px 10px rgba(232,68,43,.35); }
+  .back:hover { filter: brightness(1.05); }
+  .wrap { max-width: 1000px; margin: 18px auto 40px; padding: 0 18px; }
+  .panel { background: #fff; border-radius: 14px; padding: 22px 24px; margin-bottom: 22px; box-shadow: 0 2px 14px rgba(0,0,0,.05); }
+  .panel h2 { font-size: 17px; color: #b3352b; margin-bottom: 16px; border-left: 5px solid #ff7a3c; padding-left: 12px; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  .form-grid .wide { grid-column: 1 / -1; }
+  label { display: block; font-size: 12px; color: #7a6f60; margin-bottom: 4px; }
+  input, select { width: 100%; padding: 9px 10px; border: 1px solid #e3d8c8; border-radius: 8px; font-size: 14px; background: #fffdf9; }
+  input:focus, select:focus { outline: none; border-color: #ff7a3c; }
+  .btn { margin-top: 16px; padding: 11px 26px; background: linear-gradient(135deg,#ff7a3c,#e8442b); color:#fff; border: none;
+    border-radius: 9px; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 3px 10px rgba(232,68,43,.3); }
+  .btn:hover { filter: brightness(1.05); }
+  .btn.gray { background: linear-gradient(135deg,#9a9389,#716a60); }
+  .fig { background: #fdf8f2; border: 1px solid #f0e2d0; border-radius: 10px; padding: 14px; margin-bottom: 8px; text-align: center; }
+  .fig figcaption { font-size: 12px; color: #7a6f60; margin-top: 8px; }
+  .result { margin-top: 16px; background: #fbf6ef; border-radius: 10px; padding: 14px 16px; }
+  .result table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .result th, .result td { border: 1px solid #ecdfcc; padding: 7px 9px; text-align: left; }
+  .result th { background: #f3e7d6; color: #6b5d4c; font-weight: 700; }
+  .result td.val { font-weight: 700; color: #2a2a2a; text-align: right; font-variant-numeric: tabular-nums; }
+  .ok { color: #1f8a4c; font-weight: 700; }
+  .ng { color: #e8442b; font-weight: 700; }
+  .note { background: #fdf8f2; border: 1px solid #f0e2d0; border-radius: 10px; padding: 14px 16px; font-size: 13px; color: #7a6f60; line-height: 1.9; margin-top: 16px; }
+  .note b { color: #b3352b; }
+  .star { color: #e8a200; }
+  .rec-table td { font-size: 12px; }
+  .small { font-size: 11px; color: #a89b88; margin-top: 4px; }
+  footer { text-align: center; font-size: 12px; color: #a89b88; padding: 20px; }
+  footer a { color: #b3352b; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🦾 伺服电机选型（丝杠驱动）</h1>
+  <p>负载转矩 TL=F·Pb/(2πηi) · 折算惯量 · 加速转矩 · 峰值/RMS 转矩 · 惯量比校核 · 按约束自动推荐型号 — 公式依据运动控制与厂商选型指南</p>
+</header>
+<a class="back" href="../index.html">← 返回工具集</a>
+
+<div class="wrap">
+
+  <!-- 面板① 运动与负载参数 -->
+  <div class="panel">
+    <h2>① 运动与负载参数输入</h2>
+    <div class="form-grid">
+      <div><label>安装方式</label>
+        <select id="orient">
+          <option value="h">水平安装（不计重力）</option>
+          <option value="v">垂直安装（计重力，取上行最不利）</option>
+        </select>
+      </div>
+      <div><label>负载质量 m (kg)</label><input id="m" type="text" value="30"></div>
+      <div><label>行程 S (mm)</label><input id="S" type="text" value="400"></div>
+      <div><label>最高速度 Vmax (mm/s)</label><input id="Vmax" type="text" value="500"></div>
+      <div><label>加速时间 ta (s)</label><input id="ta" type="text" value="0.2"></div>
+      <div><label>减速时间 td (s)</label><input id="td" type="text" value="0.2"></div>
+      <div><label>匀速时间 tv (s)</label><input id="tv" type="text" value="0.5"></div>
+      <div><label>停留时间 ts (s)</label><input id="ts" type="text" value="0.5"></div>
+      <div><label>丝杠导程 Pb (mm)</label><input id="Pb" type="text" value="10"></div>
+      <div><label>减速比 i（1=直连）</label><input id="i" type="text" value="1"></div>
+      <div><label>传动效率 η（滚珠丝杠 0.85~0.95）</label><input id="eta" type="text" value="0.9"></div>
+      <div><label>导轨摩擦系数 μ（直线导轨 0.02）</label><input id="mu" type="text" value="0.02"></div>
+      <div><label>丝杠外径 d0 (mm，估算惯量用)</label><input id="d0" type="text" value="16"></div>
+      <div><label>丝杠质量 ms (kg，留空按钢密度估算)</label><input id="ms" type="text" value=""></div>
+      <div><label>丝杠长度 Ls (mm，估算质量用)</label><input id="Ls" type="text" value="600"></div>
+      <div><label>惯量比限值（精密5 / 一般10 / 宽松20）</label><input id="irlim" type="text" value="10"></div>
+      <div><label>安全系数 K（额定转矩裕度）</label><input id="K" type="text" value="1.5"></div>
+    </div>
+    <div class="fig">
+      <svg viewBox="0 0 680 230" width="680" height="230" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="丝杠驱动直线轴布置示意图">
+        <!-- 底座 -->
+        <rect x="40" y="186" width="600" height="14" fill="#e8dcc8" stroke="#b98a5f" stroke-width="1.5"/>
+        <!-- 直线导轨 -->
+        <rect x="120" y="172" width="470" height="8" rx="3" fill="#c9b79b" stroke="#9a8763" stroke-width="1"/>
+        <!-- 工作台 -->
+        <rect x="300" y="138" width="120" height="34" rx="4" fill="#fbe3d0" stroke="#c87a4a" stroke-width="2"/>
+        <text x="360" y="159" font-size="13" font-weight="700" fill="#7a4a2a" text-anchor="middle">工作台 m</text>
+        <!-- 丝杠 -->
+        <rect x="80" y="158" width="430" height="10" rx="5" fill="#d7dde2" stroke="#8a949c" stroke-width="1.5"/>
+        <line x1="120" y1="163" x2="510" y2="163" stroke="#aab2b9" stroke-width="1" stroke-dasharray="4 4"/>
+        <text x="300" y="128" font-size="12" font-weight="700" fill="#5a6b73" text-anchor="middle">滚珠丝杠 导程 Pb</text>
+        <!-- 电机 -->
+        <rect x="60" y="120" width="80" height="56" rx="6" fill="#ffd9c2" stroke="#e8442b" stroke-width="2"/>
+        <text x="100" y="152" font-size="13" font-weight="800" fill="#b3352b" text-anchor="middle">伺服</text>
+        <text x="100" y="142" font-size="11" fill="#b3352b" text-anchor="middle">电机</text>
+        <!-- 联轴器 / 减速 -->
+        <rect x="140" y="152" width="20" height="22" rx="3" fill="#b9c2c9" stroke="#7a828a" stroke-width="1"/>
+        <text x="150" y="190" font-size="10" fill="#7a6f60" text-anchor="middle" id="svgRed">i=1</text>
+        <!-- 速度 V -->
+        <line x1="360" y1="120" x2="470" y2="120" stroke="#2f7bbf" stroke-width="4"/>
+        <polygon points="478,120 462,112 462,128" fill="#2f7bbf"/>
+        <text x="415" y="112" font-size="13" font-weight="700" fill="#2f7bbf" text-anchor="middle">V</text>
+        <!-- 轴向力 F -->
+        <line x1="300" y1="110" x2="300" y2="80" stroke="#e62e2e" stroke-width="4"/>
+        <polygon points="300,72 293,90 307,90" fill="#e62e2e"/>
+        <text x="300" y="68" font-size="13" font-weight="700" fill="#e62e2e" text-anchor="middle">F</text>
+        <text x="600" y="200" font-size="11" fill="#7a6f60" text-anchor="end">① 负载转矩 TL=F·Pb/(2πηi)；② 惯量比 Jref/Jm</text>
+      </svg>
+      <figcaption>丝杠驱动直线轴：伺服电机经联轴器（或减速比 i）驱动滚珠丝杠，将旋转运动转化为工作台直线移动</figcaption>
+    </div>
+    <button class="btn" onclick="calcBase()">计算 ① 折算惯量与负载转矩</button>
+    <div class="result" id="baseRes" style="display:none"></div>
+  </div>
+
+  <!-- 面板② 转矩校核（需选电机） -->
+  <div class="panel">
+    <h2>② 转矩与惯量比校核（选择候选电机）</h2>
+    <div class="form-grid">
+      <div class="wide"><label>候选电机（品牌分组下拉，选中后自动填充；亦可手动输入）</label>
+        <select id="mmodel" onchange="fillMotor()"></select>
+      </div>
+      <div><label>额定转矩 Tr (N·m)</label><input id="Tr" type="text" value="1.27"></div>
+      <div><label>最大转矩 Tmax (N·m)</label><input id="Tmax" type="text" value="3.82"></div>
+      <div><label>额定转速 Nr (r/min)</label><input id="Nr" type="text" value="3000"></div>
+      <div><label>转子惯量 Jm (×10⁻⁴ kg·m²)</label><input id="Jm" type="text" value="0.216"></div>
+    </div>
+    <button class="btn" onclick="calcCheck()">计算 ② 加速/峰值/RMS 转矩校核</button>
+    <div class="result" id="checkRes" style="display:none"></div>
+  </div>
+
+  <!-- 面板③ 自动推荐 -->
+  <div class="panel">
+    <h2>③ 按约束自动推荐合适规格</h2>
+    <div class="note">
+      推荐逻辑：依据 ① 算出的 <b>所需转速 N、折算惯量 Jref、负载转矩 TL</b> 与角加速度 α，对库中每款电机逐一计算
+      加速转矩 Ta=(Jm+Jref)·α、峰值 Tpeak=Ta+TL、RMS 转矩、惯量比，筛选同时满足
+      <b>额定转速≥N、最大转矩≥Tpeak、额定转矩≥1.25·Trms、惯量比≤限值、功率≥1.2·P_req</b> 的型号，
+      按功率升序取最小满足规格并标 ⭐。
+    </div>
+    <button class="btn" onclick="recommend()">自动推荐</button>
+    <div class="result" id="recRes" style="display:none"></div>
+  </div>
+
+  <div class="note">
+    <b>公式与依据：</b><br>
+    · 负载转矩（到电机轴）：TL = F·Pb/(2π·η·i)，F=μ·m·g（水平）或 F=m·g·(μ+1)（垂直上行）；Pb 取 m。<br>
+    · 折算惯量（到电机轴）：Jref = m·(Pb/2π·i)² + Js/i²，Js=ms·(d0/2000)²（圆柱绕轴）。<br>
+    · 电机转速：N = 60·i·V/Pb（r/min）；角速度 ω=2π·N/60；角加速度 α=ω/ta。<br>
+    · 加速转矩：Ta=(Jm+Jref)·α；峰值 Tpeak=Ta+TL；RMS：Trms=√[((Ta+TL)²·ta+TL²·tv+(Ta−TL)²·td)/T]。<br>
+    · 惯量比=Jref/Jm（精密急加减速≤5，一般≤10，宽松≤20）；功率 P=T·N/9550 (kW)。<br>
+    · 来源：松下 MINAS A6、安川 Σ-7 选型样本；运动控制惯量/转矩校核通用方法。
+  </div>
+
+</div>
+
+<footer>
+  机械非标自动化设计计算工具集 · <a href="https://github.com/heiniao-wan/mech-calc-tools">GitHub 仓库</a><br>
+  计算结果供选型参考，最终以厂商样本与工程校核为准。
+</footer>
+
+<script>
+function $(id){ return document.getElementById(id); }
+function num(id){ const v=parseFloat($(''+id).value); return isNaN(v)?0:v; }
+
+/* ============ 厂商伺服电机数据库（200V 级，低惯量中惯量典型系列） ============
+   字段：品牌, 型号, 功率kW, 额定转矩N·m, 最大转矩N·m, 额定转速r/min, 转子惯量×10⁻⁴kg·m² */
+const SERVO = [
+  // 松下 MINAS A6（MSMF 低惯量，200V，无制动转子惯量）
+  {b:'松下 A6', m:'MSMF012 (100W)',  p:0.10, tr:0.32,  tmx:0.95, nr:3000, j:0.048},
+  {b:'松下 A6', m:'MSMF022 (200W)',  p:0.20, tr:0.64,  tmx:1.91, nr:3000, j:0.130},
+  {b:'松下 A6', m:'MSMF042 (400W)',  p:0.40, tr:1.27,  tmx:3.82, nr:3000, j:0.260},
+  {b:'松下 A6', m:'MSMF082 (750W)',  p:0.75, tr:2.39,  tmx:7.16, nr:3000, j:0.960},
+  {b:'松下 A6', m:'MHMF102 (1kW)',   p:1.00, tr:3.18,  tmx:9.55, nr:3000, j:1.200},
+  {b:'松下 A6', m:'MHMF152 (1.5kW)', p:1.50, tr:4.77,  tmx:14.3, nr:3000, j:2.000},
+  // 安川 Σ-7（SGM7A，200V）
+  {b:'安川 Σ-7', m:'SGM7A-01A (100W)',  p:0.10, tr:0.318, tmx:1.11, nr:3000, j:0.0337},
+  {b:'安川 Σ-7', m:'SGM7A-C2A (150W)', p:0.15, tr:0.477, tmx:1.67, nr:3000, j:0.0458},
+  {b:'安川 Σ-7', m:'SGM7A-02A (200W)',  p:0.20, tr:0.637, tmx:2.23, nr:3000, j:0.139},
+  {b:'安川 Σ-7', m:'SGM7A-04A (400W)',  p:0.40, tr:1.27,  tmx:4.46, nr:3000, j:0.216},
+  {b:'安川 Σ-7', m:'SGM7A-06A (600W)',  p:0.60, tr:1.91,  tmx:6.69, nr:3000, j:0.315},
+  {b:'安川 Σ-7', m:'SGM7A-08A (750W)',  p:0.75, tr:2.39,  tmx:8.36, nr:3000, j:0.775},
+  {b:'安川 Σ-7', m:'SGM7A-10A (1kW)',   p:1.00, tr:3.18,  tmx:11.1, nr:3000, j:0.971},
+  {b:'安川 Σ-7', m:'SGM7A-15A (1.5kW)', p:1.50, tr:4.90,  tmx:14.7, nr:3000, j:2.000},
+];
+
+// 全局保存基准计算结果
+let BASE = {};
+
+/* 面板① */
+function calcBase(){
+  const m=num('m'), Pb=num('Pb'), i=num('i')||1, eta=num('eta')||0.9, mu=num('mu'), V=num('Vmax'), ta=num('ta'), td=num('td'), tv=num('tv'), ts=num('ts'), K=num('K')||1.5;
+  const d0=num('d0'), Ls=num('Ls'), g=9.81;
+  const Pb_m = Pb/1000;                       // m
+  // 丝杠质量（未填则按钢密度由 d0、Ls 估算）
+  let ms = parseFloat($('ms').value);
+  if(isNaN(ms)){
+    const r=d0/2000, vol=Math.PI*r*r*(Ls/1000); // m^3
+    ms = 7850*vol;                              // kg
+  }
+  const Js = ms*Math.pow(d0/2000,2);            // kg·m²（圆柱绕轴 J=½mr²=m(d/2)²/2? 用 ½mr²）
+  const JsCyl = 0.5*ms*Math.pow(d0/2000,2);
+  // 折算惯量（到电机轴）
+  const Jlin = m*Math.pow(Pb_m/(2*Math.PI*i),2);
+  const Jref = Jlin + JsCyl/Math.pow(i,2);
+  // 轴向力
+  let F;
+  if($('orient').value==='v'){ F = m*g*(mu+1); }   // 垂直上行最不利
+  else { F = mu*m*g; }                              // 水平
+  // 负载转矩（到电机轴）
+  const TL = F*Pb_m/(2*Math.PI*eta*i);
+  // 转速 / 角速度 / 角加速度
+  const N = 60*i*V/Pb;
+  const w = 2*Math.PI*N/60;
+  const alpha = w/ta;
+  // 周期
+  const T = ta+td+tv+ts;
+  BASE = {m,Pb,Pb_m,i,eta,mu,V,ta,td,tv,ts,K,d0,Ls,ms,JsCyl,Jref,F,TL,N,w,alpha,T,g};
+  // SVG 减速比
+  $('svgRed').textContent = 'i='+i;
+  // 输出
+  const rows = [
+    ['负载质量 m', m.toFixed(1), 'kg'],
+    ['轴向力 F（最不利）', F.toFixed(1), 'N'],
+    ['丝杠质量 ms（估算）', ms.toFixed(3), 'kg'],
+    ['丝杠惯量 Js', JsCyl.toExponential(2), 'kg·m²'],
+    ['折算到电机轴 Jref', Jref.toExponential(3), 'kg·m²'],
+    ['负载转矩 TL（到电机轴）', TL.toFixed(3), 'N·m'],
+    ['电机所需转速 N', N.toFixed(0), 'r/min'],
+    ['角速度 ω', w.toFixed(1), 'rad/s'],
+    ['角加速度 α', alpha.toFixed(0), 'rad/s²'],
+    ['单周期 T', T.toFixed(2), 's'],
+  ];
+  let html = '<table><tr><th>项目</th><th>数值</th><th>单位</th></tr>';
+  rows.forEach(r=>html+='<tr><td>'+r[0]+'</td><td class="val">'+r[1]+'</td><td>'+r[2]+'</td></tr>');
+  html+='</table><div class="small">提示：Jref 已折算到电机轴（含减速比 i²），可直接用于面板②/③ 的惯量比与加速转矩计算。</div>';
+  $('baseRes').innerHTML=html; $('baseRes').style.display='';
+}
+
+/* 填充下拉 */
+(function fillSelect(){
+  const sel=$('mmodel');
+  const brands=[...new Set(SERVO.map(s=>s.b))];
+  let html='<option value="">— 手动输入 —</option>';
+  brands.forEach(br=>{
+    html+='<optgroup label="'+br+'">';
+    SERVO.filter(s=>s.b===br).forEach((s,idx)=>{
+      const gi=SERVO.indexOf(s);
+      html+='<option value="'+gi+'">'+s.m+'（'+s.tr+'/'+s.tmx+'N·m, '+s.nr+'rpm, J='+s.j+'e-4）</option>';
+    });
+    html+='</optgroup>';
+  });
+  sel.innerHTML=html;
+})();
+
+function fillMotor(){
+  const gi=$('mmodel').value;
+  if(gi==='') return;
+  const s=SERVO[+gi];
+  $('Tr').value=s.tr; $('Tmax').value=s.tmx; $('Nr').value=s.nr; $('Jm').value=s.j;
+}
+
+/* 面板② */
+function calcCheck(){
+  if(!BASE.N){ calcBase(); }
+  const Tr=num('Tr'), Tmax=num('Tmax'), Nr=num('Nr'), Jm=num('Jm')*1e-4, K=BASE.K;
+  const Jref=BASE.Jref, TL=BASE.TL, alpha=BASE.alpha, ta=BASE.ta, td=BASE.td, tv=BASE.tv, ts=BASE.ts, T=BASE.T, N=BASE.N;
+  const Ta=(Jm+Jref)*alpha;
+  const Tpeak=Ta+TL;
+  const Trms=Math.sqrt(((Math.pow(Ta+TL,2)*ta)+(Math.pow(TL,2)*tv)+(Math.pow(Ta-TL,2)*td))/T);
+  const ir=Jref/Jm;
+  const Ppk=Tpeak*N/9550;     // kW
+  const Prms=Trms*N/9550;
+  // 校核
+  const chkN = Nr>=N ? '<span class="ok">✔ 通过</span>' : '<span class="ng">✘ 超限</span>';
+  const chkPk = Tmax>=Tpeak ? '<span class="ok">✔ 通过</span>' : '<span class="ng">✘ 不足</span>';
+  const chkRms = Tr>=1.25*Trms ? '<span class="ok">✔ 通过</span>' : '<span class="ng">✘ RMS 偏大</span>';
+  const chkCont = Tr>=TL ? '<span class="ok">✔ 通过</span>' : '<span class="ng">✘ 连续转矩不足</span>';
+  const irlim=num('irlim')||10;
+  const chkIr = ir<=irlim ? '<span class="ok">✔ 通过</span>' : '<span class="ng">✘ 惯量比偏大</span>';
+  const rows=[
+    ['加速转矩 Ta=(Jm+Jref)·α', Ta.toFixed(3), 'N·m', ''],
+    ['峰值转矩 Tpeak=Ta+TL', Tpeak.toFixed(3), 'N·m', chkPk],
+    ['RMS 转矩 Trms', Trms.toFixed(3), 'N·m', chkRms],
+    ['连续负载转矩 TL', TL.toFixed(3), 'N·m', chkCont],
+    ['惯量比 Jref/Jm', ir.toFixed(2), '倍', chkIr],
+    ['所需转速 N / 额定 Nr', N.toFixed(0)+' / '+Nr.toFixed(0), 'r/min', chkN],
+    ['峰值功率 Ppk=Tpeak·N/9550', Ppk.toFixed(3), 'kW', ''],
+    ['连续功率 Prms', Prms.toFixed(3), 'kW', ''],
+  ];
+  let html='<table><tr><th>项目</th><th>数值</th><th>单位</th><th>判定</th></tr>';
+  rows.forEach(r=>html+='<tr><td>'+r[0]+'</td><td class="val">'+r[1]+'</td><td>'+r[2]+'</td><td>'+(r[3]||'')+'</td></tr>');
+  html+='</table><div class="small">惯量比限值='+irlim+'；峰值转矩应 ≤ 最大转矩（通常≈3×额定）；RMS 建议 ≤80% 额定转矩（即额定≥1.25·Trms），否则长期过载报警。</div>';
+  $('checkRes').innerHTML=html; $('checkRes').style.display='';
+}
+
+/* 面板③ 推荐 */
+function recommend(){
+  if(!BASE.N){ calcBase(); }
+  const Jref=BASE.Jref, TL=BASE.TL, alpha=BASE.alpha, ta=BASE.ta, td=BASE.td, tv=BASE.tv, ts=BASE.ts, T=BASE.T, N=BASE.N;
+  const irlim=num('irlim')||10;
+  const P_req=1.2*TL*N/9550;   // 连续功率需求（取 TL 近似）
+  let pass=[];
+  SERVO.forEach(s=>{
+    const Jm=s.j*1e-4;
+    const Ta=(Jm+Jref)*alpha;
+    const Tpeak=Ta+TL;
+    const Trms=Math.sqrt(((Math.pow(Ta+TL,2)*ta)+(Math.pow(TL,2)*tv)+(Math.pow(Ta-TL,2)*td))/T);
+    const ir=Jref/Jm;
+    const Pmk=Tpeak*N/9550;
+    const ok = (N<=s.nr) && (Tpeak<=s.tmx) && (1.25*Trms<=s.tr) && (TL<=s.tr) && (ir<=irlim) && (s.p>=P_req);
+    if(ok) pass.push({s,Ta,Tpeak,Trms,ir,Pmk});
+  });
+  pass.sort((a,b)=> a.s.p-b.s.p || a.s.tr-b.s.tr);
+  let html='<div id="recSum">满足全部约束的型号共 <b>'+pass.length+'</b> 款（所需转速 '+N.toFixed(0)+' r/min、Jref '+Jref.toExponential(2)+'、TL '+TL.toFixed(2)+' N·m、惯量比限值 '+irlim+'）。按功率升序：</div>';
+  if(pass.length===0){
+    html+='<div class="ng" style="margin-top:12px">⚠ 当前约束下无满足型号。可尝试：加大减速比 i（惯量↓、转速↑、转矩↓）、放宽惯量比限值，或选择更大功率电机 / 加减速机。</div>';
+  } else {
+    html+='<table class="rec-table"><tr><th>推荐</th><th>品牌/型号</th><th>功率 kW</th><th>额定/最大 N·m</th><th>额定转速</th><th>转子惯量 ×10⁻⁴</th><th>Tpeak</th><th>Trms</th><th>惯量比</th></tr>';
+    pass.forEach((r,idx)=>{
+      const star = idx===0 ? '<span class="star">⭐ 最小满足</span>' : '';
+      html+='<tr><td>'+star+'</td><td>'+r.s.b+' '+r.s.m+'</td><td>'+r.s.p.toFixed(2)+'</td><td>'+r.s.tr+'/'+r.s.tmx+'</td><td>'+r.s.nr+'</td><td>'+r.s.j+'</td><td>'+r.Tpeak.toFixed(2)+'</td><td>'+r.Trms.toFixed(2)+'</td><td>'+r.ir.toFixed(1)+'</td></tr>';
+    });
+    html+='</table>';
+  }
+  $('recRes').innerHTML=html; $('recRes').style.display='';
+}
+</script>
+</body>
+</html>

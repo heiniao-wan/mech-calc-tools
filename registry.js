@@ -5,6 +5,15 @@
 // ============================================================
 const TOOLS = [
   {
+    id: "servo-motor",
+    name: "伺服电机选型（丝杠驱动）",
+    file: "tools/servo-motor.html",
+    category: "传动选型",
+    desc: "丝杠驱动直线轴的负载转矩 TL=F·Pb/(2πηi)、折算惯量、加速转矩、峰值/RMS 转矩与惯量比校核；内置松下 A6/安川 Σ-7 规格库，按约束自动推荐最小满足型号",
+    icon: "🦾",
+    date: "2026-09-23"
+  },
+  {
     id: "ball-screw",
     name: "滚珠丝杠选型计算",
     file: "tools/ball-screw.html",

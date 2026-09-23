@@ -32,6 +32,9 @@
 | 凡一商城：滚珠丝杠选伺服电机计算工具 | 完整公式链：Fc/Tc/Ta/RMS 转矩/惯量比表/效率表/摩擦系数表 | https://m.forrun.cn/tools/ball_screw_servo.html |
 | 非标机械设计选型计算讲透 | TL=F·P/(2πη)、Ta=Jα、惯量比建议值（精密≤5，一般≤20） | http://www.zhenhuaedu.com/feibiao/5398.html |
 | CSDN：伺服与步进电机选型指南 | 峰值/额定转矩校核、功率曲线、矩频特性 | https://blog.csdn.net/weixin_34357928/article/details/91559534 |
+| 松下 MINAS A6 选型样本（200V 级 MSMF/MHMF 低/中惯量） | 额定/峰值转矩、额定转速 3000rpm、转子惯量（×10⁻⁴kg·m²）、惯量比建议≤20~30 倍 | https://industry.panasonic.eu/storage/custom-upload/Factory%20%26%20Automation/Industrial%20Motors/Documents/ca_minas_a6_4247_en.pdf ；单型号 MSMF082L1U1 https://industry.panasonic.com/ap/en/products/motor/fa-motor/ac-servo/number/msmf082l1u1 |
+| 安川 Σ-7 SGM7A 选型样本（200V） | 50W~1.5kW 额定/瞬时最大转矩、转子惯量（×10⁻⁴kg·m²）、惯量比建议（标准30倍/带外置再生20倍） | https://invertersuk.com/wp-content/uploads/SGM7A_200.pdf ；过渡指南 https://www.dmcsolution.com.my/wp-content/uploads/2018/01/Sigma-5-to-Sigma-7-Transition-Guide-watermark.pdf |
+| 丝杠驱动惯量折算通用式（2026-09-23 入库） | 折算到电机轴 Jref=m·(Pb/2π·i)²+Js/i²、电机转速 N=60·i·V/Pb、加速转矩 Ta=(Jm+Jref)·α、RMS=√[Σ(Tk²·tk)/T]、功率 P=T·N/9550 | 见 tools/servo-motor.html 公式依据区；厂商样本以 Panasonic/ Yaskawa 为准 |
 
 ## 五、梁与结构
 | 来源 | 覆盖内容 | 链接 |
