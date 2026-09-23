@@ -5,6 +5,15 @@
 // ============================================================
 const TOOLS = [
   {
+    id: "ball-screw",
+    name: "滚珠丝杠选型计算",
+    file: "tools/ball-screw.html",
+    category: "传动选型",
+    desc: "加速/匀速/减速三段工况轴向负载与平均负载 Fm、所需动额定负载 Ca=(60·Lh·Nm/10⁶)^⅓·Fm·fw、寿命反算、静载荷安全系数校核、欧拉压杆稳定、临界转速与 DmN 值限制（MISUMI/THK 选型指南）",
+    icon: "🔩",
+    date: "2026-09-23"
+  },
+  {
     id: "spring-calc",
     name: "弹簧计算（压缩/扭转）",
     file: "tools/spring-calc.html",

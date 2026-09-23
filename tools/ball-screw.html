@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>滚珠丝杠选型计算 - 机械计算工具集</title>
+<meta name="description" content="滚珠丝杠选型计算：工况轴向负载（加速/匀速/减速三段）与平均负载、所需动额定负载 Ca=(60·Lh·Nm/10⁶)^⅓·Fm·fw、寿命反算、静载荷安全系数、欧拉压杆稳定校核、临界转速与 DmN 值限制，公式依据 MISUMI/THK 选型指南。">
+<meta name="keywords" content="滚珠丝杠选型,滚珠丝杠计算,动额定负载,压杆稳定,临界转速,DmN值,轴向负载,寿命计算,伺服丝杠,直线传动">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #faf7f4; color: #3d3730; }
+  header { background: linear-gradient(135deg, #ff7a45 0%, #f7433b 60%, #d92b2b 100%); color: #fff; padding: 30px 20px 26px; position: relative; text-align: center; }
+  header h1 { font-size: 24px; }
+  header .back { position: absolute; left: 16px; top: 18px; display: inline-block; padding: 9px 20px; background: #ffffff; color: #c8342a; text-decoration: none; font-size: 16px; font-weight: 700; border-radius: 999px; box-shadow: 0 2px 8px rgba(120,20,10,.35); transition: transform .15s, box-shadow .15s; }
+  header .back:hover { transform: translateY(-2px); box-shadow: 0 4px 14px rgba(120,20,10,.5); background: #fff5ef; }
+  header p { font-size: 13px; opacity: .9; margin-top: 6px; }
+  .wrap { max-width: 980px; margin: 0 auto; padding: 24px 18px; }
+  .panel { background: #fff; border: 1px solid #eee5dc; border-radius: 14px; padding: 22px; margin-bottom: 18px; }
+  .panel h2 { font-size: 16px; color: #b3352b; margin-bottom: 14px; padding-left: 9px; border-left: 4px solid #f7433b; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  .form-grid .wide { grid-column: 1 / -1; }
+  label { display: block; font-size: 13px; color: #6b645a; margin-bottom: 4px; }
+  input, select { width: 100%; padding: 8px 10px; border: 1px solid #d8cfc4; border-radius: 8px; font-size: 14px; background: #fffdfb; }
+  input:focus, select:focus { outline: none; border-color: #f7433b; }
+  .btn { background: linear-gradient(135deg, #ff7a45, #e62e2e); color: #fff; border: none; padding: 11px 30px; font-size: 15px; font-weight: 600; border-radius: 9px; cursor: pointer; margin-top: 16px; }
+  .btn:hover { filter: brightness(1.08); }
+  table.results { width: 100%; border-collapse: collapse; margin-top: 14px; }
+  table.results th, table.results td { border: 1px solid #eee5dc; padding: 9px 12px; font-size: 14px; text-align: left; }
+  table.results th { background: #fdf3ee; color: #8a5a4a; width: 250px; }
+  table.results td.v { font-weight: 600; color: #2f2a24; }
+  .ok { color: #1d9e57; font-weight: 700; }
+  .ng { color: #e62e2e; font-weight: 700; }
+  .warn { color: #c07a00; font-weight: 700; }
+  .note { background: #fdf8f2; border: 1px solid #f0e2d0; border-radius: 10px; padding: 14px 16px; font-size: 13px; color: #7a6f60; line-height: 1.9; margin-top: 16px; }
+  .note b { color: #b3352b; }
+  .fig { text-align: center; margin: 4px 0 14px; }
+  .fig svg { max-width: 100%; height: auto; }
+  footer { text-align: center; color: #b9afa4; font-size: 12px; padding: 26px 0 34px; line-height: 1.8; }
+</style>
+</head>
+<body>
+<header>
+  <a class="back" href="../index.html">← 返回工具集</a>
+  <h1>🔩 滚珠丝杠选型计算</h1>
+  <p>工况轴向负载 · 平均负载与所需动额定负载 Ca · 寿命反算 · 静载荷校核 · 欧拉压杆稳定 · 临界转速 · DmN 值 · 公式依据 MISUMI / THK 滚珠丝杠选型指南</p>
+</header>
+
+<div class="wrap">
+
+  <!-- ============ ① 工况轴向负载与平均负载 ============ -->
+  <div class="panel">
+    <h2>① 工况轴向负载与平均负载（加速 / 匀速 / 减速三段）</h2>
+    <div class="fig">
+      <svg viewBox="0 0 680 250" width="680" height="250" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="滚珠丝杠传动布置示意图：两端支承、螺母滑台与轴向负载">
+        <!-- 驱动端轴承（固定侧） -->
+        <rect x="60" y="86" width="34" height="52" fill="#b9c0ca" stroke="#6f7680" stroke-width="1.5"/>
+        <text x="77" y="160" font-size="11" fill="#6f7680" text-anchor="middle">固定支承</text>
+        <!-- 尾端轴承（简支侧） -->
+        <rect x="548" y="86" width="34" height="52" fill="#b9c0ca" stroke="#6f7680" stroke-width="1.5"/>
+        <text x="565" y="160" font-size="11" fill="#6f7680" text-anchor="middle">支承</text>
+        <!-- 丝杠轴 -->
+        <rect x="94" y="106" width="454" height="12" fill="#e8d5c0" stroke="#b98a5f" stroke-width="1.5"/>
+        <!-- 螺母 -->
+        <rect x="300" y="94" width="70" height="36" fill="#fbe3d0" stroke="#c87a4a" stroke-width="2"/>
+        <text x="335" y="84" font-size="12" font-weight="700" fill="#b3352b" text-anchor="middle">螺母</text>
+        <!-- 滑台与质量 W -->
+        <rect x="330" y="30" width="120" height="44" fill="#dfe8f2" stroke="#5b7a9d" stroke-width="2"/>
+        <text x="390" y="57" font-size="13" font-weight="700" fill="#2f5b8a" text-anchor="middle">移动质量 W</text>
+        <line x1="390" y1="74" x2="390" y2="88" stroke="#5b7a9d" stroke-width="1.5" stroke-dasharray="4 3"/>
+        <!-- 轴向负载 F -->
+        <line x1="452" y1="112" x2="530" y2="112" stroke="#e62e2e" stroke-width="5"/>
+        <polygon points="542,112 524,103 524,121" fill="#e62e2e"/>
+        <text x="492" y="136" font-size="13" font-weight="700" fill="#e62e2e" text-anchor="middle">轴向负载 F</text>
+        <!-- 转速箭头 -->
+        <path d="M 150 92 A 26 26 0 1 1 149.5 91.5" fill="none" stroke="#2f7bbf" stroke-width="3"/>
+        <polygon points="150,92 143,78 157,84" fill="#2f7bbf"/>
+        <text x="150" y="66" font-size="12" font-weight="700" fill="#2f7bbf" text-anchor="middle">转速 N</text>
+        <!-- 支承跨距 Lb 标注 -->
+        <line x1="77" y1="196" x2="565" y2="196" stroke="#b3352b" stroke-width="1"/>
+        <line x1="77" y1="188" x2="77" y2="204" stroke="#b3352b" stroke-width="1"/>
+        <line x1="565" y1="188" x2="565" y2="204" stroke="#b3352b" stroke-width="1"/>
+        <text x="321" y="216" font-size="12" font-weight="700" fill="#b3352b" text-anchor="middle">支承跨距 Lb（压杆稳定 / 临界转速计算用）</text>
+        <!-- 说明 -->
+        <text x="340" y="240" font-size="12" fill="#7a6f60" text-anchor="middle">丝杠外径 d0、根径 d1 由所选型号样本查取；水平安装时轴向负载含导轨摩擦力 μ·W·g</text>
+      </svg>
+    </div>
+    <div class="form-grid">
+      <div><label>移动质量 W（kg，含滑台+工件）</label><input id="sw" type="number" value="100"></div>
+      <div><label>安装方向</label>
+        <select id="smount">
+          <option value="h">水平安装（计导轨摩擦）</option>
+          <option value="v">垂直安装（不计摩擦，计重力）</option>
+        </select>
+      </div>
+      <div><label>导轨类型（摩擦系数 μ）</label>
+        <select id="sfric">
+          <option value="0.02">直线导轨（μ≈0.02）</option>
+          <option value="0.05">燕尾槽滑动导轨（μ≈0.05）</option>
+          <option value="0.15">滑动导轨（铸铁贴塑，μ≈0.15）</option>
+          <option value="custom">自定义 μ</option>
+        </select>
+      </div>
+      <div id="sfricWrap" style="display:none"><label>自定义摩擦系数 μ</label><input id="sfricC" type="number" step="0.01" value="0.02"></div>
+      <div><label>最大进给速度 Vmax（mm/s）</label><input id="svmax" type="number" value="300"></div>
+      <div><label>加减速时间 t（s）</label><input id="st" type="number" step="0.01" value="0.1"></div>
+      <div><label>丝杠导程 Pb（mm）</label><input id="spb" type="number" step="0.1" value="10"></div>
+      <div><label>匀速段时间占比 t2/T（0~1）</label><input id="st2" type="number" step="0.01" value="0.5"></div>
+    </div>
+    <button class="btn" onclick="loadCalc()">计算轴向负载</button>
+    <table class="results" id="loadRes" style="display:none">
+      <tr><th>加速度 α = Vmax / t</th><td class="v" id="sa"></td></tr>
+      <tr><th>加速段轴向负载 Pa</th><td class="v" id="spa"></td></tr>
+      <tr><th>匀速段轴向负载 Pb′</th><td class="v" id="spb2"></td></tr>
+      <tr><th>减速段轴向负载 Pc（取绝对值）</th><td class="v" id="spc"></td></tr>
+      <tr><th>最大轴向负载 Fmax = max(Pa, Pc)</th><td class="v" id="sfmax"></td></tr>
+      <tr><th>轴向平均负载 Fm（时间加权）</th><td class="v" id="sfm"></td></tr>
+      <tr><th>最高转速 Nmax = Vmax / Pb × 60</th><td class="v" id="snmax"></td></tr>
+      <tr><th>平均转速 Nm（梯形速度加权）</th><td class="v" id="snm"></td></tr>
+    </table>
+    <div class="note">
+      水平安装：Pa = W(α+μg)、Pb′ = μWg、Pc = |W(α−μg)|；垂直安装：Pa = W(g+α)、Pb′ = Wg、Pc = |W(g−α)|（MISUMI 选型指南 §6-2）。
+      Fm = (Pa·t1+Pb′·t2+Pc·t3)/T，加速段时间 t1 = t3 = (1−t2/T)·T/2；减速段负载方向与运动同向时按绝对值计入疲劳平均（简化处理）。
+      若减速段 Pc 计算为负，说明摩擦力大于惯性力，丝杠不受压。
+    </div>
+  </div>
+
+  <!-- ============ ② 寿命与动额定负载 ============ -->
+  <div class="panel">
+    <h2>② 所需动额定负载 Ca 与寿命反算（疲劳寿命）</h2>
+    <div class="form-grid">
+      <div><label>预期寿命 Lh（小时）</label>
+        <select id="slh" onchange="if(this.value==='custom')document.getElementById('slhC').parentElement.style.display='';else document.getElementById('slhC').parentElement.style.display='none';if(this.value!=='custom')document.getElementById('slhC').value=this.value;">
+          <option value="20000">机床类（20000 h）</option>
+          <option value="15000">自动控制设备 / 计量装置（15000 h）</option>
+          <option value="10000">一般工业机械（10000 h）</option>
+          <option value="custom">自定义</option>
+        </select>
+      </div>
+      <div style="display:none"><label>自定义寿命 Lh（小时）</label><input id="slhC" type="number" value="15000"></div>
+      <div><label>运行系数 fw</label>
+        <select id="sfw">
+          <option value="1.1">平稳无冲击（1.0~1.2）</option>
+          <option value="1.35" selected>正常运行（1.2~1.5）</option>
+          <option value="1.75">伴有冲击（1.5~2.0）</option>
+        </select>
+      </div>
+      <div><label>轴向平均负载 Fm（N）</label><input id="sfmIn" type="number" value="300"></div>
+      <div><label>平均转速 Nm（r/min）</label><input id="snmIn" type="number" value="900"></div>
+      <div><label>最大轴向负载 Fmax（N，静载校核用）</label><input id="sfmaxIn" type="number" value="500"></div>
+      <div><label>所选型号基本动额定负载 Ca（N）</label><input id="sca" type="number" value="8000"></div>
+      <div><label>所选型号基本静额定负载 C0a（N）</label><input id="sc0a" type="number" value="15000"></div>
+      <div><label>静载荷安全系数 fs</label>
+        <select id="sfs">
+          <option value="1.5">普通载荷（1~2）</option>
+          <option value="2" selected>一般冲击（2）</option>
+          <option value="3">振动冲击（2~3）</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn" onclick="lifeCalc()">计算所需 Ca 与寿命</button>
+    <table class="results" id="lifeRes" style="display:none">
+      <tr><th>所需基本动额定负载 Ca·req = (60·Lh·Nm/10⁶)^⅓ · Fm · fw</th><td class="v" id="scaReq"></td></tr>
+      <tr><th>所选型号 Ca 校核</th><td class="v" id="scaChk"></td></tr>
+      <tr><th>所选型号实际寿命 Lh（小时）</th><td class="v" id="slhAct"></td></tr>
+      <tr><th>静载荷校核 C0a ≥ fs · Fmax（需 <span id="sfsReq"></span> N）</th><td class="v" id="sc0Chk"></td></tr>
+    </table>
+    <div class="note">
+      寿命公式 Lh = 10⁶/(60·Nm)·(Ca/(Fm·fw))³（MISUMI 选型指南 §6-1）。Ca·req 小于所选型号 Ca 时寿命校核通过。
+      <b>常见磨制丝杠 Ca 量级参考（各厂商有差异，务必以样本为准）</b>：φ16×5 约 12~20 kN、φ20×5 约 18~28 kN、φ25×5 约 25~40 kN、φ32×5 约 40~60 kN。
+      静载荷校核防滚道塑性变形：C0a ≥ fs·Fmax，fs 普通载荷取 1~2、冲击振动取 2~3。
+    </div>
+  </div>
+
+  <!-- ============ ③ 容许转速与压杆稳定 ============ -->
+  <div class="panel">
+    <h2>③ 压杆稳定 · 临界转速 · DmN 值校核</h2>
+    <div class="form-grid">
+      <div><label>丝杠外径 d0（mm）</label><input id="bd0" type="number" step="0.1" value="20"></div>
+      <div><label>丝杠根径 d1（mm，样本查取）</label><input id="bd1" type="number" step="0.1" value="16.8"></div>
+      <div><label>支承跨距 Lb（mm）</label><input id="blb" type="number" value="1200"></div>
+      <div><label>两端支承方式</label>
+        <select id="bsup">
+          <option value="4.73,4">固定-固定</option>
+          <option value="3.93,2" selected>固定-支承（简支）</option>
+          <option value="3.14,1">支承-支承（两端简支）</option>
+          <option value="1.88,0.25">固定-自由（悬臂）</option>
+        </select>
+      </div>
+      <div><label>最高转速 Nmax（r/min）</label><input id="bnmax" type="number" value="1800"></div>
+      <div><label>丝杠类型（DmN 限值）</label>
+        <select id="bdmn">
+          <option value="70000">磨制丝杠（DmN ≤ 70000）</option>
+          <option value="50000">轧制丝杠（DmN ≤ 50000）</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn" onclick="speedCalc()">校核容许转速与稳定性</button>
+    <table class="results" id="spdRes" style="display:none">
+      <tr><th>截面惯性矩 I = π·d1⁴/64</th><td class="v" id="bi"></td></tr>
+      <tr><th>欧拉屈曲临界载荷 Pcr = n·π²·E·I/Lb²</th><td class="v" id="bpcr"></td></tr>
+      <tr><th>压杆稳定校核（Fmax ≤ Pcr/2.5，需 <span id="bpcrReq"></span> N）</th><td class="v" id="bpcrChk"></td></tr>
+      <tr><th>临界转速 nc（含 0.8 安全系数）</th><td class="v" id="bnc"></td></tr>
+      <tr><th>临界转速校核（Nmax ≤ nc）</th><td class="v" id="bncChk"></td></tr>
+      <tr><th>DmN 值 = Dm × Nmax（Dm ≈ d0）</th><td class="v" id="bdmnV"></td></tr>
+      <tr><th>DmN 值校核</th><td class="v" id="bdmnChk"></td></tr>
+    </table>
+    <div class="note">
+      压杆稳定按欧拉公式 Pcr = n·π²·E·I/Lb²，支承系数 n：固定-固定 4、固定-简支 2、两端简支 1、固定-自由 0.25；E = 2.06×10⁵ MPa；判定取压屈安全系数 2.5。
+      临界转速按梁横向自振频率 nc = 0.8·λ²/(2π)·√(E·I/(ρ·A))/Lb²·60（r/min），λ 为对应支承的一阶振型系数（4.73/3.93/3.14/1.88），ρ = 7850 kg/m³。
+      DmN 值限制防滚珠打滑与温升（MISUMI：磨制 ≤70000、轧制 ≤50000），球中心径 Dm 此处近似取外径 d0。
+      固定-自由布置对压杆稳定与临界转速最不利，长行程优先采用固定-支承或两端固定 + 预拉伸。
+    </div>
+  </div>
+
+</div>
+
+<footer>
+  滚珠丝杠选型计算 · 轴向负载 / 动额定负载 / 压杆稳定 / 临界转速 / DmN 值 · 公式依据 MISUMI《滚珠丝杠选型指南》与 THK 技术资料<br>
+  机械计算工具集 · 仅供设计参考，最终选型以厂商样本为准
+</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const num = id => { const v = parseFloat($(id).value); return isNaN(v) ? 0 : v; };
+const G = 9.8, E_ST = 206000, RHO = 7850; // m/s², MPa, kg/m³
+
+// ① 工况轴向负载与平均负载
+function loadCalc() {
+  const W = num('sw'), v = num('svmax'), t = num('st'), pb = num('spb'), t2r = num('st2');
+  if (W <= 0 || v <= 0 || t <= 0 || pb <= 0 || t2r < 0 || t2r >= 1) return alert('请检查质量、速度、时间与占比输入（0 < t2/T < 1）');
+  let mu;
+  if ($('sfric').value === 'custom') { mu = num('sfricC'); if (mu <= 0) return alert('请输入自定义摩擦系数'); }
+  else mu = parseFloat($('sfric').value);
+  const vert = $('smount').value === 'v';
+  const a = v / t / 1000;                      // m/s²
+  let pa, pm, pc;
+  if (vert) { pa = W * (G + a); pm = W * G; pc = Math.abs(W * (G - a)); }
+  else      { pa = W * (a + mu * G); pm = W * mu * G; pc = Math.abs(W * (a - mu * G)); }
+  const fmax = Math.max(pa, pc);
+  const t3r = (1 - t2r) / 2;                   // 加速、减速各占一半
+  const fm = (pa * t3r + pm * t2r + pc * t3r) / (t3r + t2r + t3r);
+  const nmax = v / pb * 60;
+  const nm = (v / 2 * t3r + v * t2r + v / 2 * t3r) / (t3r + t2r + t3r) / pb * 60;
+  $('sa').textContent = a.toFixed(2) + ' m/s²';
+  $('spa').textContent = pa.toFixed(1) + ' N';
+  $('spb2').textContent = pm.toFixed(1) + ' N';
+  $('spc').textContent = pc.toFixed(1) + ' N' + (pc === 0 ? '（减速段无压载荷）' : '');
+  $('sfmax').textContent = fmax.toFixed(1) + ' N';
+  $('sfm').textContent = fm.toFixed(1) + ' N';
+  $('snmax').textContent = nmax.toFixed(0) + ' r/min';
+  $('snm').textContent = nm.toFixed(0) + ' r/min';
+  $('loadRes').style.display = '';
+}
+
+// ② 寿命与动额定负载
+function lifeCalc() {
+  const lh = $('slh').value === 'custom' ? num('slhC') : parseFloat($('slh').value);
+  const fw = parseFloat($('sfw').value), fm = num('sfmIn'), nm = num('snmIn');
+  const fmax = num('sfmaxIn'), ca = num('sca'), c0a = num('sc0a'), fs = parseFloat($('sfs').value);
+  if (lh <= 0 || fm <= 0 || nm <= 0 || fmax <= 0) return alert('请填写寿命、平均负载与平均转速');
+  if (ca <= 0 || c0a <= 0) return alert('请填写所选型号的 Ca 与 C0a');
+  const caReq = Math.pow(60 * lh * nm / 1e6, 1 / 3) * fm * fw;
+  const lhAct = 1e6 / (60 * nm) * Math.pow(ca / (fm * fw), 3);
+  const c0Req = fs * fmax;
+  $('scaReq').textContent = caReq.toFixed(0) + ' N';
+  $('scaChk').innerHTML = ca >= caReq ? '<span class="ok">✔ 通过（Ca ≥ 所需）</span>' : '<span class="ng">✘ 不足，需加大规格</span>';
+  $('slhAct').textContent = lhAct.toFixed(0) + ' 小时';
+  $('sfsReq').textContent = c0Req.toFixed(0);
+  $('sc0Chk').innerHTML = c0a >= c0Req ? '<span class="ok">✔ 通过</span>' : '<span class="ng">✘ 不足</span>';
+  $('lifeRes').style.display = '';
+}
+
+// ③ 压杆稳定 · 临界转速 · DmN
+function speedCalc() {
+  const d0 = num('bd0'), d1 = num('bd1'), lb = num('blb'), nmax = num('bnmax');
+  if (d0 <= 0 || d1 <= 0 || lb <= 0 || nmax <= 0) return alert('请填写外径、根径、跨距与最高转速');
+  const [lam, n] = $('bsup').value.split(',').map(Number);
+  const dmnLim = parseFloat($('bdmn').value);
+  const fmax = num('sfmaxIn') > 0 ? num('sfmaxIn') : 0;
+  const I = Math.PI * Math.pow(d1, 4) / 64;                 // mm⁴
+  const pcr = n * Math.PI * Math.PI * E_ST * I / (lb * lb); // N
+  const A = Math.PI * d1 * d1 / 4;                          // mm²
+  const Im = I * 1e-12, Am = A * 1e-6, lbm = lb * 1e-3;     // m 单位
+  const nc = 0.8 * lam * lam / (2 * Math.PI) * Math.sqrt(E_ST * 1e6 * Im / (RHO * Am)) / (lbm * lbm) * 60;
+  const dmn = d0 * nmax;
+  $('bi').textContent = I.toFixed(0) + ' mm⁴';
+  $('bpcr').textContent = pcr.toFixed(0) + ' N';
+  if (fmax > 0) {
+    $('bpcrReq').textContent = (pcr / 2.5).toFixed(0);
+    $('bpcrChk').innerHTML = fmax <= pcr / 2.5 ? '<span class="ok">✔ 通过</span>' : '<span class="ng">✘ 有压弯风险，加大直径或改善支承</span>';
+  } else {
+    $('bpcrReq').textContent = '—';
+    $('bpcrChk').textContent = '未填 Fmax，仅给出临界值';
+  }
+  $('bnc').textContent = nc.toFixed(0) + ' r/min';
+  $('bncChk').innerHTML = nmax <= nc ? '<span class="ok">✔ 通过</span>' : '<span class="ng">✘ 超限，缩短跨距 / 加大直径 / 改善支承</span>';
+  $('bdmnV').textContent = dmn.toFixed(0);
+  $('bdmnChk').innerHTML = dmn <= dmnLim ? '<span class="ok">✔ 通过（限 ' + dmnLim + '）</span>' : '<span class="ng">✘ 超限</span>';
+  $('spdRes').style.display = '';
+}
+</script>
+</body>
+</html>
