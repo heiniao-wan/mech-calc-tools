@@ -212,6 +212,48 @@
     </div>
   </div>
 
+  <!-- ============ ④ 型号库与自动选型推荐 ============ -->
+  <div class="panel">
+    <h2>④ 丝杠型号库（THK / HIWIN / TBI）与自动选型推荐</h2>
+    <div class="form-grid">
+      <div class="wide"><label>从规格库选择型号（自动填充 导程 / 外径 d0 / 根径 d1 / Ca / C0a，亦可手动修改任意输入框）</label>
+        <select id="smodel" onchange="applyModel()">
+          <option value="-1">— 自定义 / 手动输入 —</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-grid" style="margin-top:14px">
+      <div><label>目标导程 Pb（可选，留空则不限，mm）</label><input id="rtPb" type="number" step="0.1" value="10"></div>
+      <div><label>支承跨距 Lb（mm，稳定性/转速用）</label><input id="rtLb" type="number" value="1200"></div>
+      <div><label>支承方式（稳定性/转速）</label>
+        <select id="rtSup">
+          <option value="4.73,4">固定-固定</option>
+          <option value="3.93,2" selected>固定-支承（简支）</option>
+          <option value="3.14,1">支承-支承（两端简支）</option>
+          <option value="1.88,0.25">固定-自由（悬臂）</option>
+        </select>
+      </div>
+      <div><label>丝杠类型（DmN 限值）</label>
+        <select id="rtDmn">
+          <option value="70000">磨制丝杠（DmN ≤ 70000）</option>
+          <option value="50000">轧制丝杠（DmN ≤ 50000）</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn" onclick="recommend()">自动推荐合适规格</button>
+    <div id="recSum" class="note" style="display:none"></div>
+    <table class="results" id="recRes" style="display:none">
+      <thead><tr><th>型号</th><th>品牌</th><th>d0(mm)</th><th>Pb(mm)</th><th>根径d1(mm)</th><th>Ca(N)</th><th>C0a(N)</th><th>Pcr(N)</th><th>nc(r/min)</th><th>结论</th></tr></thead>
+      <tbody id="recBody"></tbody>
+    </table>
+    <div class="note">
+      型号数据来源：<b>THK BNK 系列</b>（THK 官方样本，根径为沟槽谷径，Ca/C0a 取预紧 GT 级，单位 N）、<b>HIWIN SFU 系列</b> 与 <b>TBI SFU 系列</b>（通用滚制丝杠样本，Ca/C0a 由 kgf 换算为 N）。
+      <b>HIWIN / TBI 的沟槽根径 d1 按几何关系 d1≈0.80·d0+0.075·Pb 估算</b>，仅供压杆稳定与临界转速校核参考，精确值请以各厂商样本为准。
+      推荐逻辑：从规格库筛选同时满足 <b>Ca ≥ 所需 Ca_req</b>、<b>C0a ≥ fs·Fmax（静载）</b>、<b>压杆 Pcr ≥ 2.5·Fmax</b>、<b>临界转速 nc ≥ Nmax</b>、<b>DmN ≤ 限值</b> 的型号，按外径 d0 从小到大取最小满足规格；若指定目标导程则优先匹配该导程。
+      所需 Ca_req 与 Fmax/Nmax 取自面板 ①/②（请先填写并运行①和②），未运行则采用当前面板输入值。
+    </div>
+  </div>
+
 </div>
 
 <footer>
@@ -298,6 +340,155 @@ function speedCalc() {
   $('bdmnChk').innerHTML = dmn <= dmnLim ? '<span class="ok">✔ 通过（限 ' + dmnLim + '）</span>' : '<span class="ng">✘ 超限</span>';
   $('spdRes').style.display = '';
 }
+
+// ============ ④ 规格库（THK / HIWIN / TBI） ============
+// THK BNK：官方样本，Ca/C0a 为预紧 GT 级（N），根径为沟槽谷径（mm）
+// HIWIN / TBI SFU：通用滚制丝杠样本，Ca/C0a 由 kgf 换算为 N；根径 d1 按 d1≈0.80·d0+0.075·Pb 估算
+const BALL_SCREWS = [
+  // ---- THK BNK（精密磨制，外径 16~25）----
+  { brand: "THK", model: "BNK1616", d0: 16, pb: 16, d1: 13.7, ca: 7100, coa: 14300, rootEst: false },
+  { brand: "THK", model: "BNK2010", d0: 20, pb: 10, d1: 16.4, ca: 11100, coa: 22000, rootEst: false },
+  { brand: "THK", model: "BNK2020", d0: 20, pb: 20, d1: 17.5, ca: 11100, coa: 24700, rootEst: false },
+  { brand: "THK", model: "BNK2520", d0: 25, pb: 20, d1: 21.9, ca: 16700, coa: 38000, rootEst: false },
+  // ---- HIWIN SFU（滚制，外径 12~100）----
+  { brand: "HIWIN", model: "SFU1204-4", d0: 12, pb: 4, d1: 9.9, ca: 5816, coa: 11070, rootEst: true },
+  { brand: "HIWIN", model: "SFU1604-4", d0: 16, pb: 4, d1: 13.1, ca: 6168, coa: 12455, rootEst: true },
+  { brand: "HIWIN", model: "SFU1605-4", d0: 16, pb: 5, d1: 13.2, ca: 7653, coa: 17554, rootEst: true },
+  { brand: "HIWIN", model: "SFU1610-4", d0: 16, pb: 10, d1: 13.6, ca: 7070, coa: 12250, rootEst: true },
+  { brand: "HIWIN", model: "SFU2005-4", d0: 20, pb: 5, d1: 16.4, ca: 11081, coa: 23339, rootEst: true },
+  { brand: "HIWIN", model: "SFU2010-4", d0: 20, pb: 10, d1: 16.75, ca: 8139, coa: 16475, rootEst: true },
+  { brand: "HIWIN", model: "SFU2505-4", d0: 25, pb: 5, d1: 20.4, ca: 12553, coa: 30494, rootEst: true },
+  { brand: "HIWIN", model: "SFU2510-4", d0: 25, pb: 10, d1: 20.75, ca: 19064, coa: 38018, rootEst: true },
+  { brand: "HIWIN", model: "SFU3205-4", d0: 32, pb: 5, d1: 26.0, ca: 14220, coa: 40698, rootEst: true },
+  { brand: "HIWIN", model: "SFU3210-4", d0: 32, pb: 10, d1: 26.35, ca: 33245, coa: 70307, rootEst: true },
+  { brand: "HIWIN", model: "SFU4005-4", d0: 40, pb: 5, d1: 32.4, ca: 15789, coa: 52268, rootEst: true },
+  { brand: "HIWIN", model: "SFU4010-4", d0: 40, pb: 10, d1: 32.75, ca: 38344, coa: 93359, rootEst: true },
+  { brand: "HIWIN", model: "SFU5010-4", d0: 50, pb: 10, d1: 40.75, ca: 43640, coa: 122583, rootEst: true },
+  { brand: "HIWIN", model: "SFU5020-4", d0: 50, pb: 20, d1: 41.5, ca: 45550, coa: 140488, rootEst: true },
+  { brand: "HIWIN", model: "SFU6310-4", d0: 63, pb: 10, d1: 51.15, ca: 49721, coa: 162790, rootEst: true },
+  { brand: "HIWIN", model: "SFU6320-4", d0: 63, pb: 20, d1: 51.9, ca: 74264, coa: 233961, rootEst: true },
+  { brand: "HIWIN", model: "SFU8010-4", d0: 80, pb: 10, d1: 64.75, ca: 55115, coa: 208882, rootEst: true },
+  { brand: "HIWIN", model: "SFU8020-4", d0: 80, pb: 20, d1: 65.5, ca: 83210, coa: 302964, rootEst: true },
+  { brand: "HIWIN", model: "SFU10020-4", d0: 100, pb: 20, d1: 81.5, ca: 92371, coa: 384240, rootEst: true },
+  // ---- TBI SFU（滚制，外径 16~80）----
+  { brand: "TBI", model: "SFU1605-4", d0: 16, pb: 5, d1: 13.2, ca: 13533, coa: 29933, rootEst: true },
+  { brand: "TBI", model: "SFU2005-4", d0: 20, pb: 5, d1: 16.4, ca: 15208, coa: 38001, rootEst: true },
+  { brand: "TBI", model: "SFU2505-4", d0: 25, pb: 5, d1: 20.4, ca: 16906, coa: 48092, rootEst: true },
+  { brand: "TBI", model: "SFU2510-4", d0: 25, pb: 10, d1: 20.75, ca: 28969, coa: 71535, rootEst: true },
+  { brand: "TBI", model: "SFU3205-4", d0: 32, pb: 5, d1: 26.0, ca: 18852, coa: 62201, rootEst: true },
+  { brand: "TBI", model: "SFU3210-4", d0: 32, pb: 10, d1: 26.35, ca: 47128, coa: 119714, rootEst: true },
+  { brand: "TBI", model: "SFU4005-4", d0: 40, pb: 5, d1: 32.4, ca: 20692, coa: 78337, rootEst: true },
+  { brand: "TBI", model: "SFU4010-4", d0: 40, pb: 10, d1: 32.75, ca: 52944, coa: 152003, rootEst: true },
+  { brand: "TBI", model: "SFU5010-4", d0: 50, pb: 10, d1: 40.75, ca: 58873, coa: 192352, rootEst: true },
+  { brand: "TBI", model: "SFU6310-4", d0: 63, pb: 10, d1: 51.15, ca: 65881, coa: 248649, rootEst: true },
+  { brand: "TBI", model: "SFU8010-4", d0: 80, pb: 10, d1: 64.75, ca: 72033, coa: 313345, rootEst: true },
+];
+
+// 填充下拉选项（按品牌分组）
+function buildModelOptions() {
+  const sel = $('smodel');
+  const brands = [...new Set(BALL_SCREWS.map(m => m.brand))];
+  brands.forEach(b => {
+    const og = document.createElement('optgroup');
+    og.setAttribute('label', b);
+    BALL_SCREWS.forEach((m, i) => {
+      if (m.brand === b) {
+        const o = document.createElement('option');
+        o.value = i;
+        o.textContent = m.model + '  (φ' + m.d0 + '×' + m.pb + ', Ca=' + m.ca + 'N)';
+        og.appendChild(o);
+      }
+    });
+    sel.appendChild(og);
+  });
+}
+
+// 选择型号 → 自动填充各面板输入
+function applyModel() {
+  const i = parseInt($('smodel').value, 10);
+  if (isNaN(i) || i < 0) return;
+  const m = BALL_SCREWS[i];
+  $('spb').value = m.pb;    // 面板① 导程
+  $('sca').value = m.ca;    // 面板② 动额定负载
+  $('sc0a').value = m.coa;  // 面板② 静额定负载
+  $('bd0').value = m.d0;    // 面板③ 外径
+  $('bd1').value = m.d1;    // 面板③ 根径
+  $('rtPb').value = m.pb;   // 推荐目标导程
+}
+
+// 单型号压杆临界载荷 Pcr 与临界转速 nc
+function modelStability(m, lb, lam, n) {
+  const I = Math.PI * Math.pow(m.d1, 4) / 64;
+  const pcr = n * Math.PI * Math.PI * E_ST * I / (lb * lb);
+  const A = Math.PI * m.d1 * m.d1 / 4;
+  const Im = I * 1e-12, Am = A * 1e-6, lbm = lb * 1e-3;
+  const nc = 0.8 * lam * lam / (2 * Math.PI) * Math.sqrt(E_ST * 1e6 * Im / (RHO * Am)) / (lbm * lbm) * 60;
+  return { pcr, nc };
+}
+
+// ④ 自动推荐合适规格
+function recommend() {
+  const lh = $('slh').value === 'custom' ? num('slhC') : parseFloat($('slh').value);
+  const fw = parseFloat($('sfw').value), fm = num('sfmIn'), nm = num('snmIn');
+  const fmax = num('sfmaxIn'), fs2 = parseFloat($('sfs').value);
+  if (!(lh > 0) || !(fm > 0) || !(nm > 0)) return alert('请先在面板②填写寿命 Lh、平均负载 Fm 与平均转速 Nm（或先在①/②运行计算）');
+  const caReq = Math.pow(60 * lh * nm / 1e6, 1 / 3) * fm * fw;
+  const c0Req = fs2 * fmax;
+  const nmax = num('snmax') > 0 ? num('snmax') : (num('svmax') / (num('spb') || 1) * 60);
+  const [lam, n] = $('rtSup').value.split(',').map(Number);
+  const lb = num('rtLb'), dmnLim = parseFloat($('rtDmn').value), tPb = num('rtPb');
+
+  const body = $('recBody');
+  body.innerHTML = '';
+  const passed = [];
+  BALL_SCREWS.forEach(m => {
+    if (tPb > 0 && m.pb !== tPb) return;       // 指定导程则先按导程过滤
+    const caOK = m.ca >= caReq;
+    const coaOK = m.coa >= c0Req;
+    const { pcr, nc } = modelStability(m, lb, lam, n);
+    const pcrOK = pcr >= 2.5 * fmax;
+    const ncOK = nc >= nmax;
+    const dmnOK = m.d0 * nmax <= dmnLim;
+    const ok = caOK && coaOK && pcrOK && ncOK && dmnOK;
+    if (ok) passed.push({ m, pcr, nc });
+  });
+  // 若指定导程无满足项，放宽导程约束重算
+  if (passed.length === 0 && tPb > 0) {
+    BALL_SCREWS.forEach(m => {
+      const caOK = m.ca >= caReq, coaOK = m.coa >= c0Req;
+      const { pcr, nc } = modelStability(m, lb, lam, n);
+      const ok = caOK && coaOK && pcr >= 2.5 * fmax && nc >= nmax && m.d0 * nmax <= dmnLim;
+      if (ok) passed.push({ m, pcr, nc });
+    });
+  }
+  passed.sort((a, b) => (a.m.d0 - b.m.d0) || (Math.abs(a.m.pb - tPb) - Math.abs(b.m.pb - tPb)));
+
+  $('recSum').style.display = '';
+  $('recSum').innerHTML = '采用要求：所需 Ca_req = <b>' + caReq.toFixed(0) + ' N</b>，静载需 C0a ≥ <b>' +
+    c0Req.toFixed(0) + ' N</b>，Fmax = ' + fmax.toFixed(0) + ' N，Nmax = ' + nmax.toFixed(0) +
+    ' r/min，Lb = ' + lb + ' mm，支承方式 + DmN 限值 ' + dmnLim + (tPb > 0 ? '，目标导程 ' + tPb + ' mm' : '') +
+    '。共筛选出 <b>' + passed.length + '</b> 个满足规格，推荐最小满足外径：<b>' +
+    (passed.length ? passed[0].m.brand + ' ' + passed[0].m.model : '无（请加大 Lb 或降低要求）') + '</b>。';
+
+  passed.slice(0, 12).forEach((p, idx) => {
+    const m = p.m;
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + (idx === 0 ? '⭐ ' : '') + m.model + (m.rootEst ? ' <small>(根径估)</small>' : '') + '</td>' +
+      '<td>' + m.brand + '</td><td>' + m.d0 + '</td><td>' + m.pb + '</td><td>' + m.d1 +
+      '</td><td>' + m.ca + '</td><td>' + m.coa + '</td><td>' + p.pcr.toFixed(0) + '</td><td>' + p.nc.toFixed(0) +
+      '</td><td>' + (idx === 0 ? '<span class="ok">推荐</span>' : '<span class="ok">满足</span>') + '</td>';
+    body.appendChild(tr);
+  });
+  // 若指定导程被放宽，提示
+  if (passed.length && tPb > 0 && !passed.some(p => p.m.pb === tPb)) {
+    const tip = document.createElement('tr');
+    tip.innerHTML = '<td colspan="10" style="color:#c07a00">⚠ 指定导程 ' + tPb + ' mm 无满足规格，已放宽导程约束列出全部满足项；如需该导程请加大外径或改善支承条件。</td>';
+    body.appendChild(tip);
+  }
+  $('recRes').style.display = '';
+}
+
+buildModelOptions();
 </script>
 </body>
 </html>

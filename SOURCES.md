@@ -22,6 +22,9 @@
 | 数控机床进给滚珠丝杠选择与计算（佳工机电网） | Cam 预期额定动载荷、欧拉压杆公式、极限转速 nc、Dn≤70000 | http://m.newmaker.com/art-detail-28663.html |
 | 滚珠丝杆副设计计算（Mechtool） | 寿命 Lr=(Ca/(fw·Fm))³·10⁶、允许轴向载荷、临界转速公式 | https://www.mechtool.cn/calculation/calculation_ballscrewdrive.html |
 | 滚珠丝杆介绍（百度百科） | 选型步骤全流程、轴向刚性串联公式、DN 值校核 | https://baike.baidu.com/item/滚珠丝杆介绍 |
+| THK 官方 BNK 系列样本（BNK16/20/25 规格表） | 公称外径、导程、沟槽谷径(根径)、基本动额定载荷 Ca、静额定 C0a（单位 kN，取 GT 预紧级）、DN 值 | https://www.thk.com/us/en/products/ball_screw/finished_shaft_end/bnk20/ 与 /bnk25/ |
+| HIWIN / TBI SFU 系列滚制丝杠样本 | 公称直径、导程、动额定载荷 Ca、静额定 C0a（kgf，换算 N）、钢球直径 | https://www.deliyalinearmotion.com/ball-screw/sfu-ball-screw.html ；TBI: https://tflbearing.com/product/linear-bearing/tbi-high-precision-universal-ball-screw-sfa-sfni-sfyr-sfnu2005 |
+| 丝杠型号库数据来源说明（2026-09-23 入库） | 工具内置 THK/ HIWIN/ TBI 三品牌规格：THK 取官方真实根径；HIWIN/TBI 根径按 d1≈0.80·d0+0.075·Pb 估算（仅供压杆/临界转速参考） | 见工具 ④ 面板，最终以各厂商样本为准 |
 
 ## 四、伺服/步进电机选型
 | 来源 | 覆盖内容 | 链接 |
