@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>梯形丝杠选型 · 机械非标自动化设计计算</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #f7f4f0; color: #3a342e; line-height: 1.6; }
+  header { background: linear-gradient(135deg, #ff7a3c 0%, #e8442b 100%); color: #fff; padding: 22px 28px; text-align: center; }
+  header h1 { font-size: 22px; font-weight: 800; letter-spacing: 1px; }
+  header p { font-size: 13px; opacity: .92; margin-top: 6px; }
+  .back { display: inline-block; margin: 14px 0 0 28px; padding: 10px 20px; background: linear-gradient(135deg,#ff7a3c,#e8442b); color: #fff;
+    text-decoration: none; font-weight: 700; font-size: 15px; border-radius: 8px; box-shadow: 0 3px 10px rgba(232,68,43,.35); }
+  .back:hover { filter: brightness(1.05); }
+  .wrap { max-width: 1000px; margin: 18px auto 40px; padding: 0 18px; }
+  .panel { background: #fff; border-radius: 14px; padding: 22px 24px; margin-bottom: 22px; box-shadow: 0 2px 14px rgba(0,0,0,.05); }
+  .panel h2 { font-size: 17px; color: #b3352b; margin-bottom: 16px; border-left: 5px solid #ff7a3c; padding-left: 12px; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  .form-grid .wide { grid-column: 1 / -1; }
+  label { display: block; font-size: 12px; color: #7a6f60; margin-bottom: 4px; }
+  input, select { width: 100%; padding: 9px 10px; border: 1px solid #e3d8c8; border-radius: 8px; font-size: 14px; background: #fffdf9; }
+  input:focus, select:focus { outline: none; border-color: #ff7a3c; }
+  .btn { margin-top: 16px; padding: 11px 26px; background: linear-gradient(135deg,#ff7a3c,#e8442b); color:#fff; border: none;
+    border-radius: 9px; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 3px 10px rgba(232,68,43,.3); }
+  .btn:hover { filter: brightness(1.05); }
+  .btn.gray { background: linear-gradient(135deg,#9a9389,#716a60); }
+  .fig { background: #fdf8f2; border: 1px solid #f0e2d0; border-radius: 10px; padding: 14px; margin: 4px 0 8px; text-align: center; }
+  .fig figcaption { font-size: 12px; color: #7a6f60; margin-top: 8px; }
+  .result { margin-top: 16px; background: #fbf6ef; border-radius: 10px; padding: 14px 16px; }
+  .result table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .result th, .result td { border: 1px solid #ecdfcc; padding: 7px 9px; text-align: left; }
+  .result th { background: #f3e7d6; color: #6b5d4c; font-weight: 700; }
+  .result td.val { font-weight: 700; color: #2a2a2a; text-align: right; font-variant-numeric: tabular-nums; }
+  .ok { color: #1f8a4c; font-weight: 700; }
+  .ng { color: #e8442b; font-weight: 700; }
+  .note { background: #fdf8f2; border: 1px solid #f0e2d0; border-radius: 10px; padding: 14px 16px; font-size: 13px; color: #7a6f60; line-height: 1.9; margin-top: 16px; }
+  .note b { color: #b3352b; }
+  .star { color: #e8a200; }
+  .rec-table td { font-size: 12px; }
+  .small { font-size: 11px; color: #a89b88; margin-top: 4px; }
+  footer { text-align: center; font-size: 12px; color: #a89b88; padding: 20px; }
+  footer a { color: #b3352b; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🔧 梯形丝杠选型（滑动螺旋传动）</h1>
+  <p>螺纹升角 λ · 自锁判定 · 驱动力矩 T=F·d₂·tan(λ+ρ')/2 · 效率 · 耐磨性/强度/稳定性校核 · 按约束自动推荐 — 公式依据《机械设计手册》与米思米 MISUMI 选型资料</p>
+</header>
+<a class="back" href="../index.html">← 返回工具集</a>
+
+<div class="wrap">
+
+  <!-- 面板① 螺纹几何与自锁 -->
+  <div class="panel">
+    <h2>① 螺纹几何参数与自锁判定</h2>
+    <div class="form-grid">
+      <div class="wide"><label>丝杠规格（选择后自动填充 d / P / d₂，亦可手动输入）</label>
+        <select id="trspec" onchange="fillSpec()"></select>
+      </div>
+      <div><label>公称直径 d (mm)</label><input id="gd" type="text" value="20"></div>
+      <div><label>螺距 / 导程 P (mm，单头 S=P)</label><input id="gP" type="text" value="4"></div>
+      <div><label>中径 d₂ (mm)</label><input id="gd2" type="text" value="18"></div>
+      <div><label>牙型角 α (°)（梯形 30 / 锯齿 33 / 矩形 0）</label><input id="galpha" type="text" value="30"></div>
+      <div class="wide"><label>螺母材质 / 摩擦系数 f（钢-青铜 0.10 / 钢-铸铁 0.13 / 钢-树脂 0.13 / 黄铜 0.21）</label>
+        <select id="gmat" onchange="setFric()">
+          <option value="0.10">钢螺杆-青铜螺母（f=0.10，良好润滑，推荐）</option>
+          <option value="0.13">钢螺杆-铸铁螺母（f=0.13）</option>
+          <option value="0.13,POM">钢螺杆-树脂螺母 POM/尼龙（f=0.13）</option>
+          <option value="0.21">钢螺杆-黄铜螺母（f=0.21，米思米样本）</option>
+          <option value="custom">自定义</option>
+        </select>
+      </div>
+      <div id="gfWrap" style="display:none"><label>自定义摩擦系数 f</label><input id="gf" type="text" value="0.10"></div>
+    </div>
+    <div class="fig">
+      <svg viewBox="0 0 680 240" width="680" height="240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="梯形丝杠副剖面与几何参数示意图">
+        <!-- 螺母（剖视） -->
+        <rect x="250" y="72" width="190" height="96" rx="6" fill="#e6d4bd" stroke="#b98a5f" stroke-width="2"/>
+        <text x="345" y="66" font-size="12" font-weight="700" fill="#8a6a45" text-anchor="middle">螺母</text>
+        <!-- 螺杆本体 -->
+        <rect x="60" y="110" width="560" height="22" fill="#dbe2e7" stroke="#8a949c" stroke-width="1.5"/>
+        <!-- 螺杆上表面梯形螺纹牙（示意） -->
+        <path d="M64,110 l6,-9 h14 l6,9 l6,-9 h14 l6,9 l6,-9 h14 l6,9 l6,-9 h14 l6,9 l6,-9 h14 l6,9 l6,-9 h14 l6,9 l6,-9 h14 l6,9 l6,-9 h14 l6,9 l6,-9 h14 l6,9 l6,-9 h14 l6,9 l6,-9 h14 l6,9 l6,-9 h14 l6,9 l6,-9 h14 l6,9 l6,-9 h14 l6,9 l6,-9 h14 l6,9 l6,-9 h14 l6,9 l6,-9 h14 l6,9 l6,-9 h14 l6,9 l6,-9 h14 l6,9 l6,-9 h14 l6,9 l6,-9 h14 l6,9"
+              fill="none" stroke="#5f88a8" stroke-width="1.6" stroke-linejoin="round"/>
+        <!-- 中径 d2 虚线 -->
+        <line x1="60" y1="128" x2="620" y2="128" stroke="#b3352b" stroke-width="1" stroke-dasharray="6 4"/>
+        <text x="674" y="132" font-size="12" font-weight="700" fill="#b3352b" text-anchor="end">d₂ 中径</text>
+        <!-- 外径 d 标注 -->
+        <line x1="46" y1="98" x2="46" y2="136" stroke="#2f7bbf" stroke-width="1"/>
+        <text x="40" y="120" font-size="12" font-weight="700" fill="#2f7bbf" text-anchor="end">d</text>
+        <!-- 螺距 P 标注 -->
+        <line x1="300" y1="92" x2="326" y2="92" stroke="#e8a200" stroke-width="1.4"/>
+        <circle cx="300" cy="92" r="2" fill="#e8a200"/>
+        <circle cx="326" cy="92" r="2" fill="#e8a200"/>
+        <text x="313" y="86" font-size="12" font-weight="700" fill="#c88a00" text-anchor="middle">P</text>
+        <!-- 轴向力 F -->
+        <line x1="620" y1="121" x2="654" y2="121" stroke="#e62e2e" stroke-width="4"/>
+        <polygon points="662,121 646,114 646,128" fill="#e62e2e"/>
+        <text x="640" y="108" font-size="13" font-weight="700" fill="#e62e2e" text-anchor="middle">F</text>
+        <!-- 底部说明 -->
+        <text x="340" y="206" font-size="12" fill="#7a6f60" text-anchor="middle">螺纹升角 λ = arctan(S / π·d₂)；当量摩擦角 ρ' = arctan(f / cos(α/2))</text>
+        <text x="340" y="226" font-size="12" fill="#7a6f60" text-anchor="middle">自锁条件：λ ≤ ρ'（此时螺母不会在轴向力作用下自行松退）</text>
+      </svg>
+      <figcaption>梯形丝杠副（剖视）：螺杆旋转 → 螺母沿轴向直线移动；升角越小越易自锁，但效率越低</figcaption>
+    </div>
+    <button class="btn" onclick="geoCalc()">计算 ① 升角 / 当量摩擦角 / 自锁判定</button>
+    <div class="result" id="geoRes" style="display:none"></div>
+  </div>
+
+  <!-- 面板② 驱动力矩与效率 -->
+  <div class="panel">
+    <h2>② 驱动力矩与效率</h2>
+    <div class="form-grid">
+      <div><label>轴向工作载荷 F (N)</label><input id="tF" type="text" value="3000"></div>
+      <div><label>转速 n (r/min，用于算功率)</label><input id="tn" type="text" value="300"></div>
+      <div><label>效率修正系数 K（滚珠/滚动支承 0.95，滑动支承 0.90）</label><input id="tK" type="text" value="0.95"></div>
+      <div><label>支承面摩擦转矩 M₂ (N·mm，留空忽略)</label><input id="tMc" type="text" value="0"></div>
+    </div>
+    <div class="fig">
+      <svg viewBox="0 0 680 230" width="680" height="230" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="螺纹升角与斜面力学模型示意图">
+        <!-- 斜面三角形 -->
+        <polygon points="120,180 520,180 520,66" fill="#fbe3d0" stroke="#c87a4a" stroke-width="2"/>
+        <!-- 升角 λ 弧 -->
+        <path d="M162,180 A42,42 0 0 0 158,164" fill="none" stroke="#b3352b" stroke-width="1.6"/>
+        <text x="168" y="172" font-size="13" font-weight="700" fill="#b3352b">λ</text>
+        <!-- 底边 πd2 -->
+        <text x="320" y="200" font-size="12" font-weight="700" fill="#7a6f60" text-anchor="middle">底边 = π·d₂（螺纹展开）</text>
+        <!-- 高 = 导程 S -->
+        <line x1="540" y1="180" x2="540" y2="66" stroke="#2f7bbf" stroke-width="1"/>
+        <text x="552" y="126" font-size="12" font-weight="700" fill="#2f7bbf">S 导程</text>
+        <!-- 斜面上的滑块（螺母受力） -->
+        <g transform="rotate(-20 320 123)">
+          <rect x="296" y="112" width="48" height="30" rx="4" fill="#dbe2e7" stroke="#5f88a8" stroke-width="1.8"/>
+          <text x="320" y="132" font-size="12" font-weight="700" fill="#3f5f75" text-anchor="middle">F</text>
+        </g>
+        <!-- 法向力 N 与摩擦力 -->
+        <line x1="330" y1="120" x2="372" y2="98" stroke="#1f8a4c" stroke-width="2.4"/>
+        <polygon points="378,95 361,96 368,108" fill="#1f8a4c"/>
+        <text x="392" y="96" font-size="12" font-weight="700" fill="#1f8a4c">N</text>
+        <!-- 说明 -->
+        <text x="340" y="222" font-size="12" fill="#7a6f60" text-anchor="middle">驱动力矩 T = ½·d₂·F·tan(λ + ρ')；效率 η = K·tanλ / tan(λ + ρ')</text>
+      </svg>
+      <figcaption>把螺纹沿中径圆柱面展开成斜面：轴向载荷 F 在升角 λ 的斜面上滑动，需克服摩擦角 ρ'</figcaption>
+    </div>
+    <button class="btn" onclick="torqueCalc()">计算 ② 驱动力矩 / 效率 / 功率</button>
+    <div class="result" id="torqueRes" style="display:none"></div>
+  </div>
+
+  <!-- 面板③ 强度与稳定性校核 -->
+  <div class="panel">
+    <h2>③ 耐磨性 / 螺杆强度 / 稳定性 / 临界转速校核</h2>
+    <div class="form-grid">
+      <div><label>螺母高度系数 ψ（整体 1.2~2.5，剖分 2.5~3.5）</label><input id="cpsi" type="text" value="2"></div>
+      <div><label>许用压强 [p] (MPa)（钢-青铜 18~25 / 钢-铸铁 13 / 钢-钢 7.5）</label><input id="cp" type="text" value="18"></div>
+      <div class="wide"><label>螺杆材料（σs、E）</label>
+        <select id="cmat" onchange="setScrewMat()">
+          <option value="355,206000">45 钢（σs=355 MPa，E=206000）</option>
+          <option value="785,206000">40Cr（σs=785 MPa，E=206000）</option>
+          <option value="235,206000">Q235（σs=235 MPa，E=206000）</option>
+          <option value="205,193000">304 不锈钢（σs=205 MPa，E=193000）</option>
+          <option value="custom">自定义</option>
+        </select>
+      </div>
+      <div id="csigWrap" style="display:none"><label>自定义 σs / E（MPa，逗号分隔）</label><input id="csig" type="text" value="355,206000"></div>
+      <div><label>安全系数 n_s（[σ]=σs/n_s，静载 3 / 变载 5）</label><input id="cns" type="text" value="4"></div>
+      <div class="wide"><label>螺杆端部结构（μ=压杆长度系数，μ₁=临界转速端部系数）</label>
+        <select id="cend">
+          <option value="0.5,4.730">两端固定（μ=0.5 / μ₁=4.730）</option>
+          <option value="2,1.875">一端固定、一端自由（μ=2 / μ₁=1.875，最不利）</option>
+          <option value="0.7,3.927">一端固定、一端支承（μ=0.7 / μ₁=3.927）</option>
+          <option value="1,3.142">两端支承（μ=1 / μ₁=3.142）</option>
+        </select>
+      </div>
+      <div><label>受压计算长度 l (mm)</label><input id="cL" type="text" value="500"></div>
+      <div><label>稳定安全系数 [n_w]（垂直 2.5 / 倾斜 3.25 / 水平 4）</label><input id="cnw" type="text" value="2.5"></div>
+    </div>
+    <button class="btn" onclick="checkCalc()">计算 ③ 四项校核</button>
+    <div class="result" id="checkRes" style="display:none"></div>
+  </div>
+
+  <!-- 面板④ 自动推荐 -->
+  <div class="panel">
+    <h2>④ 按约束自动推荐合适规格</h2>
+    <div class="note">
+      推荐逻辑：依据面板 ②/③ 的 <b>轴向载荷 F、转速 n、受压长度 l、端部结构</b> 与面板 ① 的 <b>螺母材质 f</b>，
+      对内置 16 条常见梯形丝杠规格逐一校核 <b>自锁（可选）、耐磨性 p≤[p]、螺杆当量应力 σca≤[σ]、稳定性 Fc/F≥[n_w]、临界转速 n≤0.8nc</b>，
+      按公称直径升序取<b>最小满足规格</b>并标 ⭐。
+    </div>
+    <div class="form-grid">
+      <div class="wide"><label>选型要求</label>
+        <select id="rreq">
+          <option value="lock">要求自锁（竖直/重载场合，λ≤ρ'）</option>
+          <option value="nolock">不要求自锁（可用多头/大导程，追求效率）</option>
+          <option value="eff">优先高效率（大导程，通常不自锁）</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn" onclick="recommend()">自动推荐</button>
+    <div class="result" id="recRes" style="display:none"></div>
+  </div>
+
+  <div class="note">
+    <b>公式与依据：</b><br>
+    · 螺纹升角 λ = arctan(S/(π·d₂))，中径 d₂ = d − 0.5P（ISO 2904）；当量摩擦角 ρ' = arctan(f/cos(α/2))。<br>
+    · 自锁条件 λ ≤ ρ'；驱动力矩 M_t1 = ½·d₂·F·tan(λ+ρ')，总驱动转矩 M_q = M_t1 + M₂。<br>
+    · 效率 η = K·tanλ/tan(λ+ρ')，K 为轴承等附加损耗系数（0.90~0.95）。<br>
+    · 耐磨性：螺母高 H=ψ·d₂，旋合圈数 n=H/P，牙高 H₁=0.5P，工作压强 p = F/(π·d₂·H₁·n) ≤ [p]。<br>
+    · 螺杆当量应力 σca = √[(4F/πd₃²)² + 3(M_q/0.2d₃³)²] ≤ [σ]（第四强度理论）。<br>
+    · 稳定性：惯性半径 i=d₃/4，柔度 λs=μ·l/i，欧拉临界载荷 Fc=π²·E·I/(μ·l)²，I=πd₃⁴/64。<br>
+    · 临界转速 nc = 12×10⁶·μ₁²·d₃/l²，校核 n &lt; 0.8·nc。<br>
+    · 小径 d₃ 按 d₃ ≈ d − 1.25P 估算（ISO 精确值须查表，仅供稳定性/临界转速参考）。<br>
+    <b>来源：</b>Mechtool《滑动螺旋传动计算》、米思米 MISUMI 梯形丝杠选型资料（凡一商城公式）、ISO 2904/DIN 103 梯形螺纹、Power Screw Calculator（机械设计教材式）。
+  </div>
+
+</div>
+
+<footer>机械非标自动化设计计算工具集 · 第 11 个工具 · <a href="../index.html">返回首页</a></footer>
+
+<script>
+const $ = id => document.getElementById(id);
+
+// —— 常见梯形丝杠规格（ISO/DIN Tr 系列；d2 为有效直径，取自米思米/凡一样本）——
+const TR_SPECS = [
+  {d:8,  P:1.5, d2:7.25},
+  {d:10, P:2,   d2:9},
+  {d:12, P:2,   d2:11},
+  {d:14, P:3,   d2:12.5},
+  {d:16, P:2,   d2:15},
+  {d:16, P:3,   d2:14.5},
+  {d:18, P:4,   d2:16},
+  {d:20, P:2,   d2:19},
+  {d:20, P:4,   d2:18},
+  {d:22, P:5,   d2:19.5},
+  {d:25, P:5,   d2:22.5},
+  {d:28, P:5,   d2:25.5},
+  {d:32, P:6,   d2:29},
+  {d:36, P:6,   d2:33},
+  {d:40, P:6,   d2:37},
+  {d:50, P:8,   d2:46},
+];
+
+const num = v => parseFloat(String(v).replace(/[^\d.\-]/g, '')) || 0;
+const rad = deg => deg * Math.PI / 180;
+
+// 初始化规格下拉
+(function () {
+  const sel = $('trspec');
+  let html = '<option value="">— 手动输入 / 请选择规格 —</option>';
+  TR_SPECS.forEach((s, i) => {
+    const lam = Math.atan(s.P / (Math.PI * s.d2)) * 180 / Math.PI;
+    html += `<option value="${i}">Tr${s.d}×${s.P}（d₂=${s.d2}，λ=${lam.toFixed(2)}°）</option>`;
+  });
+  sel.innerHTML = html;
+})();
+
+function fillSpec() {
+  const i = $('trspec').value;
+  if (i === '') return;
+  const s = TR_SPECS[+i];
+  $('gd').value = s.d; $('gP').value = s.P; $('gd2').value = s.d2;
+}
+
+function setFric() {
+  const v = $('gmat').value;
+  if (v === 'custom') { $('gfWrap').style.display = ''; return; }
+  $('gfWrap').style.display = 'none';
+}
+
+function getF() {
+  const v = $('gmat').value;
+  return v === 'custom' ? num($('gf').value) : parseFloat(v.split(',')[0]);
+}
+
+// —— 面板① 几何与自锁 ——
+function geoCalc() {
+  const d = num($('gd').value), P = num($('gP').value), d2 = num($('gd2').value);
+  const alpha = num($('galpha').value), f = getF();
+  if (d2 <= 0 || P <= 0) { alert('请填写有效的中径 d₂ 与螺距 P'); return; }
+  const lambda = Math.atan(P / (Math.PI * d2)) * 180 / Math.PI;
+  const rho = Math.atan(f / Math.cos(rad(alpha / 2))) * 180 / Math.PI;
+  const d3 = d - 1.25 * P;
+  const selfLock = lambda <= rho;
+  geoResult = { d, P, d2, alpha, f, lambda, rho, d3, selfLock };
+
+  let html = `<table>
+    <tr><th>参数</th><th>数值</th><th>说明</th></tr>
+    <tr><td>导程 S</td><td class="val">${P.toFixed(2)} mm</td><td>单头螺纹 S=P</td></tr>
+    <tr><td>螺纹升角 λ</td><td class="val">${lambda.toFixed(3)}°</td><td>arctan(S/π·d₂)</td></tr>
+    <tr><td>当量摩擦角 ρ'</td><td class="val">${rho.toFixed(3)}°</td><td>arctan(f/cos(α/2))，α=${alpha}°，f=${f}</td></tr>
+    <tr><td>小径 d₃（估算）</td><td class="val">${d3.toFixed(2)} mm</td><td>d₃ ≈ d − 1.25P</td></tr>
+    <tr><td>自锁判定</td><td colspan="2">${selfLock
+      ? '<span class="ok">✔ 自锁（λ ≤ ρ\'，轴向力作用下不自行松退）</span>'
+      : '<span class="ng">✘ 不自锁（λ &gt; ρ\'，轴向力会使螺母自行倒退，需制动/减速比）</span>'}</td></tr>
+  </table>
+  <div class="small">提示：λ 越小越易自锁但效率越低；竖直提升、夹紧保压场合优先选 λ ≤ ρ' 的规格。</div>`;
+  $('geoRes').innerHTML = html;
+  $('geoRes').style.display = '';
+}
+let geoResult = null;
+
+function setScrewMat() {
+  $('csigWrap').style.display = $('cmat').value === 'custom' ? '' : 'none';
+}
+
+// —— 面板② 驱动力矩与效率 ——
+function torqueCalc() {
+  if (!geoResult) geoCalc();
+  const g = geoResult;
+  const F = num($('tF').value), n = num($('tn').value), K = num($('tK').value), M2 = num($('tMc').value);
+  const lam = rad(g.lambda), rho = rad(g.rho);
+  const tanLp = Math.tan(lam + rho);
+  const Mt1 = 0.5 * g.d2 * F * tanLp;          // N·mm
+  const Mq = Mt1 + M2;                          // N·mm
+  const eta = K * Math.tan(lam) / tanLp;        // 效率
+  const Pwr = Mq * n / 9550000;                 // kW
+
+  let html = `<table>
+    <tr><th>参数</th><th>数值</th><th>说明</th></tr>
+    <tr><td>轴向工作载荷 F</td><td class="val">${F.toFixed(1)} N</td><td>—</td></tr>
+    <tr><td>螺纹摩擦力矩 M_t1</td><td class="val">${Mt1.toFixed(1)} N·mm</td><td>½·d₂·F·tan(λ+ρ') = ${(Mt1/1000).toFixed(3)} N·m</td></tr>
+    <tr><td>支承面摩擦转矩 M₂</td><td class="val">${M2.toFixed(1)} N·mm</td><td>推力轴承/支承面摩擦</td></tr>
+    <tr><td>总驱动转矩 M_q</td><td class="val">${Mq.toFixed(1)} N·mm</td><td>= ${(Mq/1000).toFixed(3)} N·m（选电机按此×安全系数）</td></tr>
+    <tr><td>传动效率 η</td><td class="val">${(eta*100).toFixed(1)} %</td><td>K·tanλ/tan(λ+ρ')，K=${K}（未计 M₂ 时）</td></tr>
+    <tr><td>所需输入功率</td><td class="val">${Pwr.toFixed(4)} kW</td><td>M_q·n/9550000，n=${n} r/min</td></tr>
+  </table>
+  <div class="small">提示：滑动螺旋效率通常 20%~50%（远低于滚珠丝杠 90%+），但结构简单、成本低、可自锁，适合低速重载与保压场合。</div>`;
+  $('torqueRes').innerHTML = html;
+  $('torqueRes').style.display = '';
+}
+
+// —— 面板③ 四项校核 ——
+function checkCalc() {
+  const g = geoResult || (geoCalc(), geoResult);
+  const F = num($('tF').value);
+  const n = num($('tn').value);
+  const psi = num($('cpsi').value);
+  const pAllow = num($('cp').value);
+  const ns = num($('cns').value);
+  const [mu, mu1] = $('cend').value.split(',').map(Number);
+  const L = num($('cL').value);
+  const nw = num($('cnw').value);
+  let sigS, E;
+  if ($('cmat').value === 'custom') { const a = $('csig').value.split(','); sigS = num(a[0]); E = num(a[1]); }
+  else { const a = $('cmat').value.split(','); sigS = parseFloat(a[0]); E = parseFloat(a[1]); }
+
+  const d2 = g.d2, d3 = g.d3, P = g.P;
+  const lam = rad(g.lambda), rho = rad(g.rho);
+  const Mq = 0.5 * d2 * F * Math.tan(lam + rho);   // 简化忽略支承面摩擦 M2
+
+  // 1) 耐磨性
+  const H = psi * d2, nw_turns = H / P, H1 = 0.5 * P;
+  const p = F / (Math.PI * d2 * H1 * nw_turns);
+  const ok1 = p <= pAllow;
+
+  // 2) 螺杆当量应力
+  const sigT = 4 * F / (Math.PI * d3 * d3);            // 拉压应力
+  const tauT = Mq / (0.2 * d3 ** 3);                   // 扭切应力
+  const sca = Math.sqrt(sigT ** 2 + 3 * tauT ** 2);
+  const sigAllow = sigS / ns;
+  const ok2 = sca <= sigAllow;
+
+  // 3) 稳定性（欧拉）
+  const I = Math.PI * d3 ** 4 / 64;
+  const Fc = Math.PI ** 2 * E * I / (mu * L) ** 2;
+  const ok3 = Fc / F >= nw;
+  const slend = (mu * L) / (d3 / 4);
+
+  // 4) 临界转速
+  const nc = 12e6 * mu1 ** 2 * d3 / (L * L);
+  const ok4 = n <= 0.8 * nc;
+
+  let html = `<table>
+    <tr><th>校核项</th><th>计算值</th><th>许用值</th><th>判定</th></tr>
+    <tr><td>① 耐磨性 工作压强 p</td><td class="val">${p.toFixed(2)} MPa</td><td class="val">[p] = ${pAllow} MPa</td>
+      <td>${ok1 ? '<span class="ok">✔ 通过</span>' : '<span class="ng">✘ 超限（增大 d₂ 或 ψ）</span>'}</td></tr>
+    <tr><td>② 螺杆当量应力 σca</td><td class="val">${sca.toFixed(2)} MPa</td><td class="val">[σ] = ${sigAllow.toFixed(1)} MPa</td>
+      <td>${ok2 ? '<span class="ok">✔ 通过</span>' : '<span class="ng">✘ 超限（增大 d₃/改材料）</span>'}</td></tr>
+    <tr><td>③ 压杆稳定性 F_c/F</td><td class="val">${(Fc/F).toFixed(2)}</td><td class="val">[n_w] = ${nw}</td>
+      <td>${ok3 ? '<span class="ok">✔ 通过</span>' : '<span class="ng">✘ 不足（增大 d₃/缩短 l）</span>'}</td></tr>
+    <tr><td>④ 临界转速 n / nc</td><td class="val">${n.toFixed(0)} / ${nc.toFixed(0)} r/min</td><td class="val">n ≤ 0.8·nc</td>
+      <td>${ok4 ? '<span class="ok">✔ 通过</span>' : '<span class="ng">✘ 共振风险（增大 d₃/缩短 l）</span>'}</td></tr>
+  </table>
+  <div class="small">中间量：螺母高 H=${H.toFixed(1)} mm、旋合圈数 n=${nw_turns.toFixed(1)}、牙高 H₁=${H1.toFixed(2)} mm、压杆临界载荷 F_c=${Fc.toFixed(0)} N、柔度 λs=${slend.toFixed(1)}。</div>`;
+  $('checkRes').innerHTML = html;
+  $('checkRes').style.display = '';
+  return { ok1, ok2, ok3, ok4 };
+}
+
+// —— 面板④ 自动推荐 ——
+function recommend() {
+  const F = num($('tF').value), n = num($('tn').value);
+  const psi = num($('cpsi').value), pAllow = num($('cp').value), ns = num($('cns').value);
+  const [mu, mu1] = $('cend').value.split(',').map(Number);
+  const L = num($('cL').value), nw = num($('cnw').value);
+  const alpha = num($('galpha').value), f = getF();
+  let sigS, E;
+  if ($('cmat').value === 'custom') { const a = $('csig').value.split(','); sigS = num(a[0]); E = num(a[1]); }
+  else { const a = $('cmat').value.split(','); sigS = parseFloat(a[0]); E = parseFloat(a[1]); }
+  const req = $('rreq').value;
+  const rho = Math.atan(f / Math.cos(rad(alpha / 2))) * 180 / Math.PI;
+  const sigAllow = sigS / ns;
+
+  const rows = [];
+  TR_SPECS.forEach(s => {
+    const d2 = s.d2, P = s.P, d3 = s.d - 1.25 * P;
+    const lambda = Math.atan(P / (Math.PI * d2)) * 180 / Math.PI;
+    const selfLock = lambda <= rho;
+    const Mq = 0.5 * d2 * F * Math.tan(rad(lambda) + rad(rho));
+    const H = psi * d2, tn = H / P, H1 = 0.5 * P;
+    const p = F / (Math.PI * d2 * H1 * tn);
+    const sca = Math.sqrt((4 * F / (Math.PI * d3 * d3)) ** 2 + 3 * (Mq / (0.2 * d3 ** 3)) ** 2);
+    const I = Math.PI * d3 ** 4 / 64;
+    const Fc = Math.PI ** 2 * E * I / (mu * L) ** 2;
+    const nc = 12e6 * mu1 ** 2 * d3 / (L * L);
+    const okLock = req === 'lock' ? selfLock : true;          // 'nolock'/'eff' 不强制自锁
+    const ok1 = p <= pAllow, ok2 = sca <= sigAllow, ok3 = Fc / F >= nw, ok4 = n <= 0.8 * nc;
+    const pass = okLock && ok1 && ok2 && ok3 && ok4;
+    rows.push({ s, lambda, selfLock, p, sca, Fc: Fc / F, nc, okLock, ok1, ok2, ok3, ok4, pass,
+      eff: 0.95 * Math.tan(rad(lambda)) / Math.tan(rad(lambda) + rad(rho)) });
+  });
+
+  const passed = rows.filter(r => r.pass);
+  let html = '';
+  if (passed.length === 0) {
+    html = `<div class="ng">✘ 库中无完全满足的规格。建议：增大螺母高度系数 ψ、降低许用安全系数、缩短受压长度 l，或改用滚珠丝杠（本工具不覆盖）。</div>`;
+  } else {
+    const star = passed[0];
+    html = `<div class="ok">✔ 推荐最小满足规格：<b>Tr${star.s.d}×${star.s.P}</b>（d₂=${star.s.d2}，λ=${star.lambda.toFixed(2)}°，${star.selfLock ? '自锁' : '不自锁'}，效率≈${(star.eff*100).toFixed(0)}%）</div>
+    <table class="rec-table" style="margin-top:10px">
+      <tr><th>推荐</th><th>规格</th><th>d₂</th><th>λ(°)</th><th>自锁</th><th>p(MPa)</th><th>σca(MPa)</th><th>Fc/F</th><th>n/nc</th></tr>`;
+    passed.slice(0, 8).forEach((r, i) => {
+      html += `<tr><td>${i === 0 ? '<span class="star">⭐</span>' : ''}</td>
+        <td>Tr${r.s.d}×${r.s.P}</td><td>${r.s.d2}</td><td>${r.lambda.toFixed(2)}</td>
+        <td>${r.selfLock ? '✔' : '—'}</td><td>${r.p.toFixed(1)}</td><td>${r.sca.toFixed(1)}</td>
+        <td>${r.Fc.toFixed(2)}</td><td>${(n / r.nc).toFixed(2)}</td></tr>`;
+    });
+    html += `</table>`;
+    // 同时给出非自锁情况下的最大导程（高效率）建议
+    if (req === 'eff') {
+      const best = rows.filter(r => r.ok1 && r.ok2 && r.ok3 && r.ok4).sort((a, b) => b.eff - a.eff)[0];
+      if (best) html += `<div class="small">高效率优先：可选 Tr${best.s.d}×${best.s.P}（效率≈${(best.eff*100).toFixed(0)}%，${best.selfLock ? '仍自锁' : '不自锁'}）。</div>`;
+    }
+  }
+  $('recRes').innerHTML = html;
+  $('recRes').style.display = '';
+}
+
+// 页面载入即计算几何，保证后续面板可用
+geoCalc();
+</script>
+</body>
+</html>

@@ -26,6 +26,14 @@
 | HIWIN / TBI SFU 系列滚制丝杠样本 | 公称直径、导程、动额定载荷 Ca、静额定 C0a（kgf，换算 N）、钢球直径 | https://www.deliyalinearmotion.com/ball-screw/sfu-ball-screw.html ；TBI: https://tflbearing.com/product/linear-bearing/tbi-high-precision-universal-ball-screw-sfa-sfni-sfyr-sfnu2005 |
 | 丝杠型号库数据来源说明（2026-09-23 入库） | 工具内置 THK/ HIWIN/ TBI 三品牌规格：THK 取官方真实根径；HIWIN/TBI 根径按 d1≈0.80·d0+0.075·Pb 估算（仅供压杆/临界转速参考） | 见工具 ④ 面板，最终以各厂商样本为准 |
 
+## 三·B 梯形丝杠（滑动螺旋传动，2026-09-26 搜索整理）
+| 来源 | 覆盖内容 | 链接 |
+|------|---------|------|
+| Mechtool 滑动螺旋传动计算 | 螺纹升角 λ=arctan(S/(π·d2))、当量摩擦角 ρ'=arctan(f/cos(α/2))（梯形 α=30°、锯齿 33°）、自锁 λ≤ρ'、摩擦力矩 Mt1=½·d2·F·tan(λ+ρ')、当量应力 σca=√[(4F/πd3²)²+3(Mq/0.2d3³)²]、耐磨性 p=F/(π·d2·H1·n)（H1=0.5P、H=ψ·d2、n=H/P）、稳定性 Fc/F（垂直≥2.5 水平≥4）、临界转速 nc=12×10⁶·μ1²·d3/lc²、效率 η=K·tanλ/tan(λ+ρ') | https://www.mechtool.cn/calculation/calculation_screwdrive.html |
+| 凡一商城：梯形丝杠选型参数计算工具（公式来源·米思米 MISUMI） | 轴径-螺距-有效直径 d2-升角 规格表（16 条）、接触面压力 P=(Fs/Fo)·α、滑动速度 V、效率 η=(1−μ·tanλ)/(1+μ/tanλ)、负载扭矩 T=Fs·R/(2π·η)；螺母材质摩擦系数：黄铜 μ=0.21、树脂 μ=0.13 | https://www.forrun.cn/tools/lead_screw.html |
+| Power Screw Calculator（MechSimulator，机械设计教材式） | 矩形/ACME/梯形(30°) 螺纹；T_raise=(W·dm/2)·[(μ·π·dm+L·cosθ)/(π·dm·cosθ−μ·L)]+支承面、效率 η=W·L/(2π·T)、自锁条件 μ≥L·cosθ/(π·dm)；dm=d−p/2、L=n·p | https://mechsimulator.com/tools/power-screw/ |
+| ISO 2904 / DIN 103 梯形螺纹基本尺寸 | 中径 d2=d−0.5P、牙高 H1=0.5P、外螺纹小径 d3=d−P−2ac（ac 牙顶间隙）；常用规格 Tr10×2~Tr50×8 | ISO/DIN 标准原文，中文摘要见 industrialmonitordirect.com 梯形丝杠设计指南 |
+
 ## 四、伺服/步进电机选型
 | 来源 | 覆盖内容 | 链接 |
 |------|---------|------|

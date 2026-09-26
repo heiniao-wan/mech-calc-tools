@@ -5,6 +5,15 @@
 // ============================================================
 const TOOLS = [
   {
+    id: "trapezoidal-screw",
+    name: "梯形丝杠选型（滑动螺旋传动）",
+    file: "tools/trapezoidal-screw.html",
+    category: "传动选型",
+    desc: "螺纹升角 λ=arctan(S/πd₂)、当量摩擦角 ρ'=arctan(f/cos(α/2))、自锁判定 λ≤ρ'、驱动力矩 Mq=½d₂F·tan(λ+ρ')、效率、耐磨性 p=F/(πd₂·H₁·n)、螺杆当量应力、欧拉压杆稳定与临界转速校核；内置 16 条 Tr 规格库并自动推荐最小满足规格（机械设计手册 / 米思米选型资料）",
+    icon: "🔧",
+    date: "2026-09-26"
+  },
+  {
     id: "servo-motor",
     name: "伺服电机选型（丝杠驱动）",
     file: "tools/servo-motor.html",
