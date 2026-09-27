@@ -65,10 +65,22 @@
 | 弹簧计算公式汇总（bodocs） | G 取值：碳钢 78500、琴钢丝 80000、不锈钢 71500 MPa；E：碳素钢丝 206000、不锈钢 188000 MPa；扭转 K1 顺旋向取 1 | http://www.bodocs.net/doc/2d8004685.html |
 | 亨特五金弹簧技术文章 | 有效圈数 3~10、支承圈 1.5~2.5 并紧磨平、反算圈数 n=G·d⁴/(8·D³·k) | https://www.tanhuang1.com/yashuotanhuang/page/88 |
 
+## 八、轴承（2026-09-27 搜索整理）
+| 来源 | 覆盖内容 | 链接 |
+|------|---------|------|
+| GB/T 6391《滚动轴承 额定动载荷和额定寿命》 | 基本额定动载荷 C、基本额定寿命 L10=(C/P)^p（球 p=3、滚子 p=10/3）、寿命修正系数 a₁（90%→1、95%→0.62、96%→0.53、97%→0.44、98%→0.33、99%→0.21） | 标准原文；条款摘要见 Koyo 轴承技术手册 https://koyo.jtekt.co.jp/en/support/bearing-knowledge/5-7000.html |
+| 嘉立创 FA 机械设计手册：径向当量载荷 X、Y 系数表 | 深沟球轴承按 f₀·Fa/C₀r 查 e/X/Y（索引 0.172~6.89 → e 0.19~0.44、Y 2.30~1.00，Fa/Fr>e 时 X=0.56）；当量静载荷 P₀r=0.6Fr+0.5Fa（<Fr 取 Fr） | https://www.jlc-jdgf.com/mcbook/new07274.htm |
+| 嘉立创 FA 机械设计手册：单列角接触球轴承当量载荷计算 | 15°(7000C)：Fa/Fr≤e 取 Fr，>e 取 0.44Fr+YFa；25°(7000AC)：e=0.68，>e 取 0.41Fr+0.87Fa；40°(7000B)：e=1.14，>e 取 0.35Fr+0.57Fa；静载荷 P₀r=0.5Fr+(0.46/0.38/0.26)Fa；成组安装 C=i^0.7·Cr、C₀=i·C₀r、极限转速取 60%~80% | https://www.jlc-jdgf.com/mcbook/7-2-58.htm |
+| SKF 角接触球轴承（7000 ACD/P4A）技术参数 | 接触角 α=25°、e=0.68、单列 X2=0.41 / Y2=0.87、背对背 Y2=1.4（与国标表一致，交叉验证） | https://www.skf.com/group/products/super-precision-bearings/angular-contact-ball-bearings/productid-7000%20ACDGC%2FP4A |
+| FAG / SKF 深沟球轴承系数 f₀ 表（按内径代码 × 系列） | 60/62/63 系列各内径代码的 f₀（6000=14.0、6200=12.4、6300=12.1 … 6308=13.0），用于计算 f₀·Fa/C₀r 索引 | http://tbs-bearing.com/product/detail?id=14737787&sccjc=FAG&xl=6205-H-2RSR |
+| NSK 深沟球轴承 6000/6200/6300 系列规格表 | d/D/B/r、基本额定动载荷 Cr、基本额定静载荷 C₀r（单位 N，6000~6309 共 30 型号） | http://www.buynsk.com/doc_23836533.html |
+| 62 / 63 系列极限转速（脂 / 油润滑，r/min） | 6200~6209 脂 19000→7000、油 26000→9000 | https://sddentebearing.en.made-in-china.com/product/qwIGldTvMZre/China-6000-6200-6300-Series-Deep-Groove-Ball-Bearing-for-Machine.html |
+| 单列角接触球轴承 70C / 72C 系列规格（15°） | d/D/B/r、Cr/C₀r、脂/油极限转速（7000C~7009C、7200C~7203C 共 14 型号） | 东胜轴承 http://www.ds-zc.com/product/Catalog/3/213 ；哈通 http://m.htqbearing.com/hatongzhoucheng/wap_pro/10561134.html |
+
 ## 待补充方向
 - [ ] THK 滚珠丝杠/直线导轨选型手册（thk.com 技术资料）
 - [ ] 米思米 MISUMI 选型计算资料（fa.misumi-vona.cn）
 - [ ] 亚德客 AirTAC 气缸选型样本
-- [ ] SKF/NSK 轴承寿命计算资料
 - [ ] GB/T 3480 齿轮强度计算
 - [ ] 气爪（SMC MHZ/MHS 系列）夹持力计算表
+- [ ] SKF/NSK 轴承当量载荷 αISO 修正与润滑寿命（进阶）

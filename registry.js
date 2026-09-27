@@ -5,6 +5,15 @@
 // ============================================================
 const TOOLS = [
   {
+    id: "bearing-select",
+    name: "轴承选型（深沟球 / 角接触）",
+    file: "tools/bearing-select.html",
+    category: "传动选型",
+    desc: "当量动载荷 P=XFr+YFa（深沟球按 f₀·Fa/C₀r 查 e/X/Y 插值表，角接触按 15°/25°/40° 接触角系数）、额定寿命 L₁₀=(C/P)³ 与可靠度修正 L_nm、所需 Cr 反算、静载荷 S₀ 与极限转速校核；内置 6000/6200/6300/70C/72C 共 44 条规格库，按约束自动推荐最小满足规格（GB/T 6391、GB/T 4662、SKF/NSK/FAG 样本）",
+    icon: "🎯",
+    date: "2026-09-27"
+  },
+  {
     id: "trapezoidal-screw",
     name: "梯形丝杠选型（滑动螺旋传动）",
     file: "tools/trapezoidal-screw.html",

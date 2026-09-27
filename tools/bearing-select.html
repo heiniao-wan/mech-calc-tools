@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>轴承选型（深沟球/角接触）· 机械非标自动化设计计算</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #f7f4f0; color: #3a342e; line-height: 1.6; }
+  header { background: linear-gradient(135deg, #ff7a3c 0%, #e8442b 100%); color: #fff; padding: 22px 28px; text-align: center; }
+  header h1 { font-size: 22px; font-weight: 800; letter-spacing: 1px; }
+  header p { font-size: 13px; opacity: .92; margin-top: 6px; }
+  .back { display: inline-block; margin: 14px 0 0 28px; padding: 10px 20px; background: linear-gradient(135deg,#ff7a3c,#e8442b); color: #fff;
+    text-decoration: none; font-weight: 700; font-size: 15px; border-radius: 8px; box-shadow: 0 3px 10px rgba(232,68,43,.35); }
+  .back:hover { filter: brightness(1.05); }
+  .wrap { max-width: 1000px; margin: 18px auto 40px; padding: 0 18px; }
+  .panel { background: #fff; border-radius: 14px; padding: 22px 24px; margin-bottom: 22px; box-shadow: 0 2px 14px rgba(0,0,0,.05); }
+  .panel h2 { font-size: 17px; color: #b3352b; margin-bottom: 16px; border-left: 5px solid #ff7a3c; padding-left: 12px; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  .form-grid .wide { grid-column: 1 / -1; }
+  label { display: block; font-size: 12px; color: #7a6f60; margin-bottom: 4px; }
+  input, select { width: 100%; padding: 9px 10px; border: 1px solid #e3d8c8; border-radius: 8px; font-size: 14px; background: #fffdf9; }
+  input:focus, select:focus { outline: none; border-color: #ff7a3c; }
+  .btn { margin-top: 16px; padding: 11px 26px; background: linear-gradient(135deg,#ff7a3c,#e8442b); color:#fff; border: none;
+    border-radius: 9px; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 3px 10px rgba(232,68,43,.3); }
+  .btn:hover { filter: brightness(1.05); }
+  .btn.gray { background: linear-gradient(135deg,#9a9389,#716a60); }
+  .btn.mini { margin: 0; padding: 4px 10px; font-size: 12px; border-radius: 6px; box-shadow: none; }
+  .fig { background: #fdf8f2; border: 1px solid #f0e2d0; border-radius: 10px; padding: 14px; margin: 4px 0 8px; text-align: center; }
+  .fig figcaption { font-size: 12px; color: #7a6f60; margin-top: 8px; }
+  .result { margin-top: 16px; background: #fbf6ef; border-radius: 10px; padding: 14px 16px; }
+  .result table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .result th, .result td { border: 1px solid #ecdfcc; padding: 7px 9px; text-align: left; }
+  .result th { background: #f3e7d6; color: #6b5d4c; font-weight: 700; }
+  .result td.val { font-weight: 700; color: #2a2a2a; text-align: right; font-variant-numeric: tabular-nums; }
+  .ok { color: #1f8a4c; font-weight: 700; }
+  .ng { color: #e8442b; font-weight: 700; }
+  .note { background: #fdf8f2; border: 1px solid #f0e2d0; border-radius: 10px; padding: 14px 16px; font-size: 13px; color: #7a6f60; line-height: 1.9; margin-top: 16px; }
+  .note b { color: #b3352b; }
+  .star { color: #e8a200; }
+  .small { font-size: 11px; color: #a89b88; margin-top: 4px; }
+  footer { text-align: center; font-size: 12px; color: #a89b88; padding: 20px; }
+  footer a { color: #b3352b; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🎯 轴承选型（深沟球 / 角接触）</h1>
+  <p>当量动载荷 P=XFr+YFa · 额定寿命 L₁₀=(C/P)³ · 所需 Cr 反算 · 静载荷 S₀ 与极限转速校核 · 内置 6000/6200/6300/70C/72C 规格库并自动推荐</p>
+</header>
+<a class="back" href="../index.html">← 返回工具集</a>
+
+<div class="wrap">
+
+  <!-- 面板① 类型与工况 -->
+  <div class="panel">
+    <h2>① 轴承类型、载荷与工况</h2>
+    <div class="form-grid">
+      <div class="wide"><label>轴承类型（决定当量动载荷的判定系数 e 与系数 X / Y）</label>
+        <select id="btype" onchange="onTypeChange()">
+          <option value="dgb">深沟球轴承（按 f₀·Fa/C₀r 查 e / X / Y 表）</option>
+          <option value="ac15">角接触球轴承 15°（7000C 型，单个或串联）</option>
+          <option value="ac25">角接触球轴承 25°（7000AC 型，单个或串联，最常用）</option>
+          <option value="ac40">角接触球轴承 40°（7000B 型，单个或串联）</option>
+        </select>
+      </div>
+      <div><label>径向载荷 Fr (N)</label><input id="bFr" type="text" value="2000"></div>
+      <div><label>轴向载荷 Fa (N，无轴向力填 0)</label><input id="bFa" type="text" value="600"></div>
+      <div><label>转速 n (r/min)</label><input id="bn" type="text" value="1500"></div>
+      <div><label>预期寿命 Lh (h)</label><input id="bLh" type="text" value="10000"></div>
+      <div class="wide"><label>工况系数 f_w（载荷性质，P_计算 = f_w · P）</label>
+        <select id="bfw">
+          <option value="1.2">平稳运转 — 电动机、通风机、轻载输送（1.0 ~ 1.2）</option>
+          <option value="1.5">轻微冲击 — 机床、减速机、起重机（1.2 ~ 1.8）</option>
+          <option value="2.0">中等冲击 — 振动筛、破碎机、轧机（1.8 ~ 3.0）</option>
+        </select>
+      </div>
+      <div class="wide"><label>可靠度要求（寿命修正系数 a₁，GB/T 6391）</label>
+        <select id="brel">
+          <option value="1">90 %（a₁ = 1，常规设计）</option>
+          <option value="0.62">95 %（a₁ = 0.62）</option>
+          <option value="0.53">96 %（a₁ = 0.53）</option>
+          <option value="0.44">97 %（a₁ = 0.44）</option>
+          <option value="0.33">98 %（a₁ = 0.33）</option>
+          <option value="0.21">99 %（a₁ = 0.21，重要设备）</option>
+        </select>
+      </div>
+      <div class="wide"><label>润滑方式（用于极限转速校核）</label>
+        <select id="blub">
+          <option value="grease">脂润滑（取样本脂润滑极限转速）</option>
+          <option value="oil">油润滑（取样本油润滑极限转速）</option>
+        </select>
+      </div>
+    </div>
+    <div class="fig">
+      <svg viewBox="0 0 680 260" width="680" height="260" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="深沟球轴承剖视受力示意图">
+        <!-- 外圈 -->
+        <rect x="90" y="58" width="500" height="40" rx="4" fill="#dfe6ea" stroke="#8a949c" stroke-width="2"/>
+        <text x="112" y="83" font-size="12" font-weight="700" fill="#4c6577">外圈</text>
+        <!-- 内圈 -->
+        <rect x="90" y="170" width="500" height="40" rx="4" fill="#e6d4bd" stroke="#b98a5f" stroke-width="2"/>
+        <text x="112" y="195" font-size="12" font-weight="700" fill="#8a6a45">内圈</text>
+        <!-- 滚动体（钢球） -->
+        <circle cx="150" cy="134" r="18" fill="#fff" stroke="#8a949c" stroke-width="2"/>
+        <circle cx="220" cy="134" r="18" fill="#fff" stroke="#8a949c" stroke-width="2"/>
+        <circle cx="290" cy="134" r="18" fill="#fff" stroke="#8a949c" stroke-width="2"/>
+        <circle cx="360" cy="134" r="18" fill="#fff" stroke="#8a949c" stroke-width="2"/>
+        <circle cx="430" cy="134" r="18" fill="#fff" stroke="#8a949c" stroke-width="2"/>
+        <circle cx="500" cy="134" r="18" fill="#fff" stroke="#8a949c" stroke-width="2"/>
+        <circle cx="570" cy="134" r="18" fill="#fff" stroke="#8a949c" stroke-width="2"/>
+        <!-- 旋转方向 n -->
+        <path d="M 100 40 A 46 46 0 0 1 190 38" fill="none" stroke="#2f7bbf" stroke-width="2.4"/>
+        <polygon points="186,32 196,40 184,47" fill="#2f7bbf"/>
+        <text x="145" y="26" font-size="13" font-weight="700" fill="#2f7bbf" text-anchor="middle">n</text>
+        <!-- 径向载荷 Fr -->
+        <line x1="340" y1="24" x2="340" y2="50" stroke="#e62e2e" stroke-width="5"/>
+        <polygon points="340,58 331,42 349,42" fill="#e62e2e"/>
+        <text x="356" y="42" font-size="13" font-weight="700" fill="#e62e2e">Fr 径向载荷</text>
+        <!-- 轴向载荷 Fa -->
+        <line x1="600" y1="134" x2="644" y2="134" stroke="#1f8a4c" stroke-width="5"/>
+        <polygon points="654,134 636,125 636,143" fill="#1f8a4c"/>
+        <text x="622" y="116" font-size="13" font-weight="700" fill="#1f8a4c" text-anchor="middle">Fa 轴向载荷</text>
+        <!-- 说明 -->
+        <text x="340" y="234" font-size="12" fill="#7a6f60" text-anchor="middle">径向载荷 Fr 由轴传至内圈 → 滚动体 → 外圈；轴向载荷 Fa 由角接触的接触角承担</text>
+        <text x="340" y="252" font-size="12" fill="#7a6f60" text-anchor="middle">深沟球可承受一定双向轴向力；接触角越大，轴向承载能力越强但极限转速越低</text>
+      </svg>
+      <figcaption>深沟球轴承剖视：内圈随轴旋转，滚动体在内外圈滚道间承受 Fr；Fa 经滚道接触点传递</figcaption>
+    </div>
+    <div class="note">
+      <b>工况系数 f_w</b>：轴承实际工况常有振动与冲击，用 f_w 放大当量动载荷后参与寿命计算（平稳 1.0~1.2 / 轻微冲击 1.2~1.8 / 中等冲击 1.8~3.0）。<br>
+      <b>寿命修正 a₁</b>：L₁₀ 对应 90% 可靠度；要求更高可靠度时按 L_nm = a₁·L₁₀ 修正，所需额定动载荷相应放大 a₁<sup>−1/3</sup> 倍。
+    </div>
+  </div>
+
+  <!-- 面板② 当量动载荷与寿命 -->
+  <div class="panel">
+    <h2>② 当量动载荷与额定寿命</h2>
+    <div class="form-grid">
+      <div><label>基本额定动载荷 Cr (N)</label><input id="bCr" type="text" value="29100"></div>
+      <div><label>基本额定静载荷 C₀r (N)</label><input id="bC0r" type="text" value="17900"></div>
+      <div id="f0box"><label>系数 f₀（深沟球专用，GB/T 4662）</label><input id="bf0" type="text" value="14"></div>
+      <div id="acBox" style="display:none"><label>判断系数 e</label><input id="be" type="text" value="0.68"></div>
+      <div id="acBoxX" style="display:none"><label>径向系数 X</label><input id="bX" type="text" value="0.41"></div>
+      <div id="acBoxY" style="display:none"><label>轴向系数 Y</label><input id="bY" type="text" value="0.87"></div>
+    </div>
+    <div class="fig">
+      <svg viewBox="0 0 680 230" width="680" height="230" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="角接触球轴承接触角对比示意图">
+        <!-- 组1 15° -->
+        <rect x="80" y="56" width="100" height="26" rx="3" fill="#dfe6ea" stroke="#8a949c" stroke-width="1.8"/>
+        <rect x="80" y="150" width="100" height="26" rx="3" fill="#e6d4bd" stroke="#b98a5f" stroke-width="1.8"/>
+        <line x1="130" y1="82" x2="130" y2="150" stroke="#c9bda9" stroke-width="1.4" stroke-dasharray="5 4"/>
+        <line x1="130" y1="82" x2="148" y2="150" stroke="#b3352b" stroke-width="2.4"/>
+        <text x="130" y="122" font-size="13" font-weight="700" fill="#b3352b" text-anchor="end">15°</text>
+        <text x="130" y="196" font-size="12" fill="#7a6f60" text-anchor="middle">7000C（高速）</text>
+        <!-- 组2 25° -->
+        <rect x="290" y="56" width="100" height="26" rx="3" fill="#dfe6ea" stroke="#8a949c" stroke-width="1.8"/>
+        <rect x="290" y="150" width="100" height="26" rx="3" fill="#e6d4bd" stroke="#b98a5f" stroke-width="1.8"/>
+        <line x1="340" y1="82" x2="340" y2="150" stroke="#c9bda9" stroke-width="1.4" stroke-dasharray="5 4"/>
+        <line x1="340" y1="82" x2="372" y2="150" stroke="#b3352b" stroke-width="2.4"/>
+        <text x="340" y="122" font-size="13" font-weight="700" fill="#b3352b" text-anchor="end">25°</text>
+        <text x="340" y="196" font-size="12" fill="#7a6f60" text-anchor="middle">7000AC（通用）</text>
+        <!-- 组3 40° -->
+        <rect x="500" y="56" width="100" height="26" rx="3" fill="#dfe6ea" stroke="#8a949c" stroke-width="1.8"/>
+        <rect x="500" y="150" width="100" height="26" rx="3" fill="#e6d4bd" stroke="#b98a5f" stroke-width="1.8"/>
+        <line x1="550" y1="82" x2="550" y2="150" stroke="#c9bda9" stroke-width="1.4" stroke-dasharray="5 4"/>
+        <line x1="550" y1="82" x2="607" y2="150" stroke="#b3352b" stroke-width="2.4"/>
+        <text x="550" y="122" font-size="13" font-weight="700" fill="#b3352b" text-anchor="end">40°</text>
+        <text x="550" y="196" font-size="12" fill="#7a6f60" text-anchor="middle">7000B（轴向重载）</text>
+        <!-- 说明 -->
+        <text x="340" y="222" font-size="12" fill="#7a6f60" text-anchor="middle">接触角 α = 滚动体与滚道的公称接触法线同径向平面的夹角；α 越大轴向承载力越强、判定系数 e 越大</text>
+      </svg>
+      <figcaption>三种接触角对比：虚线为纯径向方向，红线为接触法线；接触角越大（15°→25°→40°）轴向承载能力越高</figcaption>
+    </div>
+    <button class="btn" onclick="calcLoad()">计算 ② P / L₁₀ / L₁₀ₕ / 所需 Cr</button>
+    <div class="result" id="loadRes" style="display:none"></div>
+  </div>
+
+  <!-- 面板③ 静载荷与转速校核 -->
+  <div class="panel">
+    <h2>③ 静载荷与极限转速校核</h2>
+    <div class="form-grid">
+      <div><label>所需静载荷安全系数 S₀（平稳 1.0~1.5 / 冲击 1.5~2.5）</label><input id="cS0" type="text" value="1.5"></div>
+      <div><label>所选型号极限转速 n_lim (r/min，留空则跳过校核)</label><input id="cNlim" type="text" value="10000"></div>
+    </div>
+    <button class="btn" onclick="calcCheck()">计算 ③ 静载荷 / 极限转速校核</button>
+    <div class="result" id="chkRes" style="display:none"></div>
+  </div>
+
+  <!-- 面板④ 型号库与自动推荐 -->
+  <div class="panel">
+    <h2>④ 轴承型号库与自动选型推荐</h2>
+    <div class="form-grid">
+      <div class="wide"><label>从规格库选择型号（自动回填 ② ③ 的 Cr / C₀r / f₀ 与极限转速）</label>
+        <select id="bsel" onchange="applySelModel()"></select>
+      </div>
+    </div>
+    <div class="note">
+      规格库数据取自 <b>NSK 深沟球样本</b>（6000/6200/6300 系列尺寸与 Cr / C₀r，单位 N）、<b>东胜/洛阳汇普 70C 系列</b>与<b>哈通 72C 系列</b>角接触样本（Cr / C₀r 已换算为 N）；<b>f₀ 取自 FAG / SKF 深沟球轴承系数 f₀ 表</b>（按内径代码 × 系列查得）。
+      6000 / 6300 系列的极限转速样本中未收录，库内留空，转速校核自动跳过——如需使用请查该型号样本手工填入 ③ 的 n_lim。<br>
+      另外：<b>两套及以上单列角接触球轴承成组安装</b>时，基本额定动载荷取 i<sup>0.7</sup>·Cr、静载荷取 i·C₀r，极限转速取单列的 60 %~80 %。
+    </div>
+    <button class="btn" onclick="recommend()">按约束自动推荐最小满足规格</button>
+    <button class="btn gray" onclick="document.getElementById('recRes').style.display='none'">清空推荐结果</button>
+    <div class="result" id="recRes" style="display:none"></div>
+  </div>
+
+</div>
+
+<footer>
+  公式依据：GB/T 6391《滚动轴承 额定动载荷和额定寿命》、GB/T 4662《滚动轴承 额定静载荷》、
+  《机械设计手册》轴承篇、SKF / NSK / FAG 轴承样本 · 仅作选型初算，重要场合请以厂商样本与试验为准
+</footer>
+
+<script>
+const $ = id => document.getElementById(id);
+const num = v => { const x = parseFloat(v); return isNaN(x) ? 0 : x; };
+
+// ============================================================
+// 规格库 1：深沟球轴承（GB/T 276 / NSK 样本口径，Cr、C₀r 单位 N）
+// [型号, d, D, B, r, Cr, C0r, f0, 脂润滑极限转速, 油润滑极限转速]
+// f0 取自 FAG/SKF 深沟球轴承系数 f0 表
+// ============================================================
+const DB_DGB = [
+  ["6000", 10, 26,  8, 0.3,  4550,  1970, 14.0, null, null],
+  ["6001", 12, 28,  8, 0.3,  5100,  2370, 14.5, null, null],
+  ["6002", 15, 32,  9, 0.3,  5600,  2830, 13.9, null, null],
+  ["6003", 17, 35, 10, 0.3,  6000,  3250, 14.3, null, null],
+  ["6004", 20, 42, 12, 0.6,  9400,  5000, 13.9, null, null],
+  ["6005", 25, 47, 12, 0.6, 10100,  5850, 14.5, null, null],
+  ["6006", 30, 55, 13, 1.0, 13200,  8300, 14.8, null, null],
+  ["6007", 35, 62, 14, 1.0, 16000, 10300, 14.8, null, null],
+  ["6008", 40, 68, 15, 1.0, 16800, 11500, 15.3, null, null],
+  ["6009", 45, 75, 16, 1.0, 20900, 15200, 15.4, null, null],
+  ["6200", 10, 30,  9, 0.6,  5100,  2390, 12.4, 19000, 26000],
+  ["6201", 12, 32, 10, 0.6,  6800,  3050, 13.0, 18000, 24000],
+  ["6202", 15, 35, 11, 0.6,  7650,  3750, 13.1, 17000, 22000],
+  ["6203", 17, 40, 12, 0.6,  9550,  4800, 13.1, 16000, 20000],
+  ["6204", 20, 47, 14, 1.0, 12800,  6600, 13.1, 14000, 18000],
+  ["6205", 25, 52, 15, 1.0, 14000,  7850, 13.8, 12000, 16000],
+  ["6206", 30, 62, 16, 1.0, 19500, 11300, 13.8,  9500, 13000],
+  ["6207", 35, 72, 17, 1.1, 25700, 15300, 13.8,  8500, 11000],
+  ["6208", 40, 80, 18, 1.1, 29100, 17900, 14.0,  8000, 10000],
+  ["6209", 45, 85, 19, 1.1, 31500, 20400, 14.1,  7000,  9000],
+  ["6300", 10, 35, 11, 0.6,  8100,  3450, 12.1, null, null],
+  ["6301", 12, 37, 12, 1.0,  9700,  4200, 12.2, null, null],
+  ["6302", 15, 42, 13, 1.0, 11400,  5450, 12.1, null, null],
+  ["6303", 17, 47, 14, 1.0, 13600,  6650, 12.3, null, null],
+  ["6304", 20, 52, 15, 1.1, 15900,  7900, 12.4, null, null],
+  ["6305", 25, 62, 17, 1.1, 20600, 11200, 12.4, null, null],
+  ["6306", 30, 72, 19, 1.1, 26700, 15000, 13.0, null, null],
+  ["6307", 35, 80, 21, 1.5, 33500, 19200, 13.1, null, null],
+  ["6308", 40, 90, 23, 1.5, 40500, 24000, 13.0, null, null],
+  ["6309", 45, 100, 25, 1.5, 53000, 32000, 13.0, null, null],
+];
+
+// ============================================================
+// 规格库 2：单列角接触球轴承 15°（70C / 72C 系列）
+// [型号, d, D, B, r, Cr, C0r, 脂润滑极限转速, 油润滑极限转速]
+// ============================================================
+const DB_AC = [
+  ["7000C", 10, 26,  8, 0.3,  4900,  2200, 43000, 58000],
+  ["7001C", 12, 28,  8, 0.3,  5400,  2640, 39000, 52000],
+  ["7002C", 15, 32,  9, 0.3,  6250,  3400, 34000, 45000],
+  ["7003C", 17, 35, 10, 0.3,  7700,  4100, 31000, 41000],
+  ["7004C", 20, 42, 12, 0.6, 10500,  6050, 27000, 36000],
+  ["7005C", 25, 47, 12, 0.6, 11700,  7450, 23000, 31000],
+  ["7006C", 30, 55, 13, 1.0, 15100, 10300, 20000, 26000],
+  ["7007C", 35, 62, 14, 1.0, 19100, 13700, 17000, 23000],
+  ["7008C", 40, 68, 15, 1.0, 20600, 15900, 15000, 21000],
+  ["7009C", 45, 75, 16, 1.0, 24400, 19300, 14000, 19000],
+  ["7200C", 10, 30,  9, 0.6,  5800,  2900, 24000, 32000],
+  ["7201C", 12, 32, 10, 0.6,  7900,  3800, 22000, 28000],
+  ["7202C", 15, 35, 11, 0.6,  9200,  4900, 19000, 25000],
+  ["7203C", 17, 40, 12, 0.6, 10800,  5800, 16000, 22000],
+];
+
+// 角接触球轴承系数（单个或串联配置；25°、40° 出自 GB/T 292 配套计算表，15° 为 70C 系列样本典型值）
+const AC = {
+  ac15: { ang: 15, e: 0.38, X: 0.44, Y: 1.47, p0: [0.5, 0.46] },
+  ac25: { ang: 25, e: 0.68, X: 0.41, Y: 0.87, p0: [0.5, 0.38] },
+  ac40: { ang: 40, e: 1.14, X: 0.35, Y: 0.57, p0: [0.5, 0.26] },
+};
+
+// 深沟球 e / Y 插值表：索引 f₀·Fa/C₀r，Fa/Fr > e 时 X = 0.56
+const TBL_EY = [
+  [0.172, 0.19, 2.30], [0.345, 0.22, 1.99], [0.689, 0.26, 1.71], [1.03, 0.28, 1.55],
+  [1.38, 0.30, 1.45], [2.07, 0.34, 1.31], [3.45, 0.38, 1.15], [5.17, 0.42, 1.04], [6.89, 0.44, 1.00],
+];
+
+function interpEY(x) {
+  const n = TBL_EY.length;
+  if (x <= TBL_EY[0][0]) return [TBL_EY[0][1], TBL_EY[0][2]];
+  for (let i = 1; i < n; i++) {
+    if (x <= TBL_EY[i][0]) {
+      const [x0, e0, y0] = TBL_EY[i - 1], [x1, e1, y1] = TBL_EY[i];
+      const t = (x - x0) / (x1 - x0);
+      return [e0 + t * (e1 - e0), y0 + t * (y1 - y0)];
+    }
+  }
+  return [TBL_EY[n - 1][1], TBL_EY[n - 1][2]];
+}
+
+// 当量动载荷（不含 f_w）
+function eqLoad(type, Fr, Fa, C0r, f0) {
+  const fr = Fr > 0 ? Fr : 1e-9;
+  if (type === 'dgb') {
+    const k = f0 * Fa / C0r;
+    const [e, Y] = interpEY(k);
+    if (Fa / fr <= e) return { P: Fr, e, X: 1, Y: 0, k, txt: 'Fa/Fr ≤ e：轴向力影响微小，取 P = Fr' };
+    return { P: 0.56 * Fr + Y * Fa, e, X: 0.56, Y, k, txt: 'Fa/Fr > e：须计入轴向力' };
+  }
+  const c = AC[type];
+  if (Fa / fr <= c.e) return { P: Fr, e: c.e, X: 1, Y: 0, txt: 'Fa/Fr ≤ e：取 P = Fr' };
+  return { P: c.X * Fr + c.Y * Fa, e: c.e, X: c.X, Y: c.Y, txt: 'Fa/Fr > e：取 P = X·Fr + Y·Fa' };
+}
+
+// 当量静载荷 P₀r
+function eqStatic(type, Fr, Fa) {
+  if (type === 'dgb') return Math.max(0.6 * Fr + 0.5 * Fa, Fr);
+  const c = AC[type];
+  return Math.max(c.p0[0] * Fr + c.p0[1] * Fa, Fr);
+}
+
+function curList() { return $('btype').value === 'dgb' ? DB_DGB : DB_AC; }
+function parseRow(t, r) {
+  if (t === 'dgb') return { id: r[0], d: r[1], D: r[2], B: r[3], rr: r[4], Cr: r[5], C0r: r[6], f0: r[7], ng: r[8], no: r[9] };
+  return { id: r[0], d: r[1], D: r[2], B: r[3], rr: r[4], Cr: r[5], C0r: r[6], f0: 0, ng: r[7], no: r[8] };
+}
+
+// ——— 类型切换：显示/隐藏 f₀ 与 e/X/Y，重建型号下拉 ———
+function onTypeChange() {
+  const t = $('btype').value;
+  const dgb = t === 'dgb';
+  $('f0box').style.display = dgb ? '' : 'none';
+  $('acBox').style.display = dgb ? 'none' : '';
+  $('acBoxX').style.display = dgb ? 'none' : '';
+  $('acBoxY').style.display = dgb ? 'none' : '';
+  if (!dgb) {
+    const c = AC[t];
+    $('be').value = c.e; $('bX').value = c.X; $('bY').value = c.Y;
+  }
+  rebuildSel();
+}
+
+// ——— 型号下拉（按系列分组）———
+function rebuildSel() {
+  const t = $('btype').value, sel = $('bsel');
+  sel.innerHTML = '';
+  const groups = t === 'dgb'
+    ? [['6000 系列（特轻型）', '60'], ['6200 系列（轻型）', '62'], ['6300 系列（中型）', '63']]
+    : [['70C 系列（15°）', '70'], ['72C 系列（15°）', '72']];
+  groups.forEach(([label, prefix]) => {
+    const g = document.createElement('optgroup');
+    g.label = label;
+    curList().filter(r => r[0].startsWith(prefix)).forEach(r => {
+      const m = parseRow(t, r);
+      const o = document.createElement('option');
+      o.value = m.id;
+      o.textContent = m.id + '（d' + m.d + ' × D' + m.D + '，Cr = ' + (m.Cr / 1000).toFixed(2) + ' kN）';
+      g.appendChild(o);
+    });
+    sel.appendChild(g);
+  });
+}
+
+// ——— 选中型号后回填 ———
+function applySelModel() {
+  const t = $('btype').value, id = $('bsel').value;
+  if (!id) return;
+  const row = curList().find(r => r[0] === id);
+  if (!row) return;
+  const m = parseRow(t, row);
+  $('bCr').value = m.Cr;
+  $('bC0r').value = m.C0r;
+  if (t === 'dgb') $('bf0').value = m.f0;
+  const lim = $('blub').value === 'grease' ? m.ng : m.no;
+  $('cNlim').value = lim === null || lim === undefined ? '' : lim;
+}
+
+// ——— 面板② 当量动载荷与寿命 ———
+function calcLoad() {
+  const t = $('btype').value;
+  const Fr = num($('bFr').value), Fa = num($('bFa').value), n = num($('bn').value);
+  const Lh = num($('bLh').value), fw = num($('bfw').value), a1 = num($('brel').value);
+  const Cr = num($('bCr').value), C0r = num($('bC0r').value), f0 = num($('bf0').value);
+  if (!(Fr > 0)) { alert('请输入径向载荷 Fr（> 0）'); return; }
+  if (!(n > 0) || !(Lh > 0)) { alert('请输入转速 n 与预期寿命 Lh'); return; }
+  if (!(Cr > 0) || !(C0r > 0)) { alert('请输入轴承的基本额定动载荷 Cr 与静载荷 C₀r'); return; }
+
+  const r = eqLoad(t, Fr, Fa, C0r, f0);
+  const P = fw * r.P;
+  const L10 = Math.pow(Cr / P, 3);              // 百万转
+  const L10h = 1e6 * L10 / (60 * n);            // 小时
+  const Lnm = a1 * L10h;                        // 可靠度修正后
+  const CrReq = P * Math.pow(60 * n * Lh / (1e6 * a1), 1 / 3);
+  const pass = Lnm >= Lh;
+
+  let html = '<table>' +
+    '<tr><th>项目</th><th>数值</th><th>说明</th></tr>' +
+    (t === 'dgb'
+      ? '<tr><td>f₀·Fa / C₀r</td><td class="val">' + r.k.toFixed(3) + '</td><td>用于查判定系数 e 的索引值</td></tr>'
+      : '<tr><td>接触角 α</td><td class="val">' + AC[t].ang + ' °</td><td>角接触球轴承（' + t.slice(2) + ' 型）</td></tr>') +
+    '<tr><td>判断系数 e</td><td class="val">' + r.e.toFixed(3) + '</td><td>Fa/Fr 与此值比较</td></tr>' +
+    '<tr><td>Fa / Fr</td><td class="val">' + (Fa / (Fr || 1e-9)).toFixed(3) + '</td><td>' + r.txt + '</td></tr>' +
+    '<tr><td>系数 X / Y</td><td class="val">' + r.X + ' / ' + r.Y.toFixed(3) + '</td><td>P = X·Fr + Y·Fa</td></tr>' +
+    '<tr><td>当量动载荷 P（未修正）</td><td class="val">' + r.P.toFixed(1) + ' N</td><td>X·Fr + Y·Fa</td></tr>' +
+    '<tr><td>计算载荷 f_w · P</td><td class="val">' + P.toFixed(1) + ' N</td><td>f_w = ' + fw + '</td></tr>' +
+    '<tr><td>额定寿命 L₁₀</td><td class="val">' + L10.toFixed(1) + ' 百万转</td><td>(C/P)³，p = 3（球轴承）</td></tr>' +
+    '<tr><td>额定寿命 L₁₀ₕ</td><td class="val">' + L10h.toFixed(0) + ' h</td><td>10⁶·L₁₀ / (60n)，n = ' + n + ' r/min</td></tr>' +
+    '<tr><td>可靠度修正寿命 L_nm</td><td class="val">' + Lnm.toFixed(0) + ' h</td><td>a₁ = ' + a1 + '（' + $('brel').selectedOptions[0].text.split('（')[0] + '）</td></tr>' +
+    '<tr><td>所需额定动载荷 Cr_req</td><td class="val">' + CrReq.toFixed(0) + ' N</td><td>按目标寿命 ' + Lh + ' h 反算</td></tr>' +
+    '<tr><td>寿命校核</td><td class="val ' + (pass ? 'ok' : 'ng') + '">' + (pass ? '✔ 通过' : '✘ 不足') + '</td>' +
+    '<td>L_nm = ' + Lnm.toFixed(0) + ' h ' + (pass ? '≥' : '<') + ' 目标 ' + Lh + ' h</td></tr>' +
+    '<tr><td>所选型号承载力校核</td><td class="val ' + (Cr >= CrReq ? 'ok' : 'ng') + '">' +
+    (Cr >= CrReq ? '✔ 通过' : '✘ 偏小') + '</td><td>Cr = ' + Cr + ' N ' + (Cr >= CrReq ? '≥' : '<') + ' Cr_req = ' + CrReq.toFixed(0) + ' N</td></tr>' +
+    '</table>';
+  if (!pass) html += '<div class="small">提示：寿命不足时可减小当量动载荷（改用更大接触角 / 提高精度）、更换更大规格，或选用额定动载荷更高的品牌型号。</div>';
+  $('loadRes').innerHTML = html;
+  $('loadRes').style.display = '';
+}
+
+// ——— 面板③ 静载荷与极限转速 ———
+function calcCheck() {
+  const t = $('btype').value;
+  const Fr = num($('bFr').value), Fa = num($('bFa').value), n = num($('bn').value);
+  const C0r = num($('bC0r').value), S0 = num($('cS0').value);
+  const Nlim = num($('cNlim').value);
+  if (!(Fr > 0)) { alert('请输入径向载荷 Fr（> 0）'); return; }
+  if (!(C0r > 0)) { alert('请输入基本额定静载荷 C₀r'); return; }
+
+  const P0r = eqStatic(t, Fr, Fa);
+  const Sact = C0r / P0r;
+  const sPass = Sact >= S0;
+  const sHead = t === 'dgb' ? '0.6·Fr + 0.5·Fa' : AC[t].p0[0] + '·Fr + ' + AC[t].p0[1] + '·Fa';
+
+  let html = '<table>' +
+    '<tr><th>项目</th><th>数值</th><th>说明</th></tr>' +
+    '<tr><td>当量静载荷 P₀r</td><td class="val">' + P0r.toFixed(1) + ' N</td><td>' + sHead + '，且不小于 Fr</td></tr>' +
+    '<tr><td>实际静载荷安全系数 S₀</td><td class="val">' + Sact.toFixed(2) + '</td><td>C₀r / P₀r</td></tr>' +
+    '<tr><td>静载荷校核</td><td class="val ' + (sPass ? 'ok' : 'ng') + '">' + (sPass ? '✔ 通过' : '✘ 不足') + '</td>' +
+    '<td>要求 S₀ ≥ ' + S0 + '，实际 ' + Sact.toFixed(2) + '</td></tr>';
+  if (Nlim > 0) {
+    const nPass = n <= Nlim;
+    html += '<tr><td>转速 / 极限转速</td><td class="val">' + n + ' / ' + Nlim + ' r/min</td><td>' +
+      $('blub').selectedOptions[0].text.split('（')[0] + '，n/n_lim = ' + (n / Nlim * 100).toFixed(1) + ' %</td></tr>' +
+      '<tr><td>极限转速校核</td><td class="val ' + (nPass ? 'ok' : 'ng') + '">' + (nPass ? '✔ 通过' : '✘ 超限') + '</td>' +
+      '<td>' + (nPass ? '工作转速低于极限转速' : '须改用油润滑 / 提高精度等级 / 减小规格') + '</td></tr>';
+  } else {
+    html += '<tr><td>极限转速校核</td><td class="val">—</td><td>未填极限转速，已跳过（请查该型号样本）</td></tr>';
+  }
+  html += '</table>';
+  $('chkRes').innerHTML = html;
+  $('chkRes').style.display = '';
+}
+
+// ——— 面板④ 自动推荐 ———
+function recommend() {
+  const t = $('btype').value;
+  const Fr = num($('bFr').value), Fa = num($('bFa').value), n = num($('bn').value);
+  const Lh = num($('bLh').value), fw = num($('bfw').value), a1 = num($('brel').value);
+  const S0 = num($('cS0').value), lub = $('blub').value;
+  if (!(Fr > 0) || !(n > 0) || !(Lh > 0)) {
+    alert('请先在面板 ① 中填写径向载荷 Fr、转速 n 与预期寿命 Lh');
+    return;
+  }
+  const P0r = eqStatic(t, Fr, Fa);
+  const hits = [];
+  curList().forEach(row => {
+    const m = parseRow(t, row);
+    const e = eqLoad(t, Fr, Fa, m.C0r, m.f0);
+    const P = fw * e.P;
+    const CrReq = P * Math.pow(60 * n * Lh / (1e6 * a1), 1 / 3);
+    const Sact = m.C0r / P0r;
+    const nlim = lub === 'grease' ? m.ng : m.no;
+    const ok = m.Cr >= CrReq && Sact >= S0 && (nlim === null || (nlim > 0 && n <= nlim));
+    if (ok) {
+      const life = a1 * Math.pow(m.Cr / P, 3) * 1e6 / (60 * n);
+      hits.push({ m, P, CrReq, Sact, life, nlim });
+    }
+  });
+  hits.sort((a, b) => a.m.D - b.m.D);
+
+  let html = '';
+  if (hits.length === 0) {
+    html = '<table><tr><th>无满足约束的规格</th></tr><tr><td>' +
+      '库内 ' + curList().length + ' 个型号均不满足当前约束。建议：放宽寿命要求或减小载荷；' +
+      '改用更大截面系列（如从 62 系列升为 63 系列）；改用滚子轴承；或采用成对安装角接触球轴承（额定动载荷按 i<sup>0.7</sup>·Cr 计）。' +
+      '</td></tr></table>';
+  } else {
+    const shown = hits.slice(0, 8);
+    html = '<table class="rec"><tr><th>推荐</th><th>型号</th><th>d × D (mm)</th><th>Cr (kN)</th>' +
+      '<th>计算载荷 P (N)</th><th>所需 Cr (kN)</th><th>预计寿命 (h)</th><th>S₀ 实际</th><th>极限转速 (r/min)</th><th>操作</th></tr>';
+    shown.forEach((h, i) => {
+      const star = i === 0 ? '<span class="star">⭐ </span>' : '';
+      html += '<tr>' +
+        '<td>' + star + (i === 0 ? '最小满足' : '备选') + '</td>' +
+        '<td>' + h.m.id + '</td>' +
+        '<td>' + h.m.d + ' × ' + h.m.D + '</td>' +
+        '<td class="val">' + (h.m.Cr / 1000).toFixed(2) + '</td>' +
+        '<td class="val">' + h.P.toFixed(0) + '</td>' +
+        '<td class="val">' + (h.CrReq / 1000).toFixed(2) + '</td>' +
+        '<td class="val">' + h.life.toFixed(0) + '</td>' +
+        '<td class="val">' + h.Sact.toFixed(2) + '</td>' +
+        '<td class="val">' + (h.nlim === null ? '—' : h.nlim) + '</td>' +
+        '<td><button class="btn mini" onclick="pick(\'' + h.m.id + '\')">选用</button></td>' +
+        '</tr>';
+    });
+    html += '</table><div class="small">约束：Cr ≥ 所需 Cr（含 f_w 与 a₁ 修正）、S₀ ≥ ' + S0 +
+      '、n ≤ 极限转速（无转速数据的型号自动跳过该项）· 按外径 D 由小到大排列，⭐ 为最小满足规格</div>';
+  }
+  $('recRes').innerHTML = html;
+  $('recRes').style.display = '';
+}
+
+function pick(id) {
+  $('bsel').value = id;
+  applySelModel();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// 初始化
+window.onload = function () {
+  rebuildSel();
+  if ($('btype').value === 'dgb') { $('bsel').value = '6208'; applySelModel(); }
+};
+</script>
+</body>
+</html>
