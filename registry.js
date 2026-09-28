@@ -5,6 +5,15 @@
 // ============================================================
 const TOOLS = [
   {
+    id: "sync-belt",
+    name: "同步带选型（梯形齿 / 圆弧齿）",
+    file: "tools/sync-belt.html",
+    category: "传动选型",
+    desc: "设计功率 Pd=K_A·P、带轮节径 d=P_b·Z/π、带速 v=πd₁n₁/60000、节线长圆整为节距整数倍与中心距反算、小带轮包角与啮合齿数 Ze≥6 校核、必需带宽 bs≥bs₀[Pd/(K_L·K_Z·P₀)]^(1/1.14)；内置 10 种带型（MXL/XL/L/H/XH + 3M/5M/8M/14M/20M）并自动推荐最小节距（GB/T 11362-2008）",
+    icon: "⛓️",
+    date: "2026-09-28"
+  },
+  {
     id: "bearing-select",
     name: "轴承选型（深沟球 / 角接触）",
     file: "tools/bearing-select.html",

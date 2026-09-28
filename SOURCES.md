@@ -77,6 +77,17 @@
 | 62 / 63 系列极限转速（脂 / 油润滑，r/min） | 6200~6209 脂 19000→7000、油 26000→9000 | https://sddentebearing.en.made-in-china.com/product/qwIGldTvMZre/China-6000-6200-6300-Series-Deep-Groove-Ball-Bearing-for-Machine.html |
 | 单列角接触球轴承 70C / 72C 系列规格（15°） | d/D/B/r、Cr/C₀r、脂/油极限转速（7000C~7009C、7200C~7203C 共 14 型号） | 东胜轴承 http://www.ds-zc.com/product/Catalog/3/213 ；哈通 http://m.htqbearing.com/hatongzhoucheng/wap_pro/10561134.html |
 
+## 九、同步带传动（2026-09-28 搜索整理）
+| 来源 | 覆盖内容 | 链接 |
+|------|---------|------|
+| GB/T 11362-2008《同步带传动 梯形齿同步带额定功率和传动中心距的计算》 | d₁=P_b·Z₁/π、d₂=P_b·Z₂/π、带速 v=πd₁n₁/60000、节线长 L_p=2a₀cosφ+π(d₂+d₁)/2+πφ(d₂−d₁)/180、中心距 a≈M+√(M²−[P_b(Z₂−Z₁)/π]²/8) 与精确式（M=P_b(2Z_b−Z₁−Z₂)/8）、带的节线长必须为节距整数倍 L=p·z_b | 标准原文 PDF http://www.gaigibelt.com/ggdown/biaozhun/GBT%2011362-2008.pdf |
+| GB/T 11361《同步带传动 梯形齿带轮》 | 带轮节径圆整表、带轮齿数系列与最小许用齿数 | 标准原文（同站资料库） |
+| 擎川：同步带选型计算 | 完整算例：Pd=KA·Pm、按 Pd-n₁ 查带型、啮合齿数 Zm=z₁/2−P_b·z₁(z₂−z₁)/(2π²a)（≥6）、啮合系数 Kz=1（Zm≥6）/1−0.2(6−Zm)、带宽 bs≥bs₀(Pd/(K_L·Kz·P₀))^(1/1.14) | https://www.everla.com/m/zhishi/14800.html |
+| IMCAD 同步带传动计算（工况系数表） | 工况系数 KA 按工作机×原动机×运转时间三向取值（复印机 1.0~1.4 … 陶土机械 1.8~2.4）、张紧轮附加量（≤200r/min 加 0.3）、增速传动附加量（增速比≥3.5 加 0.4） | http://dev.inkcad.com/WebCalculate/ZhuanYeJiSuan/TongBuDai_ZhouJie.aspx |
+| Gates Mectrol《Timing Belt Theory》白皮书 | 节距定义、带轮节径 d=p·z_p/π、节径差 u、带长与中心距关系 L=2C+πd（等径）、包角 θ₁=2arccos((d₂−d₁)/2C) | https://gates.com/content/dam/documents-library/whitepapers/timing-belt-theory-white-paper.pdf |
+| 凯奥动力：同步带精准选型指南 | 带型系列划分（梯形齿 MXL/XL/L/H/XH、圆弧齿 3M/5M/8M/14M/20M 与 S 系列）、工况系数推荐（平稳 1.0~1.4、中等冲击 1.4~1.8、重冲击/频繁启停 ≥2.0）、带宽经验式 | http://www.aorrow.cn/sys-nd/240.html |
+| 米思米 / 通用样本：同步带最小许用齿数与标准带宽 | 各带型最小许用齿数（XL 10、L 12、H 14、XH 18；3M 10、5M 14、8M 22、14M 28）、标准带宽系列（5M: 9/15/25，8M: 20/30/50 …） | 各厂商样本汇总 |
+
 ## 待补充方向
 - [ ] THK 滚珠丝杠/直线导轨选型手册（thk.com 技术资料）
 - [ ] 米思米 MISUMI 选型计算资料（fa.misumi-vona.cn）

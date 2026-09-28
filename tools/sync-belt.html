@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>同步带选型（梯形齿 / 圆弧齿）· 机械非标自动化设计计算</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #f7f4f0; color: #3a342e; line-height: 1.6; }
+  header { background: linear-gradient(135deg, #ff7a3c 0%, #e8442b 100%); color: #fff; padding: 22px 28px; text-align: center; }
+  header h1 { font-size: 22px; font-weight: 800; letter-spacing: 1px; }
+  header p { font-size: 13px; opacity: .92; margin-top: 6px; }
+  .back { display: inline-block; margin: 14px 0 0 28px; padding: 10px 20px; background: linear-gradient(135deg,#ff7a3c,#e8442b); color: #fff;
+    text-decoration: none; font-weight: 700; font-size: 15px; border-radius: 8px; box-shadow: 0 3px 10px rgba(232,68,43,.35); }
+  .back:hover { filter: brightness(1.05); }
+  .wrap { max-width: 1000px; margin: 18px auto 40px; padding: 0 18px; }
+  .panel { background: #fff; border-radius: 14px; padding: 22px 24px; margin-bottom: 22px; box-shadow: 0 2px 14px rgba(0,0,0,.05); }
+  .panel h2 { font-size: 17px; color: #b3352b; margin-bottom: 16px; border-left: 5px solid #ff7a3c; padding-left: 12px; }
+  .form-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+  .form-grid .wide { grid-column: 1 / -1; }
+  label { display: block; font-size: 12px; color: #7a6f60; margin-bottom: 4px; }
+  input, select { width: 100%; padding: 9px 10px; border: 1px solid #e3d8c8; border-radius: 8px; font-size: 14px; background: #fffdf9; }
+  input:focus, select:focus { outline: none; border-color: #ff7a3c; }
+  .btn { margin-top: 16px; padding: 11px 26px; background: linear-gradient(135deg,#ff7a3c,#e8442b); color:#fff; border: none;
+    border-radius: 9px; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 3px 10px rgba(232,68,43,.3); }
+  .btn:hover { filter: brightness(1.05); }
+  .btn.gray { background: linear-gradient(135deg,#9a9389,#716a60); }
+  .btn.mini { margin: 0; padding: 4px 10px; font-size: 12px; border-radius: 6px; box-shadow: none; }
+  .fig { background: #fdf8f2; border: 1px solid #f0e2d0; border-radius: 10px; padding: 14px; margin: 4px 0 8px; text-align: center; }
+  .fig figcaption { font-size: 12px; color: #7a6f60; margin-top: 8px; }
+  .result { margin-top: 16px; background: #fbf6ef; border-radius: 10px; padding: 14px 16px; }
+  .result table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .result th, .result td { border: 1px solid #ecdfcc; padding: 7px 9px; text-align: left; }
+  .result th { background: #f3e7d6; color: #6b5d4c; font-weight: 700; }
+  .result td.val { font-weight: 700; color: #2a2a2a; text-align: right; font-variant-numeric: tabular-nums; }
+  .ok { color: #1f8a4c; font-weight: 700; }
+  .ng { color: #e8442b; font-weight: 700; }
+  .note { background: #fdf8f2; border: 1px solid #f0e2d0; border-radius: 10px; padding: 14px 16px; font-size: 13px; color: #7a6f60; line-height: 1.9; margin-top: 16px; }
+  .note b { color: #b3352b; }
+  .star { color: #e8a200; }
+  .small { font-size: 11px; color: #a89b88; margin-top: 4px; }
+  footer { text-align: center; font-size: 12px; color: #a89b88; padding: 20px; }
+  footer a { color: #b3352b; }
+</style>
+</head>
+<body>
+<header>
+  <h1>⛓️ 同步带选型（梯形齿 / 圆弧齿）</h1>
+  <p>设计功率 Pd=K_A·P · 带速 v=πd₁n₁/60000 · 节线长与中心距 · 啮合齿数 Ze≥6 · 必需带宽 bs · 内置 10 种带型并自动推荐最小节距</p>
+</header>
+<a class="back" href="../index.html">← 返回工具集</a>
+
+<div class="wrap">
+
+  <!-- 面板① 工况参数与带型 -->
+  <div class="panel">
+    <h2>① 工况参数与带型</h2>
+    <div class="fig">
+      <svg viewBox="0 0 680 300" width="680" height="300" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="同步带传动布置示意图">
+        <!-- 带（上切线 → 大带轮弧 → 下切线 → 小带轮弧） -->
+        <path d="M152,120 L434,100 A50,50 0 0,1 434,200 L152,180 A30,30 0 1,1 152,120 Z"
+              fill="#f6ddc8" stroke="#c87a4a" stroke-width="2"/>
+        <!-- 带上直段齿（示意） -->
+        <line x1="180" y1="118" x2="180" y2="123" stroke="#c87a4a" stroke-width="1.4"/>
+        <line x1="208" y1="116" x2="208" y2="121" stroke="#c87a4a" stroke-width="1.4"/>
+        <line x1="237" y1="114" x2="237" y2="119" stroke="#c87a4a" stroke-width="1.4"/>
+        <line x1="265" y1="112" x2="265" y2="117" stroke="#c87a4a" stroke-width="1.4"/>
+        <line x1="293" y1="110" x2="293" y2="115" stroke="#c87a4a" stroke-width="1.4"/>
+        <line x1="321" y1="108" x2="321" y2="113" stroke="#c87a4a" stroke-width="1.4"/>
+        <line x1="349" y1="106" x2="349" y2="111" stroke="#c87a4a" stroke-width="1.4"/>
+        <line x1="377" y1="104" x2="377" y2="109" stroke="#c87a4a" stroke-width="1.4"/>
+        <!-- 下直段齿 -->
+        <line x1="180" y1="182" x2="180" y2="177" stroke="#c87a4a" stroke-width="1.4"/>
+        <line x1="208" y1="184" x2="208" y2="179" stroke="#c87a4a" stroke-width="1.4"/>
+        <line x1="237" y1="186" x2="237" y2="181" stroke="#c87a4a" stroke-width="1.4"/>
+        <line x1="265" y1="188" x2="265" y2="183" stroke="#c87a4a" stroke-width="1.4"/>
+        <line x1="293" y1="190" x2="293" y2="185" stroke="#c87a4a" stroke-width="1.4"/>
+        <line x1="321" y1="192" x2="321" y2="187" stroke="#c87a4a" stroke-width="1.4"/>
+        <line x1="349" y1="194" x2="349" y2="189" stroke="#c87a4a" stroke-width="1.4"/>
+        <line x1="377" y1="196" x2="377" y2="191" stroke="#c87a4a" stroke-width="1.4"/>
+        <!-- 小带轮（齿槽用虚线圆模拟） -->
+        <circle cx="150" cy="150" r="30" fill="#fffdf9" stroke="#b98a5f" stroke-width="2"/>
+        <circle cx="150" cy="150" r="27" fill="none" stroke="#b98a5f" stroke-width="5" stroke-dasharray="4 5"/>
+        <circle cx="150" cy="150" r="7" fill="#f3e7d6" stroke="#b98a5f" stroke-width="1.5"/>
+        <text x="150" y="155" font-size="12" font-weight="700" fill="#8a6a3f" text-anchor="middle">d₁</text>
+        <!-- 大带轮 -->
+        <circle cx="430" cy="150" r="50" fill="#fffdf9" stroke="#b98a5f" stroke-width="2"/>
+        <circle cx="430" cy="150" r="46" fill="none" stroke="#b98a5f" stroke-width="6" stroke-dasharray="5 6"/>
+        <circle cx="430" cy="150" r="8" fill="#f3e7d6" stroke="#b98a5f" stroke-width="1.5"/>
+        <text x="430" y="155" font-size="12" font-weight="700" fill="#8a6a3f" text-anchor="middle">d₂</text>
+        <!-- 带速 v（上直段，指向运动方向） -->
+        <line x1="248" y1="88" x2="330" y2="88" stroke="#e62e2e" stroke-width="4"/>
+        <polygon points="340,88 322,80 322,96" fill="#e62e2e"/>
+        <text x="292" y="76" font-size="12" font-weight="700" fill="#e62e2e" text-anchor="middle">带速 v (m/s)</text>
+        <!-- 中心距 a -->
+        <line x1="150" y1="252" x2="430" y2="252" stroke="#b3352b" stroke-width="1.2"/>
+        <line x1="150" y1="244" x2="150" y2="260" stroke="#b3352b" stroke-width="1.2"/>
+        <line x1="430" y1="244" x2="430" y2="260" stroke="#b3352b" stroke-width="1.2"/>
+        <line x1="150" y1="150" x2="150" y2="252" stroke="#b3352b" stroke-width="0.8" stroke-dasharray="4 4"/>
+        <line x1="430" y1="150" x2="430" y2="252" stroke="#b3352b" stroke-width="0.8" stroke-dasharray="4 4"/>
+        <text x="290" y="274" font-size="12" font-weight="700" fill="#b3352b" text-anchor="middle">中心距 a（节圆中心距）</text>
+        <!-- 齿数标注 -->
+        <text x="150" y="228" font-size="12" font-weight="700" fill="#6b5d4c" text-anchor="middle">Z₁ 齿（主动）</text>
+        <text x="430" y="228" font-size="12" font-weight="700" fill="#6b5d4c" text-anchor="middle">Z₂ 齿（从动）</text>
+        <!-- 包角说明 -->
+        <text x="20" y="30" font-size="12" fill="#7a6f60">小带轮包角 θ₁ = 180° + 2·asin[(d₂−d₁)/(2a)]</text>
+        <text x="20" y="48" font-size="12" fill="#7a6f60">啮合齿数 Ze = Z₁·θ₁/360（要求 ≥ 6，否则加张紧轮）</text>
+      </svg>
+      <figcaption>图 1　同步带传动布置（带型为圆弧齿示意）</figcaption>
+    </div>
+    <div class="form-grid">
+      <div><label>传递功率 P (kW)</label><input id="sbP" type="text" value="0.75"></div>
+      <div><label>小带轮转速 n₁ (r/min)</label><input id="sbn1" type="text" value="1500"></div>
+      <div><label>传动比 i = n₁/n₂</label><input id="sbi" type="text" value="2"></div>
+      <div><label>初定中心距 a₀ (mm)</label><input id="sba" type="text" value="400"></div>
+      <div><label>小带轮齿数 Z₁（留空 = 取该带型最小许用齿数）</label><input id="sbz1" type="text" value=""></div>
+      <div><label>带型</label>
+        <select id="sbtype" onchange="onTypeChange()">
+          <option value="auto">自动选择（按设计功率与转速推荐最小节距）</option>
+          <option value="3M">3M（圆弧齿 HTD，Pb=3）</option>
+          <option value="5M">5M（圆弧齿 HTD，Pb=5）</option>
+          <option value="8M">8M（圆弧齿 HTD，Pb=8）</option>
+          <option value="14M">14M（圆弧齿 HTD，Pb=14）</option>
+          <option value="20M">20M（圆弧齿 HTD，Pb=20）</option>
+          <option value="XL">XL（梯形齿，Pb=5.08）</option>
+          <option value="L">L（梯形齿，Pb=9.525）</option>
+          <option value="H">H（梯形齿，Pb=12.7）</option>
+          <option value="XH">XH（梯形齿，Pb=22.225）</option>
+          <option value="MXL">MXL（梯形齿，Pb=2.032）</option>
+        </select>
+      </div>
+      <div class="wide"><label>工况系数 K_A（工作机载荷性质 × 运转时间；有张紧轮时另加 0.1~0.3，增速传动另加 0.1~0.4）</label>
+        <select id="sbKa">
+          <option value="1.0">1.0 — 平稳负载：发电机、连续运转压缩机、轻载输送（3~5 h/d）</option>
+          <option value="1.2">1.2 — 平稳负载：离心泵、风机、均匀载荷输送（8~10 h/d，常用）</option>
+          <option value="1.4">1.4 — 中等冲击：搅拌机、包装机、往复式输送（3~5 h/d）</option>
+          <option value="1.6">1.6 — 中等冲击：搅拌机、破碎机、木工机械（16~24 h/d）</option>
+          <option value="1.8">1.8 — 重冲击 / 频繁启停正反转：冲床、轧机、起重机构</option>
+          <option value="2.0">2.0 — 重冲击且连续运转（16~24 h/d）、陶土机械、离心分离机</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn" onclick="runCalc()">计算几何与校核</button>
+    <div class="small">说明：同步带传动为强制啮合、无滑差，实际传动比等于齿数比；双向运转、冲击载荷、频繁启停场合应加大 K_A。</div>
+  </div>
+
+  <!-- 面板② 几何计算 -->
+  <div class="panel">
+    <h2>② 几何计算（节径 / 带速 / 节线长 / 中心距 / 啮合齿数）</h2>
+    <div class="fig">
+      <svg viewBox="0 0 680 240" width="680" height="240" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="啮合齿数示意图">
+        <!-- 带轮齿圈弧与带弧 -->
+        <path d="M190,190 A110,110 0 0,1 410,190" fill="none" stroke="#b98a5f" stroke-width="3"/>
+        <path d="M182,196 A118,118 0 0,1 418,196" fill="none" stroke="#c87a4a" stroke-width="3"/>
+        <!-- 啮合齿（径向短线） -->
+        <line x1="205" y1="135" x2="198" y2="131" stroke="#c87a4a" stroke-width="2"/>
+        <line x1="229" y1="106" x2="224" y2="100" stroke="#c87a4a" stroke-width="2"/>
+        <line x1="262" y1="87" x2="260" y2="79" stroke="#c87a4a" stroke-width="2"/>
+        <line x1="300" y1="80" x2="300" y2="72" stroke="#c87a4a" stroke-width="2"/>
+        <line x1="338" y1="87" x2="340" y2="79" stroke="#c87a4a" stroke-width="2"/>
+        <line x1="371" y1="106" x2="376" y2="100" stroke="#c87a4a" stroke-width="2"/>
+        <line x1="395" y1="135" x2="402" y2="131" stroke="#c87a4a" stroke-width="2"/>
+        <!-- 包角弧（虚线示意） -->
+        <path d="M196,178 A118,118 0 0,1 404,178" fill="none" stroke="#e62e2e" stroke-width="1.6" stroke-dasharray="6 4"/>
+        <text x="300" y="208" font-size="13" font-weight="700" fill="#b3352b" text-anchor="middle">小带轮啮合齿数 Ze = Z₁ · θ₁ / 360 ≥ 6</text>
+        <text x="300" y="228" font-size="12" fill="#7a6f60" text-anchor="middle">Ze &lt; 6 时应增大中心距 / 减小传动比 / 加张紧轮，K_Z = 1 − 0.2(6 − Ze)</text>
+      </svg>
+      <figcaption>图 2　小带轮啮合齿数与包角示意</figcaption>
+    </div>
+    <button class="btn" onclick="runCalc()">同上（与面板① 同时计算）</button>
+    <div class="result" id="geoRes"></div>
+  </div>
+
+  <!-- 面板③ 校核与带宽 -->
+  <div class="panel">
+    <h2>③ 校核与必需带宽</h2>
+    <div class="result" id="chkRes"></div>
+    <div class="note">
+      带宽公式：<b>bs ≥ bs₀ · [Pd / (K_L · K_Z · P₀)]^(1/1.14)</b>，其中 P₀ 为<b>基准宽度 b_s0 带的基本额定功率</b>，
+      本工具按 P₀ = f_allow · bs₀ · v 估算（f_allow 为样本典型单位宽度许用工作拉力，N/mm）。
+      长度系数 K_L 按节线长分段取值：&lt;500 mm → 0.8；500~749 → 0.9；750~1499 → 1.0；1500~1999 → 1.05；≥2000 → 1.1。
+    </div>
+  </div>
+
+  <!-- 面板④ 带型库与自动推荐 -->
+  <div class="panel">
+    <h2>④ 常用带型库与自动推荐</h2>
+    <button class="btn" onclick="recommend()">按工况自动推荐最小节距带型</button>
+    <button class="btn gray" onclick="showLibrary()">查看带型库</button>
+    <div class="result" id="recRes"></div>
+    <div class="note">
+      <b>齿形选择建议</b>：圆弧齿（3M/5M/8M/14M）多边形效应小、啮合平稳、噪音低、承载高，是<b>现代自动化设备与伺服驱动首选</b>；
+      梯形齿（XL/L/H）成本低、适用于中低速重载的传统设备。在满足承载的前提下<b>优先选小节距</b>（如 5M 优于 8M）——传动更平稳、
+      可用更小直径带轮、设备更紧凑。高速比小带轮（n₁ 高）应适当加大 Z₁ 以降低弯曲频率、延长寿命。
+    </div>
+  </div>
+
+</div>
+<footer>
+  公式依据 GB/T 11362-2008《同步带传动 梯形齿同步带额定功率和传动中心距的计算》、GB/T 11361 带轮标准、
+  Gates Mectrol《Timing Belt Theory》与米思米 / 盖茨选型资料。<br>
+  本工具用于方案初选与快速校核，最终选型请以厂商样本（含精确额定功率表）为准。
+</footer>
+
+<script>
+// ============================================================
+// 带型库：Pb 节距(mm)、Zmin 最小许用齿数、bs0 基准宽度(mm)、
+//         widths 标准带宽序列(mm)、fallow 单位宽度许用工作拉力(N/mm)、vmax 最大带速(m/s)
+// ============================================================
+const BELTS = [
+  { id: 'MXL', Pb: 2.032,  Zmin: 10, bs0: 6.4,   widths: [3.2, 4.8, 6.4, 9.5],      fallow: 3.0,  vmax: 40 },
+  { id: '3M',  Pb: 3,      Zmin: 10, bs0: 6,     widths: [6, 9, 15],                 fallow: 9.0,  vmax: 40 },
+  { id: 'XL',  Pb: 5.08,   Zmin: 10, bs0: 9.5,   widths: [6.4, 7.9, 9.5, 12.7],      fallow: 4.5,  vmax: 40 },
+  { id: '5M',  Pb: 5,      Zmin: 14, bs0: 9,     widths: [9, 15, 25, 40],            fallow: 15.0, vmax: 40 },
+  { id: '8M',  Pb: 8,      Zmin: 22, bs0: 20,    widths: [20, 30, 50, 85],           fallow: 20.0, vmax: 40 },
+  { id: 'L',   Pb: 9.525,  Zmin: 12, bs0: 25.4,  widths: [12.7, 19.1, 25.4, 38.1],   fallow: 6.0,  vmax: 40 },
+  { id: 'H',   Pb: 12.7,   Zmin: 14, bs0: 25.4,  widths: [19.1, 25.4, 38.1, 50.8],   fallow: 7.0,  vmax: 40 },
+  { id: '14M', Pb: 14,     Zmin: 28, bs0: 40,    widths: [40, 55, 85, 115],          fallow: 25.0, vmax: 35 },
+  { id: '20M', Pb: 20,     Zmin: 30, bs0: 115,   widths: [115, 170, 230],            fallow: 30.0, vmax: 30 },
+  { id: 'XH',  Pb: 22.225, Zmin: 18, bs0: 50.8,  widths: [50.8, 76.2, 101.6],        fallow: 8.0,  vmax: 35 },
+];
+const DEG = Math.PI / 180;
+
+function $(id) { return document.getElementById(id); }
+function num(v) { const n = parseFloat(String(v).replace(/[^\d.\-]/g, '')); return isNaN(n) ? 0 : n; }
+function beltOf(id) { return BELTS.find(b => b.id === id); }
+// 按节距升序的带型序列（推荐时取最小节距）
+function beltsByPitch() { return [...BELTS].sort((x, y) => x.Pb - y.Pb); }
+
+// 长度系数 K_L（按节线长分段，样本近似值）
+function lenFactor(Lp) {
+  if (Lp < 500) return 0.8;
+  if (Lp < 750) return 0.9;
+  if (Lp < 1500) return 1.0;
+  if (Lp < 2000) return 1.05;
+  return 1.1;
+}
+
+function onTypeChange() { /* 占位：切换带型后由用户点击计算按钮刷新 */ }
+
+let last = null;   // 上一次几何计算结果，供面板③/④ 复用
+
+// 单带型的完整计算；Z1Override>0 时用指定齿数
+function calcBelt(b, inp, Z1Override) {
+  const Z1 = (Z1Override > 0) ? Math.max(Z1Override, b.Zmin) : b.Zmin;
+  const Z2 = Math.max(Z1 + 1, Math.round(inp.i * Z1));
+  const d1 = b.Pb * Z1 / Math.PI;
+  const d2 = b.Pb * Z2 / Math.PI;
+  const v = Math.PI * d1 * inp.n1 / 60000;                  // m/s
+  // 节线长估算（以初定中心距）→ 圆整为节距整数倍（L = p·z_b）
+  const Lest = 2 * inp.a0 + Math.PI * (d1 + d2) / 2 + (d2 - d1) * (d2 - d1) / (4 * inp.a0);
+  let Zb = Math.round(Lest / b.Pb);
+  let a = 0;
+  for (let k = 0; k < 4; k++) {
+    const M = b.Pb * (2 * Zb - Z1 - Z2) / 8;
+    const disc = M * M - Math.pow(b.Pb * (Z2 - Z1) / Math.PI, 2) / 8;
+    if (disc <= 0) { Zb += 1; continue; }
+    a = M + Math.sqrt(disc);
+    if (a > (d1 + d2) / 2 * 1.05) break;
+    Zb += 1;
+  }
+  const Lp = b.Pb * Zb;                                      // 实际标准节线长
+  const s = (d2 - d1) / (2 * a);
+  const th1 = 180 + 2 * Math.asin(Math.max(-1, Math.min(1, s))) / DEG;   // 小带轮包角(°)
+  const Ze = Z1 * th1 / 360;                                 // 小带轮啮合齿数
+  const Kz = Ze >= 6 ? 1 : 1 - 0.2 * (6 - Ze);
+  const KL = lenFactor(Lp);
+  const P0 = b.fallow * b.bs0 * v;                           // 基准宽度额定功率(W)
+  const Pd = inp.Pd;
+  const bsReq = P0 > 0 ? b.bs0 * Math.pow(Pd / (KL * Kz * P0), 1 / 1.14) : Infinity;
+  let bs = null;
+  for (const w of b.widths) { if (w >= bsReq - 1e-9) { bs = w; break; } }
+  const Pall = bs ? P0 * Math.pow(bs / b.bs0, 1.14) * Kz * KL : 0;   // 实选带宽的额定功率(W)
+  return {
+    b, Z1, Z2, d1, d2, v, Zb, Lp, a, th1, Ze, Kz, KL, P0, bsReq, bs, Pall,
+    iActual: Z2 / Z1,
+    okV: v <= b.vmax, okZ: Z1 >= b.Zmin, okZe: Ze >= 6, okBs: bs !== null,
+    margin: Pall > 0 ? Pall / Pd : 0
+  };
+}
+
+// 面板① / ② 计算
+function runCalc() {
+  const P = num($('sbP').value), n1 = num($('sbn1').value), i = num($('sbi').value);
+  const a0 = num($('sba').value), KA = num($('sbKa').value);
+  const Z1in = num($('sbz1').value);
+  if (P <= 0 || n1 <= 0 || i <= 0 || a0 <= 0) { alert('请填写正的功率、转速、传动比与中心距'); return; }
+  const Pd = KA * P * 1000;                                  // W
+  const inp = { P, n1, i, a0, KA, Pd, Z1in };
+
+  let typeId = $('sbtype').value;
+  if (typeId === 'auto') {
+    // 自动：按最小节距选出第一条带宽不超标的带型
+    const pick = pickBelt(inp, Z1in);
+    typeId = pick ? pick.id : '5M';
+  }
+  const b = beltOf(typeId);
+  const r = calcBelt(b, inp, Z1in);
+  last = { inp, r };
+  renderGeo(inp, r);
+  renderChk(inp, r);
+  $('recRes').innerHTML = '';
+  if ($('sbtype').value === 'auto') recommend();
+}
+
+// 自动挑带型：返回第一个 bs 可落在标准带宽内的最小节距带型
+function pickBelt(inp, Z1in) {
+  for (const b of beltsByPitch()) {
+    const r = calcBelt(b, inp, Z1in);
+    if (r.okV && r.okBs && r.okZe) return b;
+  }
+  return null;
+}
+
+function renderGeo(inp, r) {
+  const b = r.b;
+  $('geoRes').innerHTML =
+    '<table>' +
+    '<tr><th>项目</th><th>公式</th><th>结果</th></tr>' +
+    row('设计功率 Pd = K_A · P', inp.KA.toFixed(2) + ' × ' + inp.P.toFixed(3) + ' kW', (inp.Pd / 1000).toFixed(3) + ' kW') +
+    row('带型 / 节距 P_b', b.id + '（' + (['3M','5M','8M','14M','20M'].includes(b.id) ? '圆弧齿' : '梯形齿') + '）', b.Pb + ' mm') +
+    row('小带轮齿数 Z₁', '≥ Z_min = ' + b.Zmin + ' 齿', r.Z1 + ' 齿') +
+    row('大带轮齿数 Z₂ = i · Z₁', inp.i.toFixed(2) + ' × ' + r.Z1 + '（取整）', r.Z2 + ' 齿') +
+    row('小带轮节圆直径 d₁ = P_b·Z₁/π', b.Pb + ' × ' + r.Z1 + ' / π', r.d1.toFixed(2) + ' mm') +
+    row('大带轮节圆直径 d₂ = P_b·Z₂/π', b.Pb + ' × ' + r.Z2 + ' / π', r.d2.toFixed(2) + ' mm') +
+    row('实际传动比 i′ = Z₂/Z₁', r.Z2 + ' / ' + r.Z1, r.iActual.toFixed(3)) +
+    row('带速 v = π·d₁·n₁/60000', 'π × ' + r.d1.toFixed(2) + ' × ' + inp.n1 + ' / 60000', r.v.toFixed(3) + ' m/s') +
+    row('节线长（计算值，初定中心距 ' + inp.a0 + ' mm）', 'L ≈ 2a₀ + π(d₁+d₂)/2 + (d₂−d₁)²/(4a₀)', (2 * inp.a0 + Math.PI * (r.d1 + r.d2) / 2 + (r.d2 - r.d1) * (r.d2 - r.d1) / (4 * inp.a0)).toFixed(1) + ' mm') +
+    row('带齿数 Z_b = L/P_b（圆整，L = P_b·Z_b）', '圆整后 Z_b', r.Zb + ' 齿') +
+    row('标准节线长 L_p = P_b · Z_b', b.Pb + ' × ' + r.Zb, r.Lp.toFixed(1) + ' mm') +
+    row('实际中心距 a（由标准带长反算）', 'a = M + √(M² − [P_b(Z₂−Z₁)/π]²/8)，M = P_b(2Z_b−Z₁−Z₂)/8', r.a.toFixed(1) + ' mm') +
+    row('小带轮包角 θ₁', '180° + 2·asin[(d₂−d₁)/(2a)]', r.th1.toFixed(1) + '°') +
+    row('小带轮啮合齿数 Ze = Z₁·θ₁/360', r.Z1 + ' × ' + r.th1.toFixed(1) + ' / 360', r.Ze.toFixed(2) + ' 齿' + (r.okZe ? ' <span class="ok">✔</span>' : ' <span class="ng">✘ 不足 6</span>')) +
+    '</table>' +
+    '<div class="small">中心距应设计为<b>可调</b>（长孔或张紧轮），用于安装与补偿带运行后的初伸长；两带轮轴须平行共面。</div>';
+}
+
+function renderChk(inp, r) {
+  const b = r.b;
+  $('chkRes').innerHTML =
+    '<table>' +
+    '<tr><th>校核项</th><th>计算值</th><th>许用 / 要求</th><th>判定</th></tr>' +
+    chkRow('带速 v', r.v.toFixed(3) + ' m/s', '≤ ' + b.vmax + ' m/s', r.okV) +
+    chkRow('小带轮齿数 Z₁', r.Z1 + ' 齿', '≥ Z_min = ' + b.Zmin + ' 齿（防弯曲疲劳）', r.okZ) +
+    chkRow('啮合齿数 Ze', r.Ze.toFixed(2) + ' 齿', '≥ 6 齿（K_Z = ' + r.Kz.toFixed(2) + '）', r.okZe) +
+    chkRow('必需带宽 bs', r.bsReq === Infinity ? '—' : r.bsReq.toFixed(1) + ' mm', 'bs₀=' + b.bs0 + ' mm，标准带宽 ' + b.widths.join(' / ') + ' mm', r.okBs) +
+    chkRow('实选带宽 bs', r.bs === null ? '超出该带型最大标准带宽' : r.bs + ' mm', '按公式圆整到标准带宽', r.okBs) +
+    chkRow('承载能力 P_all = P₀·(bs/bs₀)^1.14·K_Z·K_L', r.Pall.toFixed(0) + ' W', '≥ Pd = ' + inp.Pd.toFixed(0) + ' W（裕度 ' + (r.margin * 100).toFixed(0) + '%）', r.margin >= 1) +
+    '</table>' +
+    '<div class="small">' +
+    '长度系数 K_L = ' + r.KL.toFixed(2) + '（节线长 ' + r.Lp.toFixed(0) + ' mm）；' +
+    '基准宽度 ' + b.bs0 + ' mm 的基本额定功率 P₀ = ' + r.P0.toFixed(0) + ' W。' +
+    (r.okBs ? '' : '<span class="ng">　该带型在最大标准带宽下仍不足，应升级到更大节距（如 ' + b.id + ' → 下一档）。</span>') +
+    '</div>';
+}
+
+// 面板④ 自动推荐
+function recommend() {
+  const P = num($('sbP').value), n1 = num($('sbn1').value), i = num($('sbi').value);
+  const a0 = num($('sba').value), KA = num($('sbKa').value), Z1in = num($('sbz1').value);
+  if (P <= 0 || n1 <= 0 || i <= 0 || a0 <= 0) { alert('请先在面板① 填写正的功率、转速、传动比与中心距'); return; }
+  const inp = { P, n1, i, a0, KA, Pd: KA * P * 1000, Z1in };
+
+  const hits = [];
+  for (const b of beltsByPitch()) {
+    const r = calcBelt(b, inp, Z1in);
+    if (!r.okV || !r.okBs || !r.okZe) continue;
+    hits.push(r);
+  }
+  let html = '<div class="small">设计功率 Pd = K_A · P = ' + KA.toFixed(2) + ' × ' + P.toFixed(3) +
+    ' = ' + (inp.Pd / 1000).toFixed(3) + ' kW；小带轮齿数 Z₁ = ' + (Z1in > 0 ? Z1in + ' 齿（指定）' : '各带型最小许用齿数') +
+    '。约束：带速 ≤ v_max、啮合齿数 ≥ 6、带宽不超该带型最大标准宽度。</div>';
+  if (hits.length === 0) {
+    html += '<table><tr><th>没有带型满足约束</th></tr><tr><td>可采取：减小传动比（增大 Z₁ 以增大啮合齿数）、加大中心距、降低转速或功率，' +
+      '或改用链传动 / 齿轮传动方案。</td></tr></table>';
+  } else {
+    html += '<table><tr><th>带型</th><th>节距 P_b</th><th>齿数 Z₁ / Z₂</th><th>带速 v</th><th>节线长 L_p</th><th>中心距 a</th>' +
+      '<th>啮合齿数</th><th>带宽 bs</th><th>承载裕度</th></tr>';
+    hits.slice(0, 6).forEach((r, idx) => {
+      const mark = idx === 0 ? '<span class="star">⭐ </span>最小满足　' : '';
+      html += '<tr><td>' + mark + r.b.id + '</td><td class="val">' + r.b.Pb + '</td>' +
+        '<td class="val">' + r.Z1 + ' / ' + r.Z2 + '</td>' +
+        '<td class="val">' + r.v.toFixed(2) + ' m/s</td>' +
+        '<td class="val">' + r.Lp.toFixed(0) + ' mm</td>' +
+        '<td class="val">' + r.a.toFixed(0) + ' mm</td>' +
+        '<td class="val">' + r.Ze.toFixed(1) + '</td>' +
+        '<td class="val">' + r.bs + ' mm</td>' +
+        '<td class="val">' + (r.margin * 100).toFixed(0) + '%</td></tr>';
+    });
+    html += '</table>';
+    if (hits.length > 6) html += '<div class="small">另有 ' + (hits.length - 6) + ' 条更大节距方案（同向可用，按需选用）。</div>';
+    html += '<div class="small">推荐原则：满足承载与几何约束下<b>取最小节距</b>——传动平稳、噪音低、可用小直径带轮。</div>';
+  }
+  $('recRes').innerHTML = html;
+}
+
+function showLibrary() {
+  let html = '<table><tr><th>带型</th><th>节距 P_b (mm)</th><th>最小许用齿数</th><th>基准宽度 bs₀ (mm)</th>' +
+    '<th>标准带宽 (mm)</th><th>单位宽度许用拉力 (N/mm)</th><th>最大带速 (m/s)</th></tr>';
+  beltsByPitch().forEach(b => {
+    html += '<tr><td>' + b.id + '</td><td class="val">' + b.Pb + '</td><td class="val">' + b.Zmin + '</td>' +
+      '<td class="val">' + b.bs0 + '</td><td>' + b.widths.join(' / ') + '</td>' +
+      '<td class="val">' + b.fallow.toFixed(1) + '</td><td class="val">' + b.vmax + '</td></tr>';
+  });
+  html += '</table><div class="small">单位宽度许用工作拉力为样本典型值（钢丝/玻纤抗拉芯），用于额定功率估算；' +
+    '精确 P₀ 请查厂商样本按 (带型, Z₁, n₁) 查表。</div>';
+  $('recRes').innerHTML = html;
+}
+
+function row(k, f, v) { return '<tr><td>' + k + '</td><td>' + f + '</td><td class="val">' + v + '</td></tr>'; }
+function chkRow(k, v, lim, okFlag) {
+  return '<tr><td>' + k + '</td><td class="val">' + v + '</td><td>' + lim + '</td><td>' +
+    (okFlag ? '<span class="ok">✔ 通过</span>' : '<span class="ng">✘ 不足</span>') + '</td></tr>';
+}
+</script>
+</body>
+</html>
